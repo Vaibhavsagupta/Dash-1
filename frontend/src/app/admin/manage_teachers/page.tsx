@@ -53,7 +53,7 @@ export default function ManageTeacherData() {
         try {
             const token = localStorage.getItem('access_token');
             // Check API endpoint in backend/app/routers/updates.py: @router.put("/teacher/{teacher_id}")
-            const res = await fetch(`http://localhost:8002/update/teacher/${teacherId}`, {
+            const res = await fetch(`${API_BASE_URL}/update/teacher/${teacherId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

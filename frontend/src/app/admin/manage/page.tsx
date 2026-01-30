@@ -54,7 +54,7 @@ export default function ManageData() {
     const handleSave = async (studentId: string) => {
         try {
             const token = localStorage.getItem('access_token');
-            const res = await fetch(`http://localhost:8002/update/student/${studentId}`, {
+            const res = await fetch(`${API_BASE_URL}/update/student/${studentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

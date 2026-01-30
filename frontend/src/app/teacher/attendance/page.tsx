@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Search, CheckCircle, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Suspense } from 'react';
 
-export default function AttendancePage() {
+function AttendanceContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const modeParam = searchParams.get('mode');
@@ -77,7 +78,7 @@ export default function AttendancePage() {
     const fetchLogs = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const res = await fetch(`http://localhost:8002/attendance/history?date=${selectedDate}`, {
+            const res = await fetch(`${API_BASE_URL}/attendance/history?date=${selectedDate}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -365,5 +366,13 @@ export default function AttendancePage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AttendancePage() {
+    return (
+        <Suspense fallback={<div className="text-center py-20 text-slate-500">Loading attendance system...</div>}>
+            <AttendanceContent />
+        </Suspense>
     );
 }
