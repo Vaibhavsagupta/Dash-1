@@ -67,7 +67,7 @@ export default function DataIngestion() {
             console.error('Ingestion error:', error);
             setStatus({
                 type: 'error',
-                message: `Connection Error: ${error.message || 'Failed to connect to server'}. Ensure backend is running and accessible.`
+                message: `Connection Error: Failed to fetch from ${API_BASE_URL}. ${error.message || ''}. Ensure backend is running and accessible.`
             });
         } finally {
             setLoading(false);
