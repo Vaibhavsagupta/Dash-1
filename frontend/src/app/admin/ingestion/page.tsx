@@ -23,6 +23,18 @@ export default function DataIngestion() {
             return;
         }
 
+        // Check for common configuration issue: Using localhost API on deployed site
+        if (typeof window !== 'undefined' &&
+            window.location.hostname !== 'localhost' &&
+            window.location.hostname !== '127.0.0.1' &&
+            API_BASE_URL.includes('localhost')) {
+            setStatus({
+                type: 'error',
+                message: 'Configuration Error: Frontend is trying to connect to localhost. Please set NEXT_PUBLIC_API_URL in Vercel to your deployed backend URL.'
+            });
+            return;
+        }
+
         setLoading(true);
         setStatus({ type: null, message: '' });
 
@@ -51,9 +63,12 @@ export default function DataIngestion() {
             } else {
                 setStatus({ type: 'error', message: result.detail || 'Failed to ingest data' });
             }
-        } catch (error) {
-            console.error(error);
-            setStatus({ type: 'error', message: 'An error occurred during ingestion' });
+        } catch (error: any) {
+            console.error('Ingestion error:', error);
+            setStatus({
+                type: 'error',
+                message: `Connection Error: ${error.message || 'Failed to connect to server'}. Ensure backend is running and accessible.`
+            });
         } finally {
             setLoading(false);
         }
@@ -189,8 +204,8 @@ export default function DataIngestion() {
                                     onClick={handleIngest}
                                     disabled={loading || files.length === 0}
                                     className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${loading || files.length === 0
-                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20'
+                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20'
                                         }`}
                                 >
                                     {loading ? (

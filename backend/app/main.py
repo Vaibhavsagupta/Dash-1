@@ -20,6 +20,9 @@ origins = [
     "https://127.0.0.1:3000",
     "http://localhost:3002",
     "http://127.0.0.1:3002",
+    "https://dash-1-orcin.vercel.app",
+    "https://dash-1-git-main-vaibhavsaguptas-projects.vercel.app",
+    "https://dash-1.vercel.app",
 ]
 
 # Add production URL if provided
