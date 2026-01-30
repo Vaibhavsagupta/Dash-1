@@ -122,48 +122,48 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen p-8 bg-[#0f172a] text-slate-100">
-            <nav className="flex justify-between items-center mb-10">
-                <div>
+        <div className="min-h-screen p-4 md:p-8 bg-[#0f172a] text-slate-100">
+            <nav className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
+                <div className="text-center lg:text-left">
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
                         Admin Control Center
                     </h1>
                     <p className="text-slate-400 mt-2">Real-time batch readiness and faculty analytics</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap justify-center lg:justify-end gap-3 w-full lg:w-auto">
                     <button
                         onClick={() => router.push('/admin/ingestion')}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg transition-all flex items-center gap-2"
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all flex items-center gap-2"
                     >
                         <UploadCloud size={18} /> Deep Ingestion
                     </button>
                     <button
                         onClick={() => router.push('/admin/manage')}
-                        className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-lg transition-all"
+                        className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
                     >
                         Manage Data
                     </button>
                     <button
                         onClick={() => router.push('/admin/manage_teachers')}
-                        className="bg-sky-700 hover:bg-sky-600 text-white px-6 py-2 rounded-lg transition-all"
+                        className="bg-sky-700 hover:bg-sky-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
                     >
                         Manage Teachers
                     </button>
                     <button
                         onClick={() => router.push('/admin/batch-analytics')}
-                        className="bg-green-700 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all"
+                        className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
                     >
                         Batch Analytics
                     </button>
                     <button
                         onClick={() => router.push('/admin/progression')}
-                        className="bg-purple-700 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-all"
+                        className="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
                     >
                         Progression
                     </button>
                     <button
                         onClick={() => { localStorage.clear(); router.push('/login'); }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-all"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
                     >
                         Logout
                     </button>

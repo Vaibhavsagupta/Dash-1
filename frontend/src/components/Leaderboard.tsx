@@ -87,7 +87,7 @@ export default function Leaderboard() {
                                 <div className="text-xl font-bold text-slate-200">{topThree[1].name}</div>
                                 <div className="text-sm font-bold text-amber-500">{topThree[1].prs_score} PRS</div>
                             </div>
-                            <div className="relative w-24 md:w-32 bg-gradient-to-t from-slate-800 to-slate-700 rounded-t-lg border-t-4 border-slate-500 flex items-end justify-center pb-4 h-32 md:h-40 shadow-[0_0_20px_rgba(100,116,139,0.2)]">
+                            <div className="relative w-20 md:w-32 bg-gradient-to-t from-slate-800 to-slate-700 rounded-t-lg border-t-4 border-slate-500 flex items-end justify-center pb-4 h-32 md:h-40 shadow-[0_0_20px_rgba(100,116,139,0.2)]">
                                 <div className="absolute -top-6 text-slate-400">
                                     <Medal size={40} />
                                 </div>
@@ -110,7 +110,7 @@ export default function Leaderboard() {
                                 </div>
                                 <div className="text-lg font-bold text-amber-500">{topThree[0].prs_score} PRS</div>
                             </div>
-                            <div className="relative w-28 md:w-40 bg-gradient-to-t from-amber-900/40 to-amber-600/20 rounded-t-lg border-t-4 border-amber-500 flex items-end justify-center pb-4 h-40 md:h-56 shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+                            <div className="relative w-24 md:w-40 bg-gradient-to-t from-amber-900/40 to-amber-600/20 rounded-t-lg border-t-4 border-amber-500 flex items-end justify-center pb-4 h-40 md:h-56 shadow-[0_0_40px_rgba(245,158,11,0.3)]">
                                 <span className="text-6xl font-black text-amber-500/30">1</span>
                             </div>
                         </motion.div>
@@ -128,7 +128,7 @@ export default function Leaderboard() {
                                 <div className="text-xl font-bold text-slate-200">{topThree[2].name}</div>
                                 <div className="text-sm font-bold text-amber-500">{topThree[2].prs_score} PRS</div>
                             </div>
-                            <div className="relative w-24 md:w-32 bg-gradient-to-t from-amber-900/20 to-orange-900/40 rounded-t-lg border-t-4 border-orange-700 flex items-end justify-center pb-4 h-24 md:h-32 shadow-[0_0_20px_rgba(194,65,12,0.2)]">
+                            <div className="relative w-20 md:w-32 bg-gradient-to-t from-amber-900/20 to-orange-900/40 rounded-t-lg border-t-4 border-orange-700 flex items-end justify-center pb-4 h-24 md:h-32 shadow-[0_0_20px_rgba(194,65,12,0.2)]">
                                 <div className="absolute -top-6 text-orange-700">
                                     <Medal size={40} />
                                 </div>
@@ -183,9 +183,9 @@ function LeaderboardRow({ student }: { student: StudentAnalytics }) {
         >
             <td className="p-4">
                 <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${student.rank === 1 ? 'bg-amber-500/20 text-amber-400' :
-                        student.rank === 2 ? 'bg-slate-400/20 text-slate-300' :
-                            student.rank === 3 ? 'bg-orange-700/20 text-orange-400' :
-                                'bg-slate-800 text-slate-500'
+                    student.rank === 2 ? 'bg-slate-400/20 text-slate-300' :
+                        student.rank === 3 ? 'bg-orange-700/20 text-orange-400' :
+                            'bg-slate-800 text-slate-500'
                     }`}>
                     {student.rank}
                 </div>

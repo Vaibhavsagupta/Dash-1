@@ -165,7 +165,7 @@ export default function TeacherDashboard() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="glass p-8 rounded-3xl border border-cyan-900/30 bg-gradient-to-br from-slate-800/80 to-slate-900/80 relative overflow-hidden"
+                        className="glass p-6 md:p-8 rounded-3xl border border-cyan-900/30 bg-gradient-to-br from-slate-800/80 to-slate-900/80 relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 p-32 bg-cyan-500/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
 
@@ -289,7 +289,7 @@ export default function TeacherDashboard() {
                             <h3 className="text-lg font-semibold mb-4 text-purple-400 flex items-center gap-2">
                                 <Target size={18} /> Weekly Plan Overview
                             </h3>
-                            <div className="grid grid-cols-5 gap-2 text-center">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center">
                                 {processedWeeklyPlan.length === 0 ? (
                                     <div className="col-span-5 text-slate-500 text-sm">No upcoming lectures scheduled.</div>
                                 ) : (

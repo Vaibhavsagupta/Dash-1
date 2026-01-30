@@ -134,9 +134,9 @@ export default function StudentDashboard() {
     };
 
     return (
-        <div className="min-h-screen p-8 bg-[#0f172a] text-slate-100">
-            <nav className="flex justify-between items-center mb-10">
-                <div>
+        <div className="min-h-screen p-4 md:p-8 bg-[#0f172a] text-slate-100">
+            <nav className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10">
+                <div className="text-center md:text-left">
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-500">
                         Student Portal
                     </h1>
