@@ -15,7 +15,9 @@ app = FastAPI(title="Dashboard Auth System")
 # CORS Setup
 origins = [
     "http://localhost:3000",
+    "https://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://127.0.0.1:3000",
     "http://localhost:3002",
     "http://127.0.0.1:3002",
 ]
@@ -23,14 +25,15 @@ origins = [
 # Add production URL if provided
 production_url = os.getenv("FRONTEND_URL")
 if production_url:
-    origins.append(production_url)
-    # Also add the URL without trailing slash just in case
-    if production_url.endswith('/'):
-        origins.append(production_url[:-1])
+    # Handle multiple comma-separated URLs if needed
+    for url in production_url.split(','):
+        clean_url = url.strip().rstrip('/')
+        if clean_url:
+            origins.append(clean_url)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if production_url else ["*"], # Use wildcard only if production URL is not set
+    allow_origins=origins if (production_url or origins) else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
