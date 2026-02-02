@@ -26,9 +26,18 @@ def get_assignments(
         assignments = db.query(models.Assignment).filter(models.Assignment.teacher_id == teacher_id).order_by(models.Assignment.due_date).all()
         return assignments
     elif current_user.role == "student":
-        # Show all active assignments for now (simplified)
-        assignments = db.query(models.Assignment).filter(models.Assignment.status == models.AssignmentStatus.active).all()
+        # Get student's batch
+        student = db.query(models.Student).filter(models.Student.student_id == current_user.linked_id).first()
+        batch_id = student.batch_id if student else None
+        
+        # Show active assignments for their batch
+        assignments = db.query(models.Assignment).filter(
+            models.Assignment.status == models.AssignmentStatus.active,
+            models.Assignment.batch == batch_id
+        ).all()
         return assignments
+    elif current_user.role == "admin":
+        return db.query(models.Assignment).all()
         
     raise HTTPException(status_code=403, detail="Not authorized")
 

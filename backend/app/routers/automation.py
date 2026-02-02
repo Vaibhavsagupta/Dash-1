@@ -58,19 +58,32 @@ def check_student_risks_task(db: Session):
     db.commit()
     print(f"Automation Run: Generated {count} alerts.")
 
+from .. import auth, models
+
 @router.post("/run-checks", response_model=AutomationResult)
-def trigger_automation_checks(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def trigger_automation_checks(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_admin)):
     """
-    Manually trigger the automated risk analysis.
-    In production, this could be hit by a cron job (e.g., AWS Lambda, Celery Beat).
+    Manually trigger the automated risk analysis. Restricted to Admins.
     """
     background_tasks.add_task(check_student_risks_task, db)
     return {"message": "Automation checks triggered in background", "alerts_generated": 0}
 
 @router.get("/alerts")
-def get_alerts(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+def get_alerts(skip: int = 0, limit: int = 50, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
     """
-    Fetch all alerts for the dashboard.
+    Fetch alerts with role-based isolation.
     """
-    alerts = db.query(Alert).order_by(Alert.created_at.desc()).offset(skip).limit(limit).all()
+    query = db.query(models.Alert)
+    
+    if current_user.role == models.UserRole.teacher:
+        teacher_id = current_user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        
+        query = query.join(models.Student, models.Alert.student_id == models.Student.student_id) \
+                     .filter(models.Student.batch_id.in_(batch_list))
+    elif current_user.role == models.UserRole.student:
+        query = query.filter(models.Alert.student_id == current_user.linked_id)
+        
+    alerts = query.order_by(models.Alert.created_at.desc()).offset(skip).limit(limit).all()
     return alerts

@@ -56,9 +56,15 @@ def run_simple_heuristic_grader(content: str, assignment_type: str = "general") 
         
     return min(100, score), " ".join(feedback)
 
+from .. import auth, models
+
 @router.post("/grade/{submission_id}", response_model=GradingResult)
-def grade_submission(submission_id: str, db: Session = Depends(get_db)):
-    submission = db.query(Submission).filter(Submission.id == submission_id).first()
+def grade_submission(submission_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security: Only Admins or Teachers can trigger manual grading
+    if current_user.role == models.UserRole.student:
+        raise HTTPException(status_code=403, detail="Students cannot trigger manual grading")
+        
+    submission = db.query(models.Submission).filter(models.Submission.id == submission_id).first()
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
         

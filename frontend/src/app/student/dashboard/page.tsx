@@ -134,21 +134,17 @@ export default function StudentDashboard() {
     };
 
     return (
-        <div className="min-h-screen p-4 md:p-8 bg-[#0f172a] text-slate-100">
-            <nav className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10">
-                <div className="text-center md:text-left">
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-500">
-                        Student Portal
-                    </h1>
-                    <p className="text-slate-400 mt-2">Welcome, {student.name} — <span className="text-emerald-400">Aiming for Excellence</span></p>
+        <div className="min-h-screen p-4 md:p-8 pt-24 bg-[#0f172a] text-slate-100">
+            <header className="mb-10">
+                <div className="flex flex-col md:flex-row justify-between items-end">
+                    <div>
+                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-500">
+                            Student Performance Hub
+                        </h1>
+                        <p className="text-slate-400 mt-2">Personalized metrics for {student.name}</p>
+                    </div>
                 </div>
-                <button
-                    onClick={() => { localStorage.clear(); router.push('/login'); }}
-                    className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-lg transition-all"
-                >
-                    Logout
-                </button>
-            </nav>
+            </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

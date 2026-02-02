@@ -16,7 +16,12 @@ export default function AlertsWidget() {
 
     const fetchAlerts = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/automation/alerts`);
+            const token = localStorage.getItem('access_token');
+            const res = await fetch(`${API_BASE_URL}/automation/alerts`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setAlerts(data);
@@ -29,8 +34,14 @@ export default function AlertsWidget() {
     const runAnalysis = async () => {
         setLoading(true);
         try {
+            const token = localStorage.getItem('access_token');
             // Trigger the backend analysis
-            await fetch(`${API_BASE_URL}/automation/run-checks`, { method: 'POST' });
+            await fetch(`${API_BASE_URL}/automation/run-checks`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
             // Wait a bit for the background task to (likely) complete some work, then fetch
             setTimeout(() => {

@@ -58,6 +58,8 @@ export default function DataIngestion() {
             if (res.ok) {
                 setStatus({ type: 'success', message: result.message || 'Ingestion completed successfully!' });
                 setFiles([]);
+                // Trigger a refresh/revalidation of all routes
+                router.refresh();
                 // Optionally redirect to dashboard after a delay
                 setTimeout(() => router.push('/admin/dashboard'), 2000);
             } else {
@@ -86,18 +88,13 @@ export default function DataIngestion() {
     ];
 
     return (
-        <div className="min-h-screen p-8 bg-[#0f172a] text-slate-100">
-            <nav className="flex items-center gap-4 mb-12">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
-                >
-                    <ArrowLeft size={20} />
-                </button>
+        <div className="text-slate-100">
+            <header className="mb-12">
                 <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
                     Smart Data Ingestion
                 </h1>
-            </nav>
+                <p className="text-slate-400 mt-2">Deep batch ingestion and synchronization</p>
+            </header>
 
             <div className="max-w-4xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

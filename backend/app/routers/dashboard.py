@@ -128,3 +128,32 @@ def seed_daily_data(
         
     db.commit()
     return {"message": "Daily data and units seeded for today"}
+@router.get("/training-agenda")
+def get_training_agenda(
+    db: Session = Depends(get_db),
+):
+    # Fetch all lectures from schedule
+    lectures = db.query(models.Lecture, models.Teacher.name.label("trainer_name")) \
+        .join(models.Teacher, models.Lecture.teacher_id == models.Teacher.teacher_id, isouter=True) \
+        .order_by(models.Lecture.date.asc(), models.Lecture.start_time.asc()) \
+        .all()
+    
+    today = date.today()
+    agenda = []
+    for lect, trainer_name in lectures:
+        status = "Upcoming"
+        if lect.date < today:
+            status = "Completed"
+        elif lect.date == today:
+            status = "Live"
+            
+        agenda.append({
+            "id": lect.id,
+            "title": lect.topic,
+            "date": lect.date.isoformat(),
+            "trainer": trainer_name or "General Faculty",
+            "status": status,
+            "time": f"{lect.start_time} - {lect.end_time}",
+            "batch": lect.batch
+        })
+    return agenda

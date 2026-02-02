@@ -58,7 +58,7 @@ export default function AssignmentsPage() {
         try {
             const token = localStorage.getItem("access_token");
             const url = editingId
-                ? `http://localhost:8002/assignments/${editingId}`
+                ? `${API_BASE_URL}/assignments/${editingId}`
                 : `${API_BASE_URL}/assignments`;
             const method = editingId ? "PUT" : "POST";
 
@@ -92,7 +92,7 @@ export default function AssignmentsPage() {
         if (!confirm("Are you sure you want to delete this assignment?")) return;
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch(`http://localhost:8002/assignments/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/assignments/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             });

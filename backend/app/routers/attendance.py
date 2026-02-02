@@ -10,8 +10,19 @@ router = APIRouter(
 )
 
 # Admin or Teacher Dependency
-def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj)):
-    if current_user.role not in [models.UserRole.admin, models.UserRole.teacher]:
+def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj), db: Session = Depends(database.get_db)):
+    if current_user.role == models.UserRole.admin:
+        # Phase 1 Requirement: Only specific admins can fetch data
+        allowed_admins = ["admin@college.com", "admin@samatrix.com"]
+        if current_user.email not in allowed_admins:
+            # Check admins table for approval
+            admin_entry = db.query(models.Admin).filter(models.Admin.email == current_user.email).first()
+            if not admin_entry or not admin_entry.approved:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied. Admin not approved or not in allowed list."
+                )
+    elif current_user.role != models.UserRole.teacher:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Faculty access required"
@@ -24,23 +35,39 @@ def mark_attendance(
     db: Session = Depends(database.get_db),
     user: models.User = Depends(admin_or_teacher)
 ):
-    # Parse date
-    try:
-        record_date = datetime.strptime(data.date, "%Y-%m-%d").date()
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
-
-    # For now, simplest approach: Delete existing records for this date and re-insert
-    # Ideally we'd upsert, but this is quicker for the prototype
-    db.query(models.AttendanceLog).filter(models.AttendanceLog.date == record_date).delete()
+    record_date = data.date
+    
+    # Batch Isolation for Teachers
+    if user.role == models.UserRole.teacher:
+        teacher_id = user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        
+        # Verify that all students in data.records belong to one of these batches
+        student_ids = [r.student_id for r in data.records]
+        count_not_assigned = db.query(models.Student).filter(
+            models.Student.student_id.in_(student_ids),
+            ~models.Student.batch_id.in_(batch_list)
+        ).count()
+        
+        if count_not_assigned > 0:
+            raise HTTPException(status_code=403, detail="Faculty can only mark attendance for students in their assigned batches")
+        
+        # Only delete records for students in these batches on this date
+        db.query(models.AttendanceLog).filter(
+            models.AttendanceLog.date == record_date,
+            models.AttendanceLog.student_id.in_(student_ids)
+        ).delete(synchronize_session=False)
+    else:
+        # Admin: Delete all for this date
+        db.query(models.AttendanceLog).filter(models.AttendanceLog.date == record_date).delete()
     
     count = 0
     for record in data.records:
-        # Validate status enum
         try:
             status_enum = models.AttendanceStatus(record.status)
         except ValueError:
-            continue # Skip invalid statuses
+            continue
             
         new_log = models.AttendanceLog(
             student_id=record.student_id,
@@ -55,15 +82,21 @@ def mark_attendance(
 
 @router.get("/history")
 def get_attendance_history(
-    date: str,
+    date: date,
     db: Session = Depends(database.get_db),
     user: models.User = Depends(admin_or_teacher)
 ):
-    try:
-        query_date = datetime.strptime(date, "%Y-%m-%d").date()
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format")
-        
-    logs = db.query(models.AttendanceLog).filter(models.AttendanceLog.date == query_date).all()
+    query_date = date
     
+    query = db.query(models.AttendanceLog).filter(models.AttendanceLog.date == query_date)
+    
+    if user.role == models.UserRole.teacher:
+        teacher_id = user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        
+        query = query.join(models.Student, models.AttendanceLog.student_id == models.Student.student_id) \
+                     .filter(models.Student.batch_id.in_(batch_list))
+        
+    logs = query.all()
     return logs

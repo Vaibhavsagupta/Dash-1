@@ -65,9 +65,29 @@ def generate_mock_ai_report(student: Student) -> str:
     
     return f"{base_report} \n\n{advice}"
 
+from .. import auth, models
+
 @router.post("/generate-report", response_model=AIReportResponse)
-def generate_report(req: AIReportRequest, db: Session = Depends(get_db)):
-    student = db.query(Student).filter(Student.student_id == req.student_id).first()
+def generate_report(req: AIReportRequest, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security Check
+    if current_user.role == models.UserRole.student and current_user.linked_id != req.student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to generate reports for other students")
+    
+    # Teachers can only generate for their students
+    if current_user.role == models.UserRole.teacher:
+        teacher_id = current_user.linked_id
+        student = db.query(models.Student).filter(models.Student.student_id == req.student_id).first()
+        if not student:
+             raise HTTPException(status_code=404, detail="Student not found")
+        
+        assignment_exists = db.query(models.Lecture).filter(
+            models.Lecture.teacher_id == teacher_id,
+            models.Lecture.batch == student.batch_id
+        ).first()
+        if not assignment_exists:
+            raise HTTPException(status_code=403, detail="Not authorized to access reports for students in other batches")
+
+    student = db.query(models.Student).filter(models.Student.student_id == req.student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
         

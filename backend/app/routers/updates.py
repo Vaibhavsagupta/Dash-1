@@ -9,8 +9,19 @@ router = APIRouter(
 )
 
 # Admin or Teacher Dependency
-def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj)):
-    if current_user.role not in [models.UserRole.admin, models.UserRole.teacher]:
+def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj), db: Session = Depends(database.get_db)):
+    if current_user.role == models.UserRole.admin:
+        # Phase 1 Requirement: Only specific admins can fetch data
+        allowed_admins = ["admin@college.com", "admin@samatrix.com"]
+        if current_user.email not in allowed_admins:
+            # Check admins table for approval
+            admin_entry = db.query(models.Admin).filter(models.Admin.email == current_user.email).first()
+            if not admin_entry or not admin_entry.approved:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied. Admin not approved or not in allowed list."
+                )
+    elif current_user.role != models.UserRole.teacher:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Faculty access required"
@@ -22,11 +33,20 @@ def update_student(
     student_id: str, 
     update_data: schemas.StudentUpdate, 
     db: Session = Depends(database.get_db),
-    admin: models.User = Depends(admin_or_teacher)
+    user: models.User = Depends(admin_or_teacher)
 ):
     student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Batch Isolation for Teachers
+    if user.role == models.UserRole.teacher:
+        teacher_id = user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        
+        if student.batch_id not in batch_list:
+            raise HTTPException(status_code=403, detail="Faculty can only update students in their assigned batches")
     
     # Update fields if provided
     if update_data.attendance is not None: student.attendance = update_data.attendance
@@ -63,15 +83,21 @@ def update_teacher(
 @router.get("/list/students")
 def list_students(
     db: Session = Depends(database.get_db),
-    admin: models.User = Depends(admin_or_teacher)
+    user: models.User = Depends(admin_or_teacher)
 ):
-    return db.query(models.Student).all()
+    query = db.query(models.Student)
+    if user.role == models.UserRole.teacher:
+        teacher_id = user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        query = query.filter(models.Student.batch_id.in_(batch_list))
+    return query.all()
 
 @router.post("/student/add")
 def create_student(
     student_data: schemas.StudentCreate,
     db: Session = Depends(database.get_db),
-    admin: models.User = Depends(admin_or_teacher)
+    admin: models.User = Depends(auth.get_current_active_admin)
 ):
     # Check if exists
     existing_student = db.query(models.Student).filter(models.Student.student_id == student_data.student_id).first()
@@ -102,7 +128,8 @@ def create_student(
             email=student_email,
             password_hash=hashed_password,
             role=models.UserRole.student,
-            linked_id=student_data.student_id
+            linked_id=student_data.student_id,
+            approved=True
         )
         db.add(new_user)
 
@@ -119,7 +146,7 @@ def create_student(
 def create_teacher(
     teacher_data: schemas.TeacherCreate,
     db: Session = Depends(database.get_db),
-    admin: models.User = Depends(admin_or_teacher)
+    admin: models.User = Depends(auth.get_current_active_admin)
 ):
     # Check if exists
     existing_teacher = db.query(models.Teacher).filter(models.Teacher.teacher_id == teacher_data.teacher_id).first()
@@ -164,12 +191,23 @@ def create_teacher(
 def bulk_update_students(
     updates: List[schemas.StudentBulkUpdateItem],
     db: Session = Depends(database.get_db),
-    admin: models.User = Depends(admin_or_teacher)
+    user: models.User = Depends(admin_or_teacher)
 ):
     count = 0
+    # Pre-fetch assigned batches for teacher
+    batch_list = []
+    if user.role == models.UserRole.teacher:
+        teacher_id = user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+
     for update_item in updates:
         student = db.query(models.Student).filter(models.Student.student_id == update_item.student_id).first()
         if student:
+            # Check permission
+            if user.role == models.UserRole.teacher and student.batch_id not in batch_list:
+                continue # Skip students not in teacher's batches
+                
             if update_item.attendance is not None: student.attendance = update_item.attendance
             if update_item.dsa_score is not None: student.dsa_score = update_item.dsa_score
             if update_item.ml_score is not None: student.ml_score = update_item.ml_score
@@ -181,7 +219,6 @@ def bulk_update_students(
             count += 1
     
     db.commit()
-    # db.commit() # Removed duplicate
     return {"message": f"Successfully updated {count} students"}
 
 @router.post("/teachers/bulk")
@@ -202,6 +239,22 @@ def bulk_update_teachers(
             
     db.commit()
     return {"message": f"Successfully updated {count} teachers"}
+
+@router.put("/user/approve/{email}")
+def approve_user(
+    email: str,
+    db: Session = Depends(database.get_db),
+    admin: models.User = Depends(auth.get_current_active_admin)
+):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.approved = True
+    user.approved_by = admin.user_id
+    user.approved_at = func.now()
+    db.commit()
+    return {"message": f"User {email} approved successfully"}
 
 @router.get("/list/teachers")
 def list_teachers(

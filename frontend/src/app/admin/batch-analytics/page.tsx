@@ -10,8 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     TrendingUp, Users, Target, Activity, Award, ArrowRight,
     AlertCircle, ShieldCheck, Zap, BarChart3, Binary, Compass, HeartPulse,
-    Eye, Filter, Maximize2, Search, User
+    Eye, Filter, Maximize2, Search, User, Calendar, ArrowLeft
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 ChartJS.register(...registerables);
 
@@ -19,15 +20,38 @@ export default function BatchAnalyticsPage() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeRagTab, setActiveRagTab] = useState<'Red' | 'Amber' | 'Green'>('Red');
-    const [scatterMode, setScatterMode] = useState<'score' | 'growth'>('score');
+    const [scatterMode, setScatterMode] = useState<'score' | 'growth' | 'history'>('score');
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
 
+    const [selectedDate, setSelectedDate] = useState<string>('');
+    const router = useRouter();
+
     useEffect(() => {
-        fetch(`${API_BASE_URL}/analytics/batch/comprehensive_stats`)
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'ArrowLeft') {
+                router.push('/admin/dashboard');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [router]);
+
+    useEffect(() => {
+        let url = `${API_BASE_URL}/analytics/batch/comprehensive_stats`;
+        if (selectedDate) {
+            url += `?date=${selectedDate}`;
+        }
+
+        const token = localStorage.getItem('access_token');
+        setLoading(true);
+        fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+        })
             .then(res => res.json())
             .then(data => { setStats(data); setLoading(false); })
             .catch(err => { console.error(err); setLoading(false); });
-    }, []);
+    }, [selectedDate]);
 
     if (loading) return (
         <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">
@@ -47,8 +71,8 @@ export default function BatchAnalyticsPage() {
         datasets: [{
             label: scatterMode === 'score' ? 'Attendance vs Test Performance' : 'Attendance vs Qualitative Growth',
             data: (stats.correlation_data || []).map((s: any) => ({
-                x: s.attendance,
-                y: scatterMode === 'score' ? s.score : s.growth
+                x: s?.attendance || 0,
+                y: scatterMode === 'score' ? (s?.score || 0) : (s?.growth || 0)
             })),
             backgroundColor: (context: any) => {
                 const index = context.dataIndex;
@@ -105,7 +129,13 @@ export default function BatchAnalyticsPage() {
         datasets: [
             {
                 label: 'Baseline',
-                data: [stats.communication_comparison.pre, stats.fluency_comparison.pre, stats.engagement_comparison.pre, stats.knowledge_comparison.pre, stats.confidence_comparison.pre],
+                data: [
+                    stats.communication_comparison?.pre ?? 0,
+                    stats.fluency_comparison?.pre ?? 0,
+                    stats.engagement_comparison?.pre ?? 0,
+                    stats.knowledge_comparison?.pre ?? 0,
+                    stats.confidence_comparison?.pre ?? 0
+                ],
                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 borderColor: 'rgba(239, 68, 68, 0.5)',
                 borderWidth: 2,
@@ -113,7 +143,13 @@ export default function BatchAnalyticsPage() {
             },
             {
                 label: 'Current',
-                data: [stats.communication_comparison.post, stats.fluency_comparison.post, stats.engagement_comparison.post, stats.knowledge_comparison.post, stats.confidence_comparison.post],
+                data: [
+                    stats.communication_comparison?.post ?? 0,
+                    stats.fluency_comparison?.post ?? 0,
+                    stats.engagement_comparison?.post ?? 0,
+                    stats.knowledge_comparison?.post ?? 0,
+                    stats.confidence_comparison?.post ?? 0
+                ],
                 backgroundColor: 'rgba(16, 185, 129, 0.15)',
                 borderColor: '#10b981',
                 borderWidth: 3,
@@ -138,11 +174,11 @@ export default function BatchAnalyticsPage() {
             {
                 label: 'Pre (Baseline)',
                 data: [
-                    stats.communication_comparison.pre,
-                    stats.engagement_comparison.pre,
-                    stats.knowledge_comparison.pre,
-                    stats.confidence_comparison.pre,
-                    stats.fluency_comparison.pre
+                    stats.communication_comparison?.pre ?? 0,
+                    stats.engagement_comparison?.pre ?? 0,
+                    stats.knowledge_comparison?.pre ?? 0,
+                    stats.confidence_comparison?.pre ?? 0,
+                    stats.fluency_comparison?.pre ?? 0
                 ],
                 backgroundColor: 'rgba(99, 102, 241, 0.8)',
                 borderRadius: 8,
@@ -150,11 +186,11 @@ export default function BatchAnalyticsPage() {
             {
                 label: 'Post (Latest)',
                 data: [
-                    stats.communication_comparison.post,
-                    stats.engagement_comparison.post,
-                    stats.knowledge_comparison.post,
-                    stats.confidence_comparison.post,
-                    stats.fluency_comparison.post
+                    stats.communication_comparison?.post ?? 0,
+                    stats.engagement_comparison?.post ?? 0,
+                    stats.knowledge_comparison?.post ?? 0,
+                    stats.confidence_comparison?.post ?? 0,
+                    stats.fluency_comparison?.post ?? 0
                 ],
                 backgroundColor: 'rgba(16, 185, 129, 0.8)',
                 borderRadius: 8,
@@ -166,11 +202,11 @@ export default function BatchAnalyticsPage() {
         labels: ['DSA', 'ML', 'QA', 'Projects', 'Mock'],
         datasets: [{
             data: [
-                stats.subject_avgs["DSA"] || 0,
-                stats.subject_avgs["ML"] || 0,
-                stats.subject_avgs["QA"] || 0,
-                stats.subject_avgs["Projects"] || 0,
-                stats.subject_avgs["Mock Interview"] || 0
+                stats.subject_avgs?.["DSA"] || 0,
+                stats.subject_avgs?.["ML"] || 0,
+                stats.subject_avgs?.["QA"] || 0,
+                stats.subject_avgs?.["Projects"] || 0,
+                stats.subject_avgs?.["Mock Interview"] || 0
             ],
             backgroundColor: [
                 'rgba(139, 92, 246, 0.6)', // Violet
@@ -183,10 +219,63 @@ export default function BatchAnalyticsPage() {
         }]
     };
 
-    const growthPercent = ((stats.level_comparison.post - stats.level_comparison.pre) / (stats.level_comparison.pre || 1) * 100).toFixed(1);
+    const history = stats.batch_assessment_history || [];
+    const batchAssessmentTrendData = {
+        labels: history.map((a: any) => a?.name || 'Unnamed'),
+        datasets: [
+            {
+                label: 'Technical',
+                data: history.map((a: any) => a?.technical || 0),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+                fill: true,
+            },
+            {
+                label: 'Math/Numerical',
+                data: history.map((a: any) => a?.math || 0),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+            },
+            {
+                label: 'Logical Reasoning',
+                data: history.map((a: any) => a?.logic || 0),
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+            }
+        ]
+    };
+
+    const preLevel = stats.level_comparison?.pre ?? 0;
+    const postLevel = stats.level_comparison?.post ?? 0;
+    const growthPercent = preLevel > 0 ? (((postLevel - preLevel) / preLevel) * 100).toFixed(1) : (postLevel > 0 ? "100" : "0.0");
 
     return (
-        <div className="min-h-screen bg-[#020617] p-8 text-slate-100 selection:bg-indigo-500/30">
+        <div className="text-slate-100 selection:bg-indigo-500/30">
+            {/* Sticky Back Button */}
+            <div className="fixed bottom-8 left-8 z-[100] hidden md:block">
+                <button
+                    onClick={() => router.push('/admin/dashboard')}
+                    className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-2xl text-slate-300 hover:text-white hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all group shadow-2xl"
+                >
+                    <div className="p-2 bg-slate-800 rounded-lg group-hover:bg-indigo-500/20 group-hover:text-indigo-400 transition-colors">
+                        <ArrowLeft size={18} />
+                    </div>
+                    <div className="flex flex-col items-start leading-none">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Navigation</span>
+                        <span className="text-sm font-bold">Back to Dashboard</span>
+                    </div>
+                    <div className="ml-4 px-2 py-1 bg-slate-800 rounded text-[10px] font-black text-slate-500 border border-slate-700">
+                        ←
+                    </div>
+                </button>
+            </div>
+
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
                 <div>
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3 mb-2">
@@ -197,17 +286,14 @@ export default function BatchAnalyticsPage() {
                         Behavioral Intelligence
                     </h1>
                 </div>
-                <button onClick={() => window.history.back()} className="group flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 rounded-2xl text-sm transition-all border border-slate-800 font-bold shadow-2xl">
-                    <ArrowRight className="rotate-180 group-hover:-translate-x-1 transition-transform" size={18} />
-                    Exit Dashboard
-                </button>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <MetricCard title="Progression" value={`+${growthPercent}%`} sub="Skill Evolution" icon={<TrendingUp size={24} />} color="text-indigo-400" />
                 <MetricCard title="Avg Attendance" value="94.2%" sub="Global Rate" icon={<Users size={24} />} color="text-sky-400" />
-                <MetricCard title="At Risk" value={stats.rag_distribution?.Red || 0} sub="Pending Intervention" icon={<AlertCircle size={24} />} color="text-rose-400" />
-                <MetricCard title="Health" value={`${(stats.rag_distribution?.Green / stats.student_count * 100).toFixed(0)}%`} sub="Optimal Threshold" icon={<ShieldCheck size={24} />} color="text-emerald-400" />
+                <MetricCard title="At Risk" value={stats.rag_distribution?.Red ?? 0} sub="Pending Intervention" icon={<AlertCircle size={24} />} color="text-rose-400" />
+                <MetricCard title="Health" value={`${stats.student_count > 0 ? ((stats.rag_distribution?.Green ?? 0) / stats.student_count * 100).toFixed(0) : 0}%`} sub="Optimal Threshold" icon={<ShieldCheck size={24} />} color="text-emerald-400" />
+                <MetricCard title="Obs. Growth" value={`+${stats.total_improvement ?? 0}`} sub="Avg Point Gain" icon={<Compass size={24} />} color="text-blue-400" />
             </div>
 
             {/* PRIMARY ATTENDANCE SCATTER SECTION */}
@@ -229,12 +315,35 @@ export default function BatchAnalyticsPage() {
                                 >
                                     <option value="">Select Student to Track...</option>
                                     {(stats.correlation_data || [])
-                                        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                                        .filter((s: any) => s && s.name)
+                                        .sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
                                         .map((s: any) => (
                                             <option key={s.id} value={s.id}>{s.name}</option>
                                         ))
                                     }
                                 </select>
+                            </div>
+
+                            {/* Date Selector (Calendar) */}
+                            <div className="relative group min-w-[140px]">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors pointer-events-none">
+                                    <Calendar size={14} />
+                                </div>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-3 bg-slate-900/50 border border-slate-800 rounded-2xl text-xs font-bold text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer hover:bg-slate-800 transition-all uppercase tracking-wide h-[42px] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
+                                />
+                                {selectedDate && (
+                                    <button
+                                        onClick={() => setSelectedDate('')}
+                                        className="absolute -top-2 -right-2 bg-slate-800 text-slate-400 hover:text-white rounded-full p-1 border border-slate-700 shadow-lg z-10 transition-colors"
+                                        title="Clear Date (Go Live)"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                    </button>
+                                )}
                             </div>
                             <AnimatePresence>
                                 {selectedStudent && (
@@ -289,7 +398,8 @@ export default function BatchAnalyticsPage() {
                                         borderWidth: 1,
                                         callbacks: {
                                             label: (ctx: any) => {
-                                                const s = stats.correlation_data[ctx.dataIndex];
+                                                const s = stats.correlation_data?.[ctx.dataIndex];
+                                                if (!s) return 'Point data missing';
                                                 return [
                                                     ` Student: ${s.name}`,
                                                     ` Attendance: ${s.attendance}%`,
@@ -343,7 +453,21 @@ export default function BatchAnalyticsPage() {
                 </Card>
 
                 <Card className="lg:col-span-12 xl:col-span-6" title="Observation Growth (Batch-wide)" subtitle="Aggregated subject-wise shift in soft skill proficiency.">
-                    <div className="h-[400px]">
+                    <div className="flex gap-8 mb-6 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/50 w-fit">
+                        <div>
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Avg Pre-Score</div>
+                            <div className="text-xl font-black text-slate-300">{stats.avg_pre_score || 0}</div>
+                        </div>
+                        <div className="border-l border-slate-800 pl-8">
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Avg Post-Score</div>
+                            <div className="text-xl font-black text-emerald-400">{stats.avg_post_score || 0}</div>
+                        </div>
+                        <div className="border-l border-slate-800 pl-8">
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Net Gain</div>
+                            <div className="text-xl font-black text-indigo-400">+{stats.total_improvement || 0}</div>
+                        </div>
+                    </div>
+                    <div className="h-[310px]">
                         <Bar
                             data={batchObservationData}
                             options={{
@@ -372,18 +496,48 @@ export default function BatchAnalyticsPage() {
                     </div>
                 </Card>
 
+                <Card className="lg:col-span-12" title="Historical Assessment Trend" subtitle="Batch-wide progression across successive assessments (Assessment 1 to 3).">
+                    <div className="h-[400px]">
+                        <Line
+                            data={batchAssessmentTrendData}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
+                                        ticks: { color: '#64748b' }
+                                    },
+                                    x: {
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
+                                        ticks: { color: '#94a3b8', font: { weight: 'bold' } }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: { color: '#94a3b8', font: { size: 12, weight: 600 }, usePointStyle: true, padding: 30 }
+                                    }
+                                }
+                            }}
+                        />
+                    </div>
+                </Card>
+
                 <Card className="lg:col-span-12" title="Velocity of Improvement" subtitle="Students ranked by absolute growth speed.">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 py-2">
-                        {stats.top_improvers?.slice(0, 10).map((s: any, i: number) => (
+                        {(stats.top_improvers || []).slice(0, 10).map((s: any, i: number) => (
                             <div key={i} className="flex items-center gap-4 group">
                                 <span className="text-slate-500 font-mono text-sm w-4 italic">{i + 1}.</span>
                                 <div className="flex-grow">
                                     <div className="flex justify-between items-center mb-1.5">
-                                        <span className="font-bold text-slate-100 group-hover:text-indigo-400 transition-colors uppercase text-xs tracking-wider">{s.name}</span>
-                                        <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">+{s.growth} PT GROWTH</span>
+                                        <span className="font-bold text-slate-100 group-hover:text-indigo-400 transition-colors uppercase text-xs tracking-wider">{s?.name || 'Unknown'}</span>
+                                        <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">+{s?.growth || 0} PT GROWTH</span>
                                     </div>
                                     <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                                        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (s.post / 40) * 100)}%` }} className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500" />
+                                        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, ((s?.post || 0) / 40) * 100)}%` }} className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500" />
                                     </div>
                                 </div>
                             </div>
@@ -400,10 +554,10 @@ export default function BatchAnalyticsPage() {
                         ))}
                     </div>
                     <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                        {stats.rag_students?.[activeRagTab]?.map((s: any, idx: number) => (
+                        {(stats.rag_students?.[activeRagTab] || []).map((s: any, idx: number) => (
                             <div key={idx} className="flex justify-between items-center p-4 rounded-3xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition-all group">
-                                <div className="flex flex-col"><span className="font-black text-slate-200 group-hover:text-white transition-colors uppercase text-sm">{s.name}</span><span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{s.id}</span></div>
-                                <div className="flex gap-8"><div className="text-right"><div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Avg Prof.</div><div className="text-sm font-black text-slate-300">{s.avg_score}%</div></div><div className="text-right border-l border-slate-700 pl-8"><div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Attendance</div><div className="text-sm font-black text-slate-300">{s.attendance}%</div></div></div>
+                                <div className="flex flex-col"><span className="font-black text-slate-200 group-hover:text-white transition-colors uppercase text-sm">{s?.name || 'Unknown'}</span><span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{s?.id || 'N/A'}</span></div>
+                                <div className="flex gap-8"><div className="text-right"><div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Avg Prof.</div><div className="text-sm font-black text-slate-300">{s?.avg_score || 0}%</div></div><div className="text-right border-l border-slate-700 pl-8"><div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Attendance</div><div className="text-sm font-black text-slate-300">{s?.attendance || 0}%</div></div></div>
                             </div>
                         ))}
                     </div>
@@ -413,9 +567,19 @@ export default function BatchAnalyticsPage() {
                     <div className="flex flex-col items-center gap-12 py-4">
                         <div className="h-64 w-64 relative">
                             <Doughnut data={ragData} options={{ responsive: true, maintainAspectRatio: false, cutout: '85%', plugins: { legend: { display: false } } }} />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><Zap className="text-emerald-400 mb-1" size={32} /><span className="text-4xl font-black text-white">{(stats.rag_distribution?.Green / stats.student_count * 100).toFixed(0)}%</span><span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest text-center">Batch Resiliency</span></div>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <Zap className="text-emerald-400 mb-1" size={32} />
+                                <span className="text-4xl font-black text-white">
+                                    {stats.student_count > 0 ? ((stats.rag_distribution?.Green ?? 0) / stats.student_count * 100).toFixed(0) : 0}%
+                                </span>
+                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest text-center">Batch Resiliency</span>
+                            </div>
                         </div>
-                        <div className="space-y-4 w-full px-4"><HealthRow label="Optimal Progression" count={stats.rag_distribution?.Green} color="bg-emerald-500" /><HealthRow label="Moderate Risk" count={stats.rag_distribution?.Amber} color="bg-amber-500" /><HealthRow label="Critical Attention" count={stats.rag_distribution?.Red} color="bg-rose-500" /></div>
+                        <div className="space-y-4 w-full px-4">
+                            <HealthRow label="Optimal Progression" count={stats.rag_distribution?.Green ?? 0} color="bg-emerald-500" />
+                            <HealthRow label="Moderate Risk" count={stats.rag_distribution?.Amber ?? 0} color="bg-amber-500" />
+                            <HealthRow label="Critical Attention" count={stats.rag_distribution?.Red ?? 0} color="bg-rose-500" />
+                        </div>
                     </div>
                 </Card>
             </div>

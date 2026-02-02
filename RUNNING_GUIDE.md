@@ -11,36 +11,38 @@ Ensure you have the following installed:
 
 ---
 
-## 🛠️ Step 1: Backend Setup (FastAPI)
+## 🛠️ Step 1: Backend Setup (FastAPI & PostgreSQL)
 
-The backend handles the database, authentication, and analytics logic.
+The backend handles the database, authentication, and analytics logic. It is now powered by **PostgreSQL** for production stability.
 
 1.  **Open a terminal** and navigate to the project root.
 2.  **Navigate to the backend directory**:
     ```powershell
     cd backend
     ```
-3.  **Create a virtual environment** (if not already created):
+3.  **Configure Environment Variables**:
+    *   Rename `.env.example` to `.env`.
+    *   Update `DATABASE_URL` with your Supabase connection string or local PostgreSQL URL.
+4.  **Create and Activate virtual environment**:
     ```powershell
     python -m venv venv
-    ```
-4.  **Activate the virtual environment**:
-    ```powershell
     .\venv\Scripts\Activate
     ```
 5.  **Install dependencies**:
     ```powershell
     pip install -r requirements.txt
     ```
-6.  **Initialize the database** (creates mock data and users):
+6.  **Initialize the Database**:
+    *This will create tables and seed your cloud database with real student data.*
     ```powershell
     python seed.py
     ```
 7.  **Run the server**:
     ```powershell
-    uvicorn app.main:app --reload
+    uvicorn app.main:app --reload --port 7000
     ```
-    *The backend will start at `http://127.0.0.1:8000`*
+    *The backend will start at `http://127.0.0.1:7000`*
+
 
 ---
 
@@ -61,14 +63,14 @@ The frontend handles the user interface.
     ```powershell
     npm run dev
     ```
-    *The frontend will start at `http://127.0.0.1:3000`*
+    *The frontend will start at `http://127.0.0.1:5173`*
 
 ---
 
 ## 🌐 Step 3: Accessing the Dashboard
 
 Open your web browser and navigate to:
-**[http://127.0.0.1:3000](http://127.0.0.1:3000)**
+**[http://127.0.0.1:5173](http://127.0.0.1:5173)**
 
 ---
 
@@ -76,10 +78,10 @@ Open your web browser and navigate to:
 
 If you see a "Failed to fetch" error on the login or signup page:
 
-1.  **Use 127.0.0.1**: Always access the site via `http://127.0.0.1:3000` instead of `localhost:3000`.
+1.  **Use 127.0.0.1**: Always access the site via `http://127.0.0.1:5173` instead of `localhost:5173`.
 2.  **Restart Frontend**: If you changed `.env.local`, you **MUST** stop the frontend (`Ctrl+C`) and run `npm run dev` again.
 3.  **Hard Refresh**: Press `Ctrl + F5` in your browser to clear the cache.
-4.  **Check Backend**: Ensure the backend terminal shows "Uvicorn running on http://127.0.0.1:8000".
+4.  **Check Backend**: Ensure the backend terminal shows "Uvicorn running on http://127.0.0.1:7000".
 
 ---
 

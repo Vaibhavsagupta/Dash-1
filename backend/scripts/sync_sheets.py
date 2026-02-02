@@ -16,7 +16,7 @@ import sys
 
 # CONFIGURATION
 SHEET_NAME = "HR_Student_Data"
-API_ENDPOINT = "http://localhost:8000/ingest/csv" # We can reuse the CSV endpoint if we format data, or create a direct JSON one.
+API_ENDPOINT = "http://localhost:7000/ingest/csv" # We can reuse the CSV endpoint if we format data, or create a direct JSON one.
 # For this script, let's assume we push directly to a JSON endpoint or specific /sync endpoint if we built it.
 # Actually, since we built a /csv endpoint, let's adapt this script to just hit the DB directly or call a new endpoint.
 # But for "Ingestion", usually this script runs on the server.

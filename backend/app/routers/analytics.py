@@ -1,9 +1,84 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from .. import models, database
+from .. import models, database, auth
 import math
+from typing import Optional
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
+
+@router.get("/student/{student_id}/observations")
+def get_student_observations(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security check: Students can only see their own data
+    if current_user.role == models.UserRole.student and current_user.linked_id != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view other students' data")
+    
+    student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    if not student: raise HTTPException(status_code=404, detail="Student not found")
+    
+    improvement = round(student.post_score - student.pre_score, 1) if student.pre_score is not None and student.post_score is not None else 0.0
+    status = "Improved" if improvement > 0 else "Needs Improvement" if improvement < 0 else "Stable"
+    
+    return {
+        "pre": {
+            "score": student.pre_score,
+            "communication": student.pre_communication,
+            "engagement": student.pre_engagement,
+            "knowledge": student.pre_subject_knowledge,
+            "confidence": student.pre_confidence,
+            "fluency": student.pre_fluency,
+            "remarks": student.pre_remarks,
+            "status": student.pre_status
+        },
+        "post": {
+            "score": student.post_score,
+            "communication": student.post_communication,
+            "engagement": student.post_engagement,
+            "knowledge": student.post_subject_knowledge,
+            "confidence": student.post_confidence,
+            "fluency": student.post_fluency,
+            "remarks": student.post_remarks,
+            "status": student.post_status
+        },
+        "improvement_score": improvement,
+        "status": status,
+        "batch_id": student.batch_id
+    }
+
+@router.get("/batch/{batch_id}/observations")
+def get_batch_observations(batch_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security check: Admins see all, Teachers see assigned batches
+    if current_user.role == models.UserRole.teacher:
+        teacher_id = current_user.linked_id
+        # Check if teacher has any lectures for this batch
+        assignment_exists = db.query(models.Lecture).filter(
+            models.Lecture.teacher_id == teacher_id,
+            models.Lecture.batch == batch_id
+        ).first()
+        if not assignment_exists:
+            raise HTTPException(status_code=403, detail="Not authorized to view other batches' data")
+    elif current_user.role == models.UserRole.student:
+        raise HTTPException(status_code=403, detail="Students cannot view batch-wide observations")
+    
+    students = db.query(models.Student).filter(models.Student.batch_id == batch_id).all()
+    if not students: return {"message": "No data for this batch", "avg_pre": 0, "avg_post": 0, "improvement": 0, "status_distribution": {}}
+    
+    avg_pre = sum(s.pre_score for s in students) / len(students)
+    avg_post = sum(s.post_score for s in students) / len(students)
+    improvement = round(avg_post - avg_pre, 1)
+    
+    dist = {}
+    for s in students:
+        s_improvement = s.post_score - s.pre_score
+        s_status = "Improved" if s_improvement > 0 else "Needs Improvement" if s_improvement < 0 else "Stable"
+        dist[s_status] = dist.get(s_status, 0) + 1
+        
+    return {
+        "avg_pre_score": round(avg_pre, 1),
+        "avg_post_score": round(avg_post, 1),
+        "improvement_pct": improvement,
+        "status_distribution": dist,
+        "student_count": len(students)
+    }
 
 def calculate_prs(student):
     # Placement Readiness Score calculation
@@ -18,8 +93,25 @@ def calculate_prs(student):
     return round(total / 5.0, 1) if total else 0.0
 
 @router.get("/students/all")
-def get_students(db: Session = Depends(database.get_db)):
-    students = db.query(models.Student).all()
+def get_students(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security check:
+    # Admins: All students
+    # Teachers: Students in their batches
+    # Students: Only themselves
+    
+    query = db.query(models.Student)
+    
+    if current_user.role == models.UserRole.teacher:
+        teacher_id = current_user.linked_id
+        # Get batches assigned to this teacher
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        query = query.filter(models.Student.batch_id.in_(batch_list))
+    elif current_user.role == models.UserRole.student:
+        student_id = current_user.linked_id
+        query = query.filter(models.Student.student_id == student_id)
+        
+    students = query.all()
     results = []
     
     student_prs = []
@@ -37,6 +129,10 @@ def get_students(db: Session = Depends(database.get_db)):
         if total_students > 0:
             percentile = round(((total_students - rank) / total_students) * 100, 1)
         
+        # Get assessment trend (totals) for cards
+        ass_trend = db.query(models.Assessment).filter(models.Assessment.student_id == s.student_id).order_by(models.Assessment.assessment_name).all()
+        trend_scores = [a.total_score for a in ass_trend]
+
         results.append({
             "student_id": s.student_id,
             "name": s.name,
@@ -51,6 +147,7 @@ def get_students(db: Session = Depends(database.get_db)):
             "mock": s.mock_interview_score,
             "pre_score": s.pre_score,
             "post_score": s.post_score,
+            "assessment_trend": trend_scores,
             # Qualitative breakdown for individual radar
             "pre_comm": s.pre_communication,
             "post_comm": s.post_communication,
@@ -62,12 +159,17 @@ def get_students(db: Session = Depends(database.get_db)):
             "post_conf": s.post_confidence,
             "pre_fluency": s.pre_fluency,
             "post_fluency": s.post_fluency,
-            "rag": s.rag_status
+            "rag": s.rag_status,
+            "rag_history": [{"date": log.date.isoformat(), "status": log.status, "period": log.period_name} for log in db.query(models.RAGLog).filter(models.RAGLog.student_id == s.student_id).order_by(models.RAGLog.date).all()]
         })
     return results
 
 @router.get("/student/{student_id}/detailed")
-def get_student_detailed_analytics(student_id: str, db: Session = Depends(database.get_db)):
+def get_student_detailed_analytics(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security check: Students can only see their own data
+    if current_user.role == models.UserRole.student and current_user.linked_id != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view other students' data")
+        
     student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
     if not student: raise HTTPException(status_code=404, detail="Student not found")
     
@@ -136,10 +238,57 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
     # Attendance Trend (from logs)
     attendance_logs = db.query(models.AttendanceLog).filter(models.AttendanceLog.student_id == student_id).all()
     attendance_history = [{"date": log.date.isoformat(), "status": log.status} for log in attendance_logs]
+    
+    # RAG Trend
+    rag_logs = db.query(models.RAGLog).filter(models.RAGLog.student_id == student_id).order_by(models.RAGLog.date).all()
+    rag_history = [{"date": log.date.isoformat(), "status": log.status, "period": log.period_name} for log in rag_logs]
             
+    # Assessment Trend
+    # Batch-wide assessment stats to calculate historical percentiles
+    all_assessments = db.query(models.Assessment).all()
+    ass_map = {} # { "Assessment 1": { "technical": [scores...], "math": [...], ... } }
+    
+    for a in all_assessments:
+        if a.assessment_name not in ass_map:
+            ass_map[a.assessment_name] = {"technical": [], "verbal": [], "math": [], "logic": [], "total": []}
+        ass_map[a.assessment_name]["technical"].append(a.technical_score)
+        ass_map[a.assessment_name]["verbal"].append(a.verbal_score)
+        ass_map[a.assessment_name]["math"].append(a.math_score)
+        ass_map[a.assessment_name]["logic"].append(a.logic_score)
+        ass_map[a.assessment_name]["total"].append(a.total_score)
+
+    def calc_live_percentile(score, score_list):
+        if not score_list: return 0
+        better_than = sum(1 for s in score_list if s < score)
+        return round((better_than / len(score_list)) * 100, 1)
+
+    assessments = db.query(models.Assessment).filter(models.Assessment.student_id == student_id).order_by(models.Assessment.assessment_name).all()
+    assessment_history = []
+    
+    for a in assessments:
+        batch_scores = ass_map.get(a.assessment_name, {})
+        assessment_history.append({
+            "name": a.assessment_name,
+            "technical": a.technical_score,
+            "verbal": a.verbal_score,
+            "math": a.math_score,
+            "logic": a.logic_score,
+            "total": a.total_score,
+            "percentage": a.percentage,
+            "percentiles": {
+                "technical": calc_live_percentile(a.technical_score, batch_scores.get("technical", [])),
+                "verbal": calc_live_percentile(a.verbal_score, batch_scores.get("verbal", [])),
+                "math": calc_live_percentile(a.math_score, batch_scores.get("math", [])),
+                "logic": calc_live_percentile(a.logic_score, batch_scores.get("logic", [])),
+                "total": calc_live_percentile(a.total_score, batch_scores.get("total", [])),
+            }
+        })
+
     return {
         "student": student,
+        "assessment_history": assessment_history,
         "attendance_history": attendance_history,
+        "rag_history": rag_history,
         "class_stats": class_stats,
         "percentiles": student_percentiles,
         "strengths": strengths,
@@ -149,7 +298,7 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
     }
 
 @router.get("/dashboard/admin")
-def get_admin_dashboard_data(db: Session = Depends(database.get_db)):
+def get_admin_dashboard_data(db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):
     students = db.query(models.Student).all()
     total_students = len(students)
     
@@ -180,23 +329,44 @@ def get_admin_dashboard_data(db: Session = Depends(database.get_db)):
     }
 
 @router.get("/batch/comprehensive_stats")
-def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
-    students = db.query(models.Student).all()
+def get_batch_comprehensive_stats(date: Optional[str] = None, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    # Security & Data Isolation
+    query = db.query(models.Student)
+    
+    if current_user.role == models.UserRole.teacher:
+        teacher_id = current_user.linked_id
+        assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
+        batch_list = [b[0] for b in assigned_batches]
+        query = query.filter(models.Student.batch_id.in_(batch_list))
+    elif current_user.role == models.UserRole.student:
+        raise HTTPException(status_code=403, detail="Students cannot access batch-wide analytics")
+    
+    students = query.all()
     if not students: return {"error": "No students found"}
     n = len(students)
     
+    snapshot_date = None
+    if date:
+        from datetime import datetime
+        try:
+            snapshot_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except:
+            pass
+
     # helper for averages
     def safe_avg(attr):
         vals = [getattr(s, attr) for s in students if (getattr(s, attr) or 0) > 0]
         return sum(vals) / len(vals) if vals else 0.0
 
+    # ... (Keep existing simple averages for overhead stats as they are less time-sensitive in this context) ...
+    # For now, we will focus on backdating the CORRELATION DATA (Scatter Plot) as requested.
+    
     avg_pre_score = safe_avg("pre_score")
     avg_post_score = safe_avg("post_score")
     avg_pre_comm = safe_avg("pre_communication")
     avg_post_comm = safe_avg("post_communication")
     avg_pre_fluency = safe_avg("pre_fluency")
     avg_post_fluency = safe_avg("post_fluency")
-    
     avg_pre_eng = safe_avg("pre_engagement")
     avg_post_eng = safe_avg("post_engagement")
     avg_pre_knob = safe_avg("pre_subject_knowledge")
@@ -204,7 +374,7 @@ def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
     avg_pre_conf = safe_avg("pre_confidence")
     avg_post_conf = safe_avg("post_confidence")
 
-    # Detailed RAG Analysis & Counts
+    # Detailed RAG Analysis & Counts (Keep current for now)
     rag_counts = {"Green": 0, "Amber": 0, "Red": 0}
     rag_students = {"Green": [], "Amber": [], "Red": []}
     for s in students:
@@ -223,7 +393,7 @@ def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
             "attendance": s.attendance
         })
 
-    # Student growth data
+    # Student growth data (Keep current)
     student_growth = []
     for s in students:
         student_growth.append({
@@ -234,7 +404,7 @@ def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
         })
     top_improvers = sorted(student_growth, key=lambda x: x["growth"], reverse=True)[:10]
 
-    # Categorical Status Analysis
+    # ... (soft skill levels) ...
     status_map = {"critical": 1, "poor": 2, "needs": 3, "average": 4, "improved": 5, "much improved": 6}
     def get_level(status):
         if not status: return 0
@@ -247,21 +417,66 @@ def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
     avg_pre_level = sum(pre_levels) / len(pre_levels) if pre_levels else 0.0
     avg_post_level = sum(post_levels) / len(post_levels) if post_levels else 0.0
 
-    # Subject-wise & Correlation
+    # Numerical Observation Averages (Phase 6)
+    all_pre_scores = [s.pre_score for s in students if s.pre_score is not None]
+    all_post_scores = [s.post_score for s in students if s.post_score is not None]
+    avg_pre_score = sum(all_pre_scores) / len(all_pre_scores) if all_pre_scores else 0.0
+    avg_post_score = sum(all_post_scores) / len(all_post_scores) if all_post_scores else 0.0
+
+    # Subject-wise (Keep current)
     subject_avgs = {
         "DSA": safe_avg("dsa_score"), "ML": safe_avg("ml_score"), "QA": safe_avg("qa_score"),
         "Projects": safe_avg("projects_score"), "Mock Interview": safe_avg("mock_interview_score")
     }
+
+    # --- CORRELATION DATA (This is what needs backdating) ---
     correlation_data = []
-    for s in students:
-        avg_s = ((s.dsa_score or 0) + (s.ml_score or 0) + (s.qa_score or 0) + (s.projects_score or 0) + (s.mock_interview_score or 0)) / 5.0
-        correlation_data.append({
-            "id": s.student_id,
-            "name": s.name, 
-            "attendance": s.attendance or 0, 
-            "score": round(avg_s, 1),
-            "growth": round((s.post_score or 0) - (s.pre_score or 0), 1)
-        })
+
+    if snapshot_date:
+        # 1. Fetch all attendance logs <= date
+        att_logs_query = db.query(models.AttendanceLog).filter(models.AttendanceLog.date <= snapshot_date).all()
+        # Group by student
+        from collections import defaultdict
+        att_map = defaultdict(list)
+        for log in att_logs_query:
+            val = 100 if log.status in ['Present', 'Late', 'Excused'] else 0
+            att_map[log.student_id].append(val)
+        
+        # 2. Fetch all assessments <= date
+        ass_query = db.query(models.Assessment).filter(models.Assessment.date <= snapshot_date).all()
+        ass_map = defaultdict(list)
+        for a in ass_query:
+            if a.percentage is not None:
+                ass_map[a.student_id].append(a.percentage)
+        
+        for s in students:
+            # Backdated Attendance
+            logs = att_map.get(s.student_id, [])
+            att_pct = round(sum(logs) / len(logs), 1) if logs else 0
+            
+            # Backdated Avg Score
+            scores = ass_map.get(s.student_id, [])
+            avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+            
+            correlation_data.append({
+                "id": s.student_id,
+                "name": s.name, 
+                "attendance": att_pct, 
+                "score": avg_score,
+                "growth": round((s.post_score or 0) - (s.pre_score or 0), 1) # Growth is static for now
+            })
+            
+    else:
+        # Default Current State
+        for s in students:
+            avg_s = ((s.dsa_score or 0) + (s.ml_score or 0) + (s.qa_score or 0) + (s.projects_score or 0) + (s.mock_interview_score or 0)) / 5.0
+            correlation_data.append({
+                "id": s.student_id,
+                "name": s.name, 
+                "attendance": s.attendance or 0, 
+                "score": round(avg_s, 1),
+                "growth": round((s.post_score or 0) - (s.pre_score or 0), 1)
+            })
 
     # Distributions
     def get_dist(attr):
@@ -290,6 +505,55 @@ def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
         r_avg = sum([getattr(s, attr) or 0 for s in red_students]) / len(red_students) if red_students else 0
         subject_rag_impact[label] = {"green": round(g_avg, 1), "red": round(r_avg, 1)}
 
+    # Batch-wide assessment trend
+    all_assessments = db.query(models.Assessment).all()
+    ass_map = {}
+    for a in all_assessments:
+        if a.assessment_name not in ass_map:
+            ass_map[a.assessment_name] = {"technical": [], "verbal": [], "math": [], "logic": [], "total": [], "count": 0}
+        
+        m = ass_map[a.assessment_name]
+        m["technical"].append(a.technical_score)
+        m["verbal"].append(a.verbal_score)
+        m["math"].append(a.math_score)
+        m["logic"].append(a.logic_score)
+        m["total"].append(a.total_score)
+        m["count"] += 1
+    
+    batch_assessment_history = []
+    for name in sorted(ass_map.keys()):
+        m = ass_map[name]
+        batch_assessment_history.append({
+            "name": name,
+            "technical": round(sum(m["technical"]) / m["count"], 1) if m["count"] > 0 else 0,
+            "verbal": round(sum(m["verbal"]) / m["count"], 1) if m["count"] > 0 else 0,
+            "math": round(sum(m["math"]) / m["count"], 1) if m["count"] > 0 else 0,
+            "logic": round(sum(m["logic"]) / m["count"], 1) if m["count"] > 0 else 0,
+            "total": round(sum(m["total"]) / m["count"], 1) if m["count"] > 0 else 0
+        })
+
+    # Calculate daily/weekly average attendance trend
+    # We'll use a simple approach: Group logs by date and calc average
+    attendance_trend_data = []
+    # Fetch all logs (in a real app, might limit window)
+    all_att_logs = db.query(models.AttendanceLog).order_by(models.AttendanceLog.date).all()
+    
+    if all_att_logs:
+        from collections import defaultdict
+        date_map = defaultdict(list)
+        for log in all_att_logs:
+            # log.status is 'Present', 'Absent', 'Late', etc.
+            # Assuming 'Present' or 'Late' counts as attended? 
+            # Let's count 'Present' as 100, 'Late' as 100 (or 50?), 'Absent' as 0
+            val = 100 if log.status in ['Present', 'Late', 'Excused'] else 0
+            date_map[log.date].append(val)
+        
+        for d, vals in date_map.items():
+            avg_att = sum(vals) / len(vals)
+            attendance_trend_data.append({"date": d.isoformat(), "attendance": round(avg_att, 1)})
+        
+        attendance_trend_data.sort(key=lambda x: x["date"])
+
     return {
         "score_comparison": {"pre": round(avg_pre_score, 1), "post": round(avg_post_score, 1)},
         "level_comparison": {"pre": round(avg_pre_level, 1), "post": round(avg_post_level, 1)},
@@ -306,11 +570,16 @@ def get_batch_comprehensive_stats(db: Session = Depends(database.get_db)):
         "top_improvers": top_improvers,
         "subject_avgs": subject_avgs,
         "correlation_data": correlation_data,
-        "skill_distributions": skill_distributions
+        "skill_distributions": skill_distributions,
+        "batch_assessment_history": batch_assessment_history,
+        "attendance_trend": attendance_trend_data,
+        "avg_pre_score": round(avg_pre_score, 1),
+        "avg_post_score": round(avg_post_score, 1),
+        "total_improvement": round(avg_post_score - avg_pre_score, 1)
     }
 
 @router.get("/teacher/{teacher_id}/detailed")
-def get_teacher_detailed_analytics(teacher_id: str, db: Session = Depends(database.get_db)):
+def get_teacher_detailed_analytics(teacher_id: str, db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):
     teacher = db.query(models.Teacher).filter(models.Teacher.teacher_id == teacher_id).first()
     if not teacher: raise HTTPException(status_code=404, detail="Teacher not found")
     
@@ -354,4 +623,46 @@ def get_teacher_detailed_analytics(teacher_id: str, db: Session = Depends(databa
             "conversion": teacher.placement_conversion
         },
         "progression": progression
+    }
+
+@router.get("/student/{student_id}/batch-info")
+def get_student_batch_info(
+    student_id: str,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user_obj)
+):
+    # Security check: Students can only see their own data
+    if current_user.role == models.UserRole.student and current_user.linked_id != student_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view other students' data")
+        
+    student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Calculate duration
+    duration = "N/A"
+    if student.start_date and student.end_date:
+        delta = student.end_date - student.start_date
+        duration = f"{delta.days // 30} Months" if delta.days > 30 else f"{delta.days} Days"
+        
+    # Find a trainer for this batch
+    trainer = "Lead Faculty"
+    first_lecture = db.query(models.Lecture, models.Teacher.name) \
+        .join(models.Teacher, models.Lecture.teacher_id == models.Teacher.teacher_id) \
+        .filter(models.Lecture.batch == student.batch_id) \
+        .first()
+    if first_lecture:
+        trainer = first_lecture[1]
+        
+    # Assessment Avg
+    avg_score = round(((student.dsa_score or 0) + (student.ml_score or 0) + (student.qa_score or 0) + (student.projects_score or 0) + (student.mock_interview_score or 0)) / 5.0, 1)
+
+    return {
+        "batch_name": student.batch_id or "Universal Batch",
+        "trainer": trainer,
+        "duration": duration,
+        "start_date": student.start_date.isoformat() if student.start_date else None,
+        "end_date": student.end_date.isoformat() if student.end_date else None,
+        "attendance": f"{student.attendance}%",
+        "assessment_avg": f"{avg_score}%"
     }

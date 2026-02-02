@@ -18,11 +18,18 @@ class UserCreate(UserBase):
     password: str
 
 class UserResponse(UserBase):
-    user_id: uuid.UUID
+    user_id: str
+    approved: bool
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+class UserApprovalRequest(BaseModel):
+    user_id: str
+    approve: bool
 
 class Token(BaseModel):
     access_token: str
@@ -87,11 +94,11 @@ class TeacherBulkUpdateItem(BaseModel):
 
 class AttendanceLogCreate(BaseModel):
     student_id: str
-    date: str # YYYY-MM-DD
+    date: date
     status: str # present / absent
 
 class AttendanceDateRequest(BaseModel):
-    date: str
+    date: date
     records: list[AttendanceLogCreate]
 
 class LectureBase(BaseModel):
@@ -151,3 +158,13 @@ class DashboardStats(BaseModel):
     attendance_marked: bool
     attendance_count: int
     total_students: int
+class DatasetUploadResponse(BaseModel):
+    id: str
+    dataset_type: str
+    table_name: str
+    batch_id: Optional[str] = None
+    row_count: int
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True

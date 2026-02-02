@@ -22,12 +22,19 @@ export default function Leaderboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/analytics/students/all`);
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${API_BASE_URL}/analytics/students/all`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (response.ok) {
                     const data = await response.json();
                     // Ensure sorted by Rank
                     data.sort((a: StudentAnalytics, b: StudentAnalytics) => a.rank - b.rank);
                     setStudents(data);
+                } else {
+                    console.error('Failed to fetch leaderboard:', response.statusText);
                 }
             } catch (error) {
                 console.error('Failed to fetch leaderboard', error);

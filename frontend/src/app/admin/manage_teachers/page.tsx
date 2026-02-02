@@ -173,31 +173,26 @@ export default function ManageTeacherData() {
     );
 
     return (
-        <div className="min-h-screen p-8 bg-[#0f172a] text-slate-100">
-            <nav className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => router.back()}
-                        className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h1 className="text-2xl font-bold">Manage Teacher Performance Data</h1>
+        <div className="text-slate-100">
+            <header className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-white">Manage Teacher Performance</h1>
+                    <p className="text-slate-400 mt-1">Faculty effectiveness and placement conversion metrics</p>
                 </div>
                 <div className="flex gap-3">
-                    <label className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 cursor-pointer text-white px-4 py-2 rounded-lg transition">
+                    <label className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 cursor-pointer text-white px-4 py-2 rounded-lg transition border border-slate-600">
                         <UploadCloud size={18} />
-                        <span className="text-sm">Bulk Upload (CSV)</span>
+                        <span className="text-sm">Bulk Upload</span>
                         <input type="file" accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
                     </label>
                     <button
                         onClick={() => setIsAdding(!isAdding)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition shadow-lg shadow-indigo-900/20 font-semibold"
                     >
                         {isAdding ? 'Cancel' : 'Add New Teacher'}
                     </button>
                 </div>
-            </nav>
+            </header>
 
             <div className="mb-6 relative">
                 <Search className="absolute left-3 top-3 text-slate-400" size={20} />

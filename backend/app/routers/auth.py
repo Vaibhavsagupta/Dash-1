@@ -17,7 +17,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     verify_result = auth.verify_password(form_data.password, user.password_hash)
     
     if not verify_result:
@@ -25,6 +24,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user.approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account pending approval"
         )
     
     access_token_expires = auth.timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -54,7 +59,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
         email=user.email,
         password_hash=hashed_password,
         role=user.role,
-        linked_id=user.linked_id
+        linked_id=user.linked_id,
+        approved=False # Explicitly set to False for Phase 2
     )
     db.add(new_user)
     db.commit()

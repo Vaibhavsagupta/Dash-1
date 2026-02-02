@@ -1,27 +1,22 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
+from .core.config import settings
 
-load_dotenv()
-
-# Default to sqlite for local dev
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "dashboard_v4.db")
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
-
-if "sqlite" in SQLALCHEMY_DATABASE_URL:
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-    )
-else:
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
+# PostgreSQL specific configuration with optimized pooling for production
+engine = create_engine(
+    settings.DATABASE_URL,
+    pool_size=20,          # Increased for production concurrency
+    max_overflow=10,       # Allow some temporary spike overflow
+    pool_timeout=30,       # Timeout after 30s waiting for a connection
+    pool_recycle=1800,     # Recycle connections every 30 mins to prevent stale links
+    pool_pre_ping=True     # Check connection health before every use
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
@@ -29,3 +24,5 @@ def get_db():
         yield db
     finally:
         db.close()
+
+

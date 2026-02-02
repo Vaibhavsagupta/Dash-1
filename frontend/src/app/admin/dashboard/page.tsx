@@ -17,7 +17,7 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
-import { Users, GraduationCap, TrendingUp, AlertTriangle, UploadCloud } from 'lucide-react';
+import { Users, GraduationCap, TrendingUp, AlertTriangle, UploadCloud, Calendar, Clock, PlayCircle, CheckCircle2, MoreHorizontal } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 ChartJS.register(
@@ -35,6 +35,7 @@ ChartJS.register(
 export default function AdminDashboard() {
     const router = useRouter();
     const [data, setData] = useState<any>(null);
+    const [agenda, setAgenda] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -48,12 +49,23 @@ export default function AdminDashboard() {
 
         const fetchData = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/analytics/dashboard/admin`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const result = await res.json();
-                    setData(result);
+                // Fetch stats and agenda in parallel
+                const [statsRes, agendaRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/analytics/dashboard/admin`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        cache: 'no-store'
+                    }),
+                    fetch(`${API_BASE_URL}/dashboard/training-agenda`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        cache: 'no-store'
+                    })
+                ]);
+
+                if (statsRes.ok) {
+                    setData(await statsRes.json());
+                }
+                if (agendaRes.ok) {
+                    setAgenda(await agendaRes.json());
                 }
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
@@ -122,53 +134,13 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen p-4 md:p-8 bg-[#0f172a] text-slate-100">
-            <nav className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
-                <div className="text-center lg:text-left">
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
-                        Admin Control Center
-                    </h1>
-                    <p className="text-slate-400 mt-2">Real-time batch readiness and faculty analytics</p>
-                </div>
-                <div className="flex flex-wrap justify-center lg:justify-end gap-3 w-full lg:w-auto">
-                    <button
-                        onClick={() => router.push('/admin/ingestion')}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all flex items-center gap-2"
-                    >
-                        <UploadCloud size={18} /> Deep Ingestion
-                    </button>
-                    <button
-                        onClick={() => router.push('/admin/manage')}
-                        className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
-                    >
-                        Manage Data
-                    </button>
-                    <button
-                        onClick={() => router.push('/admin/manage_teachers')}
-                        className="bg-sky-700 hover:bg-sky-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
-                    >
-                        Manage Teachers
-                    </button>
-                    <button
-                        onClick={() => router.push('/admin/batch-analytics')}
-                        className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
-                    >
-                        Batch Analytics
-                    </button>
-                    <button
-                        onClick={() => router.push('/admin/progression')}
-                        className="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
-                    >
-                        Progression
-                    </button>
-                    <button
-                        onClick={() => { localStorage.clear(); router.push('/login'); }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm lg:px-6 lg:py-2 lg:text-base rounded-lg transition-all"
-                    >
-                        Logout
-                    </button>
-                </div>
-            </nav>
+        <div className="text-slate-100">
+            <header className="mb-10">
+                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+                    Admin Control Center
+                </h1>
+                <p className="text-slate-400 mt-2">Real-time batch readiness and faculty analytics</p>
+            </header>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -299,6 +271,93 @@ export default function AdminDashboard() {
                                 </div>
                             </motion.div>
                         ))}
+                    </div>
+                </div>
+            </div>
+            {/* Training Agenda Section */}
+            <div className="mt-12 mb-10">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-200">Training Agenda</h2>
+                        <p className="text-sm text-slate-500">Scheduled modules and delivery pipeline</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded border border-emerald-400/20 uppercase">
+                            <CheckCircle2 size={12} /> {agenda.filter(a => a.status === 'Completed').length} Completed
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded border border-indigo-400/20 uppercase">
+                            <PlayCircle size={12} /> {agenda.filter(a => a.status === 'Live').length} Live
+                        </span>
+                    </div>
+                </div>
+
+                <div className="glass overflow-hidden rounded-[2rem] border border-slate-700 bg-slate-800/40 backdrop-blur-md shadow-2xl">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-slate-900/50 border-b border-slate-700">
+                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Module Topic</th>
+                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Scheduled Date</th>
+                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Lead Trainer</th>
+                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Current Status</th>
+                                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Batch</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800">
+                                {agenda.length > 0 ? (
+                                    agenda.map((item, i) => (
+                                        <tr key={item.id || i} className="group hover:bg-slate-700/20 transition-colors">
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-2 bg-slate-800 rounded-xl group-hover:bg-indigo-500/10 transition-colors">
+                                                        <Calendar size={18} className="text-indigo-400" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">{item.title}</div>
+                                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                                                            <Clock size={10} /> {item.time}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="text-sm font-medium text-slate-300">
+                                                    {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                                                        {item.trainer.charAt(0)}
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-slate-300">{item.trainer}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5 text-center">
+                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'Completed' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                                                    item.status === 'Live' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 animate-pulse' :
+                                                        'bg-slate-700/50 border-slate-600 text-slate-400'
+                                                    }`}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-5 text-right">
+                                                <div className="text-xs font-bold text-slate-500 uppercase tracking-tighter">{item.batch || 'Global'}</div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="px-8 py-20 text-center">
+                                            <div className="flex flex-col items-center gap-2 opacity-30">
+                                                <Calendar size={48} className="text-slate-500" />
+                                                <p className="text-sm font-bold uppercase tracking-widest">No training modules scheduled</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

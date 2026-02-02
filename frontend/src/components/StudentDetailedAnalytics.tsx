@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import { Bar, Radar, Line, PolarArea } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
-import { ArrowLeft, TrendingUp, Calendar, Zap, AlertCircle, BarChart2, Target, Compass, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Calendar, Zap, AlertCircle, BarChart2, Target, Compass, ShieldCheck, Filter } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
 
@@ -63,14 +63,27 @@ interface DetailedStats {
         post_subject_knowledge: number;
         post_confidence: number;
         post_fluency: number;
+        pre_remarks?: string;
+        post_remarks?: string;
         pre_status?: string;
         post_status?: string;
+        batch_id?: string;
     };
     attendance_history: { date: string, status: string }[];
     class_stats: Record<string, ClassStat>;
     percentiles: Record<string, number>;
     strengths: { subject: string, score: number, diff: number, avg: number }[];
     weaknesses: { subject: string, score: number, diff: number, avg: number }[];
+    rag_history?: { date: string, status: string, period?: string }[];
+    assessment_history: {
+        name: string;
+        technical: number;
+        verbal: number;
+        math: number;
+        logic: number;
+        total: number;
+        percentage: number;
+    }[];
     placement_readiness: number;
     rank: number;
 }
@@ -78,12 +91,20 @@ interface DetailedStats {
 export default function StudentDetailedAnalytics({ studentId }: { studentId: string }) {
     const [data, setData] = useState<DetailedStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [attendanceFilter, setAttendanceFilter] = useState<'all' | '1m' | '3m' | '1w'>('all');
+    const [assessmentFilter, setAssessmentFilter] = useState<string>('all');
+
     const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/analytics/student/${studentId}/detailed`);
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${API_BASE_URL}/analytics/student/${studentId}/detailed`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const result = await response.json();
                 if (result.student) {
                     setData(result);
@@ -97,10 +118,83 @@ export default function StudentDetailedAnalytics({ studentId }: { studentId: str
         fetchData();
     }, [studentId]);
 
+    const filteredAttendance = useMemo(() => {
+        if (!data || !data.attendance_history.length) return [];
+
+        // Find the latest date in the history
+        const timestamps = data.attendance_history.map(h => new Date(h.date).getTime());
+        const maxDate = new Date(Math.max(...timestamps));
+
+        const oneWeekAgo = new Date(maxDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const oneMonthAgo = new Date(maxDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const threeMonthsAgo = new Date(maxDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+        return data.attendance_history.filter(log => {
+            const logDate = new Date(log.date);
+            if (attendanceFilter === '1w') return logDate >= oneWeekAgo;
+            if (attendanceFilter === '1m') return logDate >= oneMonthAgo;
+            if (attendanceFilter === '3m') return logDate >= threeMonthsAgo;
+            return true;
+        });
+    }, [data, attendanceFilter]);
+
+    const filteredAssessments = useMemo(() => {
+        if (!data) return [];
+        if (assessmentFilter === 'all') return data.assessment_history;
+        return data.assessment_history.filter(a => a.name === assessmentFilter);
+    }, [data, assessmentFilter]);
+
+    // 5. Polar Benchmarking (Percentiles) - Moved up to avoid hook order issues
+    const polarData = useMemo(() => {
+        if (!data) return { labels: [], datasets: [] };
+
+        const percentiles = data.percentiles;
+        let percentileValues = [
+            percentiles.dsa_score || 0,
+            percentiles.ml_score || 0,
+            percentiles.qa_score || 0,
+            percentiles.projects_score || 0,
+            percentiles.mock_interview_score || 0
+        ];
+
+        // If a specific assessment is selected, use its historical percentiles
+        if (assessmentFilter !== 'all' && filteredAssessments.length > 0) {
+            const asm = filteredAssessments[0];
+            // Mapping: DSA->Technical, ML->Math, QA->Logic, Mock->Verbal
+            // Projects doesn't change per assessment, so we keep the latest.
+            if ((asm as any).percentiles) {
+                const p = (asm as any).percentiles;
+                percentileValues = [
+                    p.technical || 0,
+                    p.math || 0,
+                    p.logic || 0,
+                    percentiles.projects_score || 0,
+                    p.verbal || 0
+                ];
+            }
+        }
+
+        return {
+            labels: ['DSA', 'ML', 'QA', 'Projects', 'Mock'],
+            datasets: [{
+                label: 'Percentile Rank',
+                data: percentileValues,
+                backgroundColor: [
+                    'rgba(139, 92, 246, 0.6)',
+                    'rgba(56, 189, 248, 0.6)',
+                    'rgba(16, 185, 129, 0.6)',
+                    'rgba(245, 158, 11, 0.6)',
+                    'rgba(239, 68, 68, 0.6)',
+                ],
+                borderWidth: 0
+            }]
+        };
+    }, [data, assessmentFilter, filteredAssessments]);
+
     if (loading) return <div className="p-10 text-center text-slate-400">Loading analytics...</div>;
     if (!data) return <div className="p-10 text-center text-red-400">Student not found</div>;
 
-    const { student, class_stats, attendance_history, strengths, weaknesses, percentiles } = data;
+    const { student, class_stats, strengths, weaknesses, percentiles } = data;
 
     // 1. Subject-wise Pre vs Post Observation comparison
     const prePostData = {
@@ -167,16 +261,59 @@ export default function StudentDetailedAnalytics({ studentId }: { studentId: str
 
     // 3. Attendance Trend
     const attTrendData = {
-        labels: attendance_history.map(h => h.date),
+        labels: filteredAttendance.map(h => h.date),
         datasets: [{
             label: 'Attendance Status',
-            data: attendance_history.map(h => h.status === 'Present' ? 1 : 0),
+            data: filteredAttendance.map(h => h.status === 'present' || h.status === 'Present' ? 1 : 0),
             borderColor: '#6366f1',
             backgroundColor: 'rgba(99, 102, 241, 0.1)',
             tension: 0.4,
             fill: true,
             pointRadius: 4,
         }]
+    };
+
+    // 3b. Assessment History Trend
+    const assessmentTrendData = {
+        labels: filteredAssessments.map(a => a.name),
+        datasets: [
+            {
+                label: 'Technical',
+                data: filteredAssessments.map(a => a.technical),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: '#6366f1',
+            },
+            {
+                label: 'Math/Numerical',
+                data: filteredAssessments.map(a => a.math),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: '#10b981',
+            },
+            {
+                label: 'Logical Reasoning',
+                data: filteredAssessments.map(a => a.logic),
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: '#f59e0b',
+            },
+            {
+                label: 'Verbal',
+                data: filteredAssessments.map(a => a.verbal),
+                borderColor: '#ec4899',
+                backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: '#ec4899',
+            }
+        ]
     };
 
     // 4. Intelligence Radar (Qualitative Skills)
@@ -200,28 +337,7 @@ export default function StudentDetailedAnalytics({ studentId }: { studentId: str
         ]
     };
 
-    // 5. Polar Benchmarking (Percentiles)
-    const polarData = {
-        labels: ['DSA', 'ML', 'QA', 'Projects', 'Mock'],
-        datasets: [{
-            label: 'Percentile Rank',
-            data: [
-                percentiles.dsa_score || 0,
-                percentiles.ml_score || 0,
-                percentiles.qa_score || 0,
-                percentiles.projects_score || 0,
-                percentiles.mock_interview_score || 0
-            ],
-            backgroundColor: [
-                'rgba(139, 92, 246, 0.6)',
-                'rgba(56, 189, 248, 0.6)',
-                'rgba(16, 185, 129, 0.6)',
-                'rgba(245, 158, 11, 0.6)',
-                'rgba(239, 68, 68, 0.6)',
-            ],
-            borderWidth: 0
-        }]
-    };
+    // 5. Polar Benchmarking (Percentiles) - Removed duplicate definition
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
@@ -306,27 +422,166 @@ export default function StudentDetailedAnalytics({ studentId }: { studentId: str
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 backdrop-blur-sm">
+                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 backdrop-blur-sm relative">
                     <div className="flex items-center gap-2 mb-6 justify-between">
                         <div className="flex items-center gap-2">
-                            <BarChart2 size={20} className="text-violet-400" />
-                            <h2 className="text-lg font-bold text-white">Subject Assessment</h2>
+                            <Calendar size={20} className="text-blue-400" />
+                            <h2 className="text-lg font-bold text-white">Attendance Trend</h2>
                         </div>
-                        <div className="text-xs text-slate-500">Marks Distribution</div>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={attendanceFilter}
+                                onChange={(e) => setAttendanceFilter(e.target.value as any)}
+                                className="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-md px-2 py-1 outline-none focus:border-indigo-500"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="1m">Last Month</option>
+                                <option value="3m">Last 3 Months</option>
+                                <option value="1w">Last Week</option>
+                            </select>
+                        </div>
                     </div>
                     <div className="h-72">
-                        <Bar
-                            data={subjectData}
+                        <Line
+                            data={attTrendData}
                             options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 scales: {
-                                    y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } },
+                                    y: {
+                                        ticks: {
+                                            callback: (val) => val === 1 ? 'Present' : 'Absent',
+                                            color: '#64748b',
+                                            font: { size: 10 }
+                                        },
+                                        grid: { color: 'rgba(255,255,255,0.05)' }
+                                    },
                                     x: { grid: { display: false } }
                                 },
-                                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } }
+                                plugins: { legend: { display: false } }
                             }}
                         />
+                    </div>
+                </div>
+
+                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 backdrop-blur-sm lg:col-span-2">
+                    <div className="flex items-center gap-2 mb-6 justify-between">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp size={20} className="text-emerald-400" />
+                            <h2 className="text-lg font-bold text-white">Assessment History Trend</h2>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Filter size={14} className="text-slate-500" />
+                                <select
+                                    value={assessmentFilter}
+                                    onChange={(e) => setAssessmentFilter(e.target.value)}
+                                    className="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-md px-2 py-1 outline-none focus:border-indigo-500 min-w-[150px]"
+                                >
+                                    <option value="all">All Assessments</option>
+                                    {data.assessment_history.map((a, idx) => (
+                                        <option key={idx} value={a.name}>{a.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="text-xs text-slate-500 uppercase tracking-widest font-black text-[9px] hidden sm:block">Progression across tests</div>
+                        </div>
+                    </div>
+                    <div className="h-80">
+                        {assessmentFilter !== 'all' && filteredAssessments.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full items-center">
+                                <div className="h-full w-full">
+                                    <Bar
+                                        data={{
+                                            labels: ['Technical', 'Verbal', 'Math', 'Logic'],
+                                            datasets: [{
+                                                label: filteredAssessments[0].name,
+                                                data: [
+                                                    filteredAssessments[0].technical,
+                                                    filteredAssessments[0].verbal,
+                                                    filteredAssessments[0].math,
+                                                    filteredAssessments[0].logic
+                                                ],
+                                                backgroundColor: [
+                                                    'rgba(99, 102, 241, 0.7)',
+                                                    'rgba(236, 72, 153, 0.7)',
+                                                    'rgba(16, 185, 129, 0.7)',
+                                                    'rgba(245, 158, 11, 0.7)'
+                                                ],
+                                                borderRadius: 6
+                                            }]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } } },
+                                            plugins: { legend: { display: false } }
+                                        }}
+                                    />
+                                </div>
+                                <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700 flex flex-col justify-center gap-4">
+                                    <h3 className="text-lg font-bold text-white mb-2 border-b border-slate-700 pb-2">{filteredAssessments[0].name} Results</h3>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-400 text-sm">Total Score</span>
+                                        <span className="text-xl font-bold text-white">{filteredAssessments[0].total}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-400 text-sm">Percentage</span>
+                                        <span className="text-xl font-bold text-indigo-400">{filteredAssessments[0].percentage}%</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 mt-2">
+                                        <div className="bg-slate-800 p-2 rounded text-center">
+                                            <div className="text-[10px] text-slate-500 uppercase">Tech</div>
+                                            <div className="text-sm font-bold text-indigo-300">{filteredAssessments[0].technical}</div>
+                                        </div>
+                                        <div className="bg-slate-800 p-2 rounded text-center">
+                                            <div className="text-[10px] text-slate-500 uppercase">Math</div>
+                                            <div className="text-sm font-bold text-emerald-300">{filteredAssessments[0].math}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <Line
+                                data={assessmentTrendData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            max: 100,
+                                            grid: { color: 'rgba(255,255,255,0.05)' },
+                                            ticks: { color: '#64748b', font: { size: 10 } }
+                                        },
+                                        x: {
+                                            grid: { color: 'rgba(255,255,255,0.05)' },
+                                            ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } }
+                                        }
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom',
+                                            labels: {
+                                                color: '#94a3b8',
+                                                padding: 20,
+                                                usePointStyle: true,
+                                                font: { size: 11, weight: 600 }
+                                            }
+                                        },
+                                        tooltip: {
+                                            mode: 'index',
+                                            intersect: false,
+                                            padding: 12,
+                                            cornerRadius: 12,
+                                            backgroundColor: '#0f172a',
+                                            borderColor: '#1e293b',
+                                            borderWidth: 1,
+                                        }
+                                    }
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
             </div>
@@ -379,6 +634,72 @@ export default function StudentDetailedAnalytics({ studentId }: { studentId: str
                         </div>
                         <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
                             <div className="h-full bg-indigo-500" style={{ width: '75%' }} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Deep Observation Insights (Phase 6) */}
+            <div className="bg-slate-800/50 p-8 rounded-[3rem] border border-slate-700 backdrop-blur-md">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2 bg-blue-500/20 rounded-xl"><Compass className="text-blue-400" size={24} /></div>
+                    <div>
+                        <h2 className="text-xl font-bold text-white">Pre & Post Observation Analysis</h2>
+                        <p className="text-xs text-slate-500">Detailed remarks and shift in categorical performance.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Pre-Observation Card */}
+                    <div className="bg-slate-900/40 p-6 rounded-2xl border border-slate-700 group hover:border-indigo-500/30 transition-all">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-indigo-400 font-bold uppercase tracking-widest text-sm">Pre-Observation</h3>
+                            <span className="text-xs font-mono px-2 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-400">Score: {student.pre_score}</span>
+                        </div>
+                        <div className="bg-slate-800/50 p-4 rounded-xl mb-4 min-h-[80px]">
+                            <p className="text-sm text-slate-300 italic">"{student.pre_remarks || 'No detailed remarks recorded for intake.'}"</p>
+                        </div>
+                        <div className="flex items-center justify-between mt-auto">
+                            <div className="text-xs text-slate-500">INTAKE STATUS</div>
+                            <div className="px-3 py-1 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300">
+                                {student.pre_status || 'NOT SET'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Post-Observation Card */}
+                    <div className="bg-slate-900/40 p-6 rounded-2xl border border-slate-700 group hover:border-emerald-500/30 transition-all">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm">Post-Observation</h3>
+                            <span className="text-xs font-mono px-2 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-400">Score: {student.post_score}</span>
+                        </div>
+                        <div className="bg-slate-800/50 p-4 rounded-xl mb-4 min-h-[80px]">
+                            <p className="text-sm text-slate-300 italic">"{student.post_remarks || 'Awaiting final exit evaluation remarks.'}"</p>
+                        </div>
+                        <div className="flex items-center justify-between mt-auto">
+                            <div className="text-xs text-slate-500">CURRENT STATUS</div>
+                            <div className={`px-3 py-1 border rounded-lg text-xs font-bold ${student.post_status?.toLowerCase().includes('improved') || student.post_status?.toLowerCase().includes('good')
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                : 'bg-slate-800 border-slate-700 text-slate-300'
+                                }`}>
+                                {student.post_status || 'PENDING'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-slate-700/50">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mb-1">Growth Index</div>
+                            <div className="text-4xl font-black text-white flex items-baseline gap-2">
+                                {(student.post_score - (student.pre_score || 0)).toFixed(1)}
+                                <span className="text-sm text-emerald-400 font-bold uppercase">Points gained</span>
+                            </div>
+                        </div>
+                        <div className="bg-slate-900/80 px-6 py-4 rounded-2xl border border-slate-700">
+                            <div className="text-[9px] text-slate-500 font-bold uppercase mb-1">Assigned Batch</div>
+                            <div className="text-xl font-black text-indigo-400">{student.batch_id || 'Global'}</div>
                         </div>
                     </div>
                 </div>
@@ -511,15 +832,56 @@ export default function StudentDetailedAnalytics({ studentId }: { studentId: str
                         ) : (
                             <div className="text-center py-4 text-slate-500 italic text-sm">No critical drops.</div>
                         )}
-                        {(student.pre_status || student.post_status) && (
-                            <div className="pt-4 border-t border-slate-700/50">
-                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Behavioral Observations</h4>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-300">
-                                        <div className="text-[8px] uppercase mb-1">Initial</div> {student.pre_status}
-                                    </div>
-                                    <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-emerald-400">
-                                        <div className="text-[8px] uppercase mb-1">Latest</div> {student.post_status}
+                        <div className="pt-4 border-t border-slate-700/50">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Behavioral Observations</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-300">
+                                    <div className="text-[8px] uppercase mb-1">Initial</div> {student.pre_status}
+                                </div>
+                                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-emerald-400">
+                                    <div className="text-[8px] uppercase mb-1">Latest</div> {student.post_status}
+                                </div>
+                            </div>
+                        </div>
+
+                        {data.rag_history && data.rag_history.length > 0 && (
+                            <div className="mt-6 pt-4 border-t border-slate-700/50 flex-grow">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Resiliency Progression (Weekly)</h4>
+                                <div className="w-full overflow-x-auto pb-2 custom-scrollbar">
+                                    <div className="flex items-center min-w-max px-2 relative">
+                                        {/* Connecting Line Background */}
+                                        <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-700/50 -z-10 transform -translate-y-1/2"></div>
+
+                                        {data.rag_history.map((h, i) => {
+                                            const isLast = i === data.rag_history!.length - 1;
+                                            return (
+                                                <div key={i} className="relative flex flex-col items-center group mx-2">
+                                                    {/* Tooltip on Hover */}
+                                                    <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-[10px] text-slate-300 px-3 py-2 rounded border border-slate-700 whitespace-normal min-w-[200px] max-w-[250px] z-20 pointer-events-none text-center shadow-xl">
+                                                        <div className="font-bold text-white mb-1">{h.period || h.date}</div>
+                                                        {h.status}
+                                                    </div>
+
+                                                    {/* Node */}
+                                                    <div className={`
+                                                        w-8 h-8 rounded-full flex items-center justify-center border-4 z-10 transition-all hover:scale-110
+                                                        ${h.status === 'Green' ? 'bg-emerald-500 border-emerald-900 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                                                            h.status === 'Amber' ? 'bg-amber-500 border-amber-900 shadow-[0_0_10px_rgba(245,158,11,0.5)]' :
+                                                                'bg-red-500 border-red-900 shadow-[0_0_10px_rgba(239,68,68,0.5)]'}
+                                                    `}>
+                                                        {h.status === 'Green' && <ShieldCheck size={12} className="text-white" />}
+                                                        {h.status === 'Amber' && <AlertCircle size={12} className="text-white" />}
+                                                        {h.status === 'Red' && <Zap size={12} className="text-white" />}
+                                                    </div>
+
+                                                    {/* Date Label */}
+                                                    <div className="mt-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                                                        {/* Attempt to show short date if period is long */}
+                                                        {h.period ? h.period.split('-')[0].trim() : h.date}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
