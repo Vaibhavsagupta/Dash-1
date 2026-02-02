@@ -38,7 +38,7 @@ if production_url:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if (production_url or origins) else ["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
