@@ -30,18 +30,22 @@ Click on the **Environment** tab and add the following keys:
 | `ALGORITHM` | `HS256` | JWT Algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Session timeout |
 | `FRONTEND_URL` | `https://your-frontend-domain.vercel.app` | **Add this after deploying frontend** |
-| `DATABASE_URL` | *(Optional)* | Render will use SQLite by default if this is empty. |
+| `DATABASE_URL` | `postgresql://user:pass@host:5432/db` | **REQUIRED** - PostgreSQL connection string (use Supabase or Render PostgreSQL) |
 
-## 4. Database Persistence (IMPORTANT for SQLite)
-If you use the default SQLite database (`dashboard_v4.db`), your data will be **wiped every time the server restarts** unless you add a Disk.
+## 4. Database Setup (PostgreSQL Required)
+This application requires **PostgreSQL**. You have two options:
 
-1. Go to **Disks** in the Render sidebar.
-2. Click **Add Disk**.
-3. **Name**: `db-storage`.
-4. **Mount Path**: `/etc/data`.
-5. **Size**: `1GB`.
-6. Update your **Environment Variable** `DATABASE_URL` to:
-   `sqlite:////etc/data/dashboard_v4.db`
+### Option A: Use Supabase (Recommended)
+1. Create a free account at [Supabase](https://supabase.com/)
+2. Create a new project
+3. Get your connection string from Project Settings → Database
+4. Add it to Render's `DATABASE_URL` environment variable
+
+### Option B: Use Render PostgreSQL
+1. In Render dashboard, click **New +** → **PostgreSQL**
+2. Create a new PostgreSQL database
+3. Copy the **Internal Database URL**
+4. Add it to your web service's `DATABASE_URL` environment variable
 
 ---
 

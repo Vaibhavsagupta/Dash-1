@@ -7,11 +7,14 @@ load_dotenv()
 class Settings:
     PROJECT_NAME: str = "Dashboard API"
     
-    # Database Configuration
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./dashboard_v4.db")
+    # Database Configuration - PostgreSQL Required
+    DATABASE_URL: str = os.getenv("DATABASE_URL")
+    
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL environment variable is required. Please set it in your .env file.")
     
     # Fix for Heroku/Render/Other platforms that use 'postgres://' instead of 'postgresql://'
-    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
         
     # Auth Configuration

@@ -1,5 +1,6 @@
 "use client";
 import AdminSidebar from "@/components/AdminSidebar";
+import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -31,11 +32,14 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="flex bg-[#0f172a] min-h-screen pt-[72px]">
-            <AdminSidebar />
-            <main className="flex-1 ml-64 p-8 overflow-y-auto">
-                {children}
-            </main>
-        </div>
+        <>
+            <Navbar />
+            <div className="flex bg-[#0f172a] min-h-screen pt-[72px]">
+                <AdminSidebar />
+                <main className="flex-1 ml-64 p-8 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
+        </>
     );
 }

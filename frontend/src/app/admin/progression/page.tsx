@@ -25,17 +25,22 @@ export default function AdminProgressionPage() {
     return (
         <div className="text-slate-200 relative">
             {/* Sticky Back Button */}
-            <motion.button
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                onClick={() => router.push('/admin/dashboard')}
-                className="fixed top-24 left-72 z-50 flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-all group shadow-xl"
-                title="Back to Dashboard (ArrowLeft)"
+            {/* Back Button */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-[1600px] mx-auto mb-6"
             >
-                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                <span className="text-sm font-bold uppercase tracking-widest">Back to Dashboard</span>
-                <kbd className="ml-2 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono opacity-50">←</kbd>
-            </motion.button>
+                <button
+                    onClick={() => router.push('/admin/dashboard')}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-xl text-slate-400 hover:text-white transition-all group w-fit"
+                    title="Back to Dashboard (ArrowLeft)"
+                >
+                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Back to Dashboard</span>
+                    <kbd className="ml-2 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono opacity-50">←</kbd>
+                </button>
+            </motion.div>
 
             <div className="max-w-[1600px] mx-auto">
                 <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-4 border-b border-slate-700 pb-6">

@@ -10,8 +10,6 @@ export const metadata: Metadata = {
   description: "Advanced Role-Based Dashboard",
 };
 
-import Navbar from "@/components/Navbar";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,7 +18,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable}`} style={{ fontFamily: 'var(--font-outfit), sans-serif' }} suppressHydrationWarning={true}>
-        <Navbar />
         {children}
       </body>
     </html>

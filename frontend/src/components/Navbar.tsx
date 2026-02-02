@@ -50,7 +50,6 @@ export default function Navbar() {
     };
 
     const navLinks = [
-        { name: 'Home', path: '/', icon: Home },
         { name: 'Dashboard', path: getDashboardLink(), icon: LayoutDashboard },
         { name: 'Batch Analysis', path: '/admin/batch-analytics', icon: BarChart3, role: 'admin' },
         { name: 'Student Progression', path: '/admin/progression', icon: TrendingUp, role: 'admin' },

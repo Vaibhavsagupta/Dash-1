@@ -41,14 +41,11 @@ export default function ApprovalsPage() {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                },
-                mode: 'cors',
-                credentials: 'include'
+                    'Content-Type': 'application/json'
+                }
             });
 
             console.log('Response status:', res.status);
-            console.log('Response ok:', res.ok);
 
             if (res.ok) {
                 const data = await res.json();
@@ -57,8 +54,14 @@ export default function ApprovalsPage() {
                 setError('');
             } else {
                 const errorText = await res.text();
-                console.error('Error response:', errorText);
-                setError(`Server error: ${res.status} - ${errorText}`);
+                console.error('Error response:', res.status, errorText);
+                if (res.status === 401) {
+                    setError("Unauthorized: Please log in again as Admin.");
+                } else if (res.status === 403) {
+                    setError("Forbidden: You do not have permission to view approvals.");
+                } else {
+                    setError(`Server error: ${res.status} - ${errorText}`);
+                }
             }
         } catch (error: any) {
             console.error("Failed to fetch approvals", error);

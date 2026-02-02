@@ -26,7 +26,7 @@ git push origin main
     *   **Build Command**: `pip install -r requirements.txt`
     *   **Start Command**: `gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT`
 5.  **Environment Variables**:
-    *   Add `DATABASE_URL`: (Optional, if you want to use external PostgreSQL. If not set, it will use a local SQLite file - *Note: SQLite data will reset on every deploy*).
+    *   Add `DATABASE_URL`: **REQUIRED** - PostgreSQL connection string (use Supabase or Render PostgreSQL).
     *   Add `FRONTEND_URL`: (Set this AFTER you get the Vercel link in Step 3).
 6.  Click **Deploy Web Service**.
 

@@ -41,34 +41,13 @@ if production_url:
             if clean_url.startswith("http://"):
                 origins.append(clean_url.replace("http://", "https://"))
 
-# Custom Middleware for Private Network Access (Chrome requirement for local dev)
-from fastapi import Request, Response
-@app.middleware("http")
-async def add_cors_and_private_network_headers(request: Request, call_next):
-    if request.method == "OPTIONS":
-        response = Response()
-        origin = request.headers.get("Origin")
-        if origin in origins or not origin:
-            response.headers["Access-Control-Allow-Origin"] = origin or "*"
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Private-Network"] = "true"
-        return response
-    
-    response = await call_next(request)
-    origin = request.headers.get("Origin")
-    if origin in origins or not origin:
-        response.headers["Access-Control-Allow-Origin"] = origin or "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins + ["http://localhost", "http://127.0.0.1"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 @app.get("/health")
