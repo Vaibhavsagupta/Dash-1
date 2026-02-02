@@ -40,7 +40,7 @@ The backend handles the database, authentication, and analytics logic.
     ```powershell
     uvicorn app.main:app --reload
     ```
-    *The backend will start at `http://localhost:8000`*
+    *The backend will start at `http://127.0.0.1:8000`*
 
 ---
 
@@ -61,14 +61,25 @@ The frontend handles the user interface.
     ```powershell
     npm run dev
     ```
-    *The frontend will start at `http://localhost:3000`*
+    *The frontend will start at `http://127.0.0.1:3000`*
 
 ---
 
 ## 🌐 Step 3: Accessing the Dashboard
 
 Open your web browser and navigate to:
-**[http://localhost:3000](http://localhost:3000)**
+**[http://127.0.0.1:3000](http://127.0.0.1:3000)**
+
+---
+
+## 🛠️ Troubleshooting: "Failed to Fetch"
+
+If you see a "Failed to fetch" error on the login or signup page:
+
+1.  **Use 127.0.0.1**: Always access the site via `http://127.0.0.1:3000` instead of `localhost:3000`.
+2.  **Restart Frontend**: If you changed `.env.local`, you **MUST** stop the frontend (`Ctrl+C`) and run `npm run dev` again.
+3.  **Hard Refresh**: Press `Ctrl + F5` in your browser to clear the cache.
+4.  **Check Backend**: Ensure the backend terminal shows "Uvicorn running on http://127.0.0.1:8000".
 
 ---
 

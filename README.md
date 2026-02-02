@@ -41,7 +41,7 @@ python seed.py
 # 6. Start the Server
 uvicorn app.main:app --reload
 ```
-*The backend runs on `http://localhost:8000`*
+*The backend runs on `http://127.0.0.1:8000`*
 
 ### 2. Frontend Setup (Next.js)
 The frontend provides the responsive user interface.
@@ -56,7 +56,7 @@ npm install
 # 3. Start the Development Server
 npm run dev
 ```
-*The frontend runs on `http://localhost:3000`*
+*The frontend runs on `http://127.0.0.1:3000`*
 
 ---
 
