@@ -7,6 +7,7 @@ from .routers import auth, analytics, updates, attendance, dashboard, assignment
 # Create tables
 try:
     Base.metadata.create_all(bind=engine)
+    print("Connected to database successfully")
 except Exception as e:
     print(f"Database connection failed or tables already exist: {e}")
 
@@ -70,3 +71,7 @@ app.include_router(admin_workflow.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Dashboard API"}
+
+@app.head("/")
+def health_check_head():
+    return ""
