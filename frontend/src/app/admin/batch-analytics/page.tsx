@@ -22,7 +22,7 @@ export default function BatchAnalyticsPage() {
     const [activeRagTab, setActiveRagTab] = useState<'Red' | 'Amber' | 'Green'>('Red');
     const [scatterMode, setScatterMode] = useState<'score' | 'growth' | 'history'>('score');
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-
+    const [selectedBatch, setSelectedBatch] = useState<string>('All');
     const [selectedDate, setSelectedDate] = useState<string>('');
     const router = useRouter();
 
@@ -37,9 +37,9 @@ export default function BatchAnalyticsPage() {
     }, [router]);
 
     useEffect(() => {
-        let url = `${API_BASE_URL}/analytics/batch/comprehensive_stats`;
+        let url = `${API_BASE_URL}/analytics/batch/comprehensive_stats?batch_filter=${selectedBatch}`;
         if (selectedDate) {
-            url += `?date=${selectedDate}`;
+            url += `&date=${selectedDate}`;
         }
 
         const token = localStorage.getItem('access_token');
@@ -51,7 +51,7 @@ export default function BatchAnalyticsPage() {
             .then(res => res.json())
             .then(data => { setStats(data); setLoading(false); })
             .catch(err => { console.error(err); setLoading(false); });
-    }, [selectedDate]);
+    }, [selectedDate, selectedBatch]);
 
     if (loading) return (
         <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">
@@ -306,6 +306,17 @@ export default function BatchAnalyticsPage() {
                         </div>
 
                         <div className="flex items-center gap-4 w-full md:w-auto">
+                            <select
+                                value={selectedBatch}
+                                onChange={(e) => setSelectedBatch(e.target.value)}
+                                className="pl-4 pr-8 py-3 bg-slate-900/50 border border-slate-800 rounded-2xl text-xs font-bold text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer hover:bg-slate-800 transition-all uppercase tracking-wide"
+                            >
+                                <option value="All">All Batches</option>
+                                <option value="Batch 1">Batch 1</option>
+                                <option value="Batch 2">Batch 2</option>
+                                <option value="Batch 3">Batch 3</option>
+                            </select>
+
                             <div className="relative group w-full md:w-64">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
                                 <select

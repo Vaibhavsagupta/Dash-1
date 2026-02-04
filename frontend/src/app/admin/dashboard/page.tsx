@@ -37,6 +37,7 @@ export default function AdminDashboard() {
     const [data, setData] = useState<any>(null);
     const [agenda, setAgenda] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedBatch, setSelectedBatch] = useState('All');
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -51,7 +52,7 @@ export default function AdminDashboard() {
             try {
                 // Fetch stats and agenda in parallel
                 const [statsRes, agendaRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/analytics/dashboard/admin`, {
+                    fetch(`${API_BASE_URL}/analytics/dashboard/admin?batch_filter=${selectedBatch}`, {
                         headers: { 'Authorization': `Bearer ${token}` },
                         cache: 'no-store'
                     }),
@@ -75,7 +76,7 @@ export default function AdminDashboard() {
         };
 
         fetchData();
-    }, [router]);
+    }, [router, selectedBatch]);
 
     if (loading || !data) {
         return (
@@ -135,11 +136,24 @@ export default function AdminDashboard() {
 
     return (
         <div className="text-slate-100">
-            <header className="mb-10">
-                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
-                    Admin Control Center
-                </h1>
-                <p className="text-slate-400 mt-2">Real-time batch readiness and faculty analytics</p>
+            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <div>
+                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+                        Admin Control Center
+                    </h1>
+                    <p className="text-slate-400 mt-2">Real-time batch readiness and faculty analytics</p>
+                </div>
+                <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+                    {['All', 'Batch 1', 'Batch 2', 'Batch 3'].map((b) => (
+                        <button
+                            key={b}
+                            onClick={() => setSelectedBatch(b)}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${selectedBatch === b ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'}`}
+                        >
+                            {b}
+                        </button>
+                    ))}
+                </div>
             </header>
 
             {/* KPI Cards */}

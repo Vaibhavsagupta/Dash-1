@@ -136,6 +136,7 @@ def get_students(db: Session = Depends(database.get_db), current_user: models.Us
         results.append({
             "student_id": s.student_id,
             "name": s.name,
+            "batch_id": s.batch_id,
             "prs_score": prs,
             "rank": rank,
             "percentile": percentile,
@@ -298,8 +299,11 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
     }
 
 @router.get("/dashboard/admin")
-def get_admin_dashboard_data(db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):
-    students = db.query(models.Student).all()
+def get_admin_dashboard_data(batch_filter: Optional[str] = None, db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):
+    query = db.query(models.Student)
+    if batch_filter and batch_filter != "All":
+        query = query.filter(models.Student.batch_id == batch_filter)
+    students = query.all()
     total_students = len(students)
     
     # Top 5 students by PRS
@@ -329,9 +333,12 @@ def get_admin_dashboard_data(db: Session = Depends(database.get_db), current_adm
     }
 
 @router.get("/batch/comprehensive_stats")
-def get_batch_comprehensive_stats(date: Optional[str] = None, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+def get_batch_comprehensive_stats(date: Optional[str] = None, batch_filter: Optional[str] = None, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
     # Security & Data Isolation
     query = db.query(models.Student)
+
+    if batch_filter and batch_filter != "All":
+        query = query.filter(models.Student.batch_id == batch_filter)
     
     if current_user.role == models.UserRole.teacher:
         teacher_id = current_user.linked_id
@@ -577,6 +584,48 @@ def get_batch_comprehensive_stats(date: Optional[str] = None, db: Session = Depe
         "avg_post_score": round(avg_post_score, 1),
         "total_improvement": round(avg_post_score - avg_pre_score, 1)
     }
+
+@router.get("/teachers/progression")
+def get_all_teachers_progression(db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):
+    teachers = db.query(models.Teacher).all()
+    results = []
+    
+    for t in teachers:
+        # Calculate modules/units completion
+        units = db.query(models.Unit).filter(models.Unit.teacher_id == t.teacher_id).all()
+        total_units = len(units)
+        completed_units = len([u for u in units if u.status == models.UnitStatus.completed])
+        course_completed = int((completed_units / total_units * 100)) if total_units > 0 else 0
+        
+        # Calculate hours from lectures
+        lectures = db.query(models.Lecture).filter(models.Lecture.teacher_id == t.teacher_id).all()
+        total_hours = len(lectures) # Assuming 1 lecture = 1 hour for now, or could sum diff
+        
+        # Get next milestone
+        next_unit = db.query(models.Unit).filter(
+            models.Unit.teacher_id == t.teacher_id, 
+            models.Unit.status != models.UnitStatus.completed
+        ).order_by(models.Unit.unit_number).first()
+        
+        # Find batch
+        batch_id = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == t.teacher_id).first()
+        batch_name = batch_id[0] if batch_id else "N/A"
+
+        results.append({
+            "id": t.teacher_id,
+            "name": t.name,
+            "subject": t.subject,
+            "course_completed": course_completed,
+            "expected_completion": 70, # Mocked for now
+            "total_hours_taught": total_hours,
+            "planned_hours": 60,
+            "modules_completed": completed_units,
+            "total_modules": total_units,
+            "next_milestone": next_unit.title if next_unit else "None",
+            "batch_id": batch_name
+        })
+        
+    return results
 
 @router.get("/teacher/{teacher_id}/detailed")
 def get_teacher_detailed_analytics(teacher_id: str, db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):

@@ -26,81 +26,21 @@ interface TeacherProgression {
     id: string;
     name: string;
     subject: string;
-    course_completed: number; // percentage
-    expected_completion: number; // percentage based on timeline
+    course_completed: number;
+    expected_completion: number;
     total_hours_taught: number;
     planned_hours: number;
     modules_completed: number;
     total_modules: number;
     next_milestone: string;
+    batch_id?: string;
 }
 
-// Mock Data
-const MOCK_TEACHERS: TeacherProgression[] = [
-    {
-        id: 'T001',
-        name: 'Prof. Alan Turing',
-        subject: 'Algorithms (DSA)',
-        course_completed: 75,
-        expected_completion: 70,
-        total_hours_taught: 45,
-        planned_hours: 60,
-        modules_completed: 6,
-        total_modules: 8,
-        next_milestone: 'Graph Theory'
-    },
-    {
-        id: 'T002',
-        name: 'Dr. Ada Lovelace',
-        subject: 'Machine Learning',
-        course_completed: 40,
-        expected_completion: 45,
-        total_hours_taught: 20,
-        planned_hours: 50,
-        modules_completed: 2,
-        total_modules: 5,
-        next_milestone: 'Neural Networks'
-    },
-    {
-        id: 'T003',
-        name: 'Prof. Grace Hopper',
-        subject: 'Compiler Design',
-        course_completed: 90,
-        expected_completion: 90,
-        total_hours_taught: 54,
-        planned_hours: 60,
-        modules_completed: 9,
-        total_modules: 10,
-        next_milestone: 'Optimization'
-    },
-    {
-        id: 'T004',
-        name: 'Dr. John von Neumann',
-        subject: 'Computer Arch',
-        course_completed: 60,
-        expected_completion: 60,
-        total_hours_taught: 30,
-        planned_hours: 50,
-        modules_completed: 3,
-        total_modules: 5,
-        next_milestone: 'Pipelining'
-    },
-    {
-        id: 'T005',
-        name: 'Prof. Margaret Hamilton',
-        subject: 'Software Eng',
-        course_completed: 20,
-        expected_completion: 25,
-        total_hours_taught: 10,
-        planned_hours: 50,
-        modules_completed: 1,
-        total_modules: 5,
-        next_milestone: 'Requirements Analysis'
-    },
-];
+import { API_BASE_URL } from '@/lib/api';
 
 const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
     const router = useRouter();
+    // ... rest of TiltCard remains same ...
     const x = useMotionValue(0);
     const y = useMotionValue(0);
     const mouseX = useSpring(x, { stiffness: 500, damping: 100 });
@@ -133,7 +73,7 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
     }, [mouseX, rotateYSpring]);
 
     // Chart Data for Donut
-    const data = {
+    const chartData = {
         labels: ['Completed', 'Remaining'],
         datasets: [
             {
@@ -151,7 +91,7 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
         ],
     };
 
-    const options = {
+    const chartOptions = {
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
         cutout: '70%',
         responsive: true,
@@ -171,7 +111,6 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
         >
             <div className="absolute inset-0 bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden transform transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-sky-500/20 group-hover:border-sky-500/50">
 
-                {/* Header Pattern */}
                 <div className="h-32 bg-gradient-to-br from-slate-900 via-sky-950 to-blue-950 relative overflow-hidden ring-1 ring-white/10">
                     <div className="absolute top-0 right-0 p-4 opacity-10 transform -rotate-12">
                         <BookOpen size={100} color="white" />
@@ -180,7 +119,10 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                         <h3 className="text-xl font-bold tracking-tight">{teacher.name}</h3>
                         <p className="text-sky-200 text-sm font-medium">{teacher.subject}</p>
                     </div>
-                    <div className="absolute top-4 right-4 z-20">
+                    <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                        <div className={`bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[10px] font-bold text-sky-400 capitalize`}>
+                            {teacher.batch_id || 'N/A'}
+                        </div>
                         <div className={`bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-xs font-bold flex items-center gap-1 ${teacher.course_completed >= teacher.expected_completion ? 'text-green-400' : 'text-red-400'}`}>
                             {teacher.course_completed >= teacher.expected_completion ? <TrendingUp size={12} /> : <Clock size={12} />}
                             {teacher.course_completed >= teacher.expected_completion ? 'On Track' : 'Delayed'}
@@ -188,11 +130,10 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                     </div>
                 </div>
 
-                {/* Floating Stat Circle (Donut Chart) */}
                 <div className="absolute top-24 right-6 w-20 h-20 bg-slate-800 rounded-full p-1 shadow-lg flex items-center justify-center z-10 group-hover:scale-110 transition-transform duration-300 border border-slate-700">
                     <div className="w-full h-full relative flex items-center justify-center">
                         <div className="absolute inset-0 w-full h-full">
-                            <Doughnut data={data} options={options} />
+                            <Doughnut data={chartData} options={chartOptions} />
                         </div>
                         <div className="absolute flex flex-col items-center">
                             <span className="text-sm font-bold text-sky-400">{teacher.course_completed}%</span>
@@ -200,10 +141,7 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                     </div>
                 </div>
 
-                {/* Content Wrapper */}
                 <div className="p-5 pt-8 flex flex-col h-[calc(100%-8rem)] justify-between relative">
-
-                    {/* Main Info - Fades out on Hover */}
                     <div className="space-y-4 group-hover:opacity-0 transition-opacity duration-300 absolute inset-x-5 top-8">
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
@@ -234,7 +172,7 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                                     <BarChart2 size={20} />
                                 </div>
                                 <div>
-                                    <div className="font-bold text-slate-200">
+                                    <div className="font-bold text-slate-200 truncate max-w-[150px]">
                                         {teacher.next_milestone}
                                     </div>
                                     <div className="text-xs text-slate-500">Scheduled Milestone</div>
@@ -247,10 +185,8 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                         </div>
                     </div>
 
-                    {/* Detailed Content - Fades in on Hover */}
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75 absolute inset-0 bg-slate-800 p-6 pt-0 mt-2 flex flex-col h-full z-20 pointer-events-none group-hover:pointer-events-auto rounded-b-2xl">
                         <div className="h-full w-full flex flex-col justify-center space-y-6">
-
                             <div>
                                 <h4 className="text-sm font-semibold text-slate-400 mb-2">Completion Timeline</h4>
                                 <div className="relative pt-1">
@@ -270,8 +206,8 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                                         <div style={{ width: `${teacher.course_completed}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-sky-500 transition-all duration-1000 ease-out"></div>
                                     </div>
                                     <div className="text-xs text-slate-500 flex justify-between">
-                                        <span>Started: Aug 1st</span>
-                                        <span>Target: Dec 15th</span>
+                                        <span>Started: Feb 1st</span>
+                                        <span>Target: Jun 15th</span>
                                     </div>
                                 </div>
                             </div>
@@ -297,7 +233,6 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
         </motion.div>
@@ -306,17 +241,54 @@ const TiltCard = ({ teacher }: { teacher: TeacherProgression }) => {
 
 export default function TeacherProgressionList() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedBatch, setSelectedBatch] = useState('All');
+    const [teachers, setTeachers] = useState<TeacherProgression[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTeachers = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`${API_BASE_URL}/analytics/teachers/progression`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTeachers(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch teachers:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTeachers();
+    }, []);
+
+    const batches = useMemo(() => {
+        const unique = Array.from(new Set(teachers.map(t => t.batch_id).filter(Boolean)));
+        return ['All', ...unique];
+    }, [teachers]);
 
     const filteredTeachers = useMemo(() => {
-        return MOCK_TEACHERS.filter(t =>
-            t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.subject.toLowerCase().includes(searchTerm.toLowerCase())
+        return teachers.filter(t => {
+            const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.subject.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesBatch = selectedBatch === 'All' || t.batch_id === selectedBatch;
+            return matchesSearch && matchesBatch;
+        });
+    }, [searchTerm, selectedBatch, teachers]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+            </div>
         );
-    }, [searchTerm]);
+    }
 
     return (
         <div className="space-y-8">
-            {/* Controls Header */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-800/50 p-4 rounded-2xl shadow-sm border border-slate-700 backdrop-blur-sm">
                 <div className="relative w-full md:w-96 group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -330,9 +302,21 @@ export default function TeacherProgressionList() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter Batch:</span>
+                    <select
+                        value={selectedBatch}
+                        onChange={(e) => setSelectedBatch(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-sky-500 focus:border-sky-500 block p-2 outline-none transition-all"
+                    >
+                        {batches.map(b => (
+                            <option key={b} value={b}>{String(b)}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
-            {/* Grid */}
             <motion.div
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
@@ -359,9 +343,10 @@ export default function TeacherProgressionList() {
                         <User size={40} className="text-slate-600" />
                     </div>
                     <h3 className="text-lg font-medium text-slate-200">No teachers found</h3>
-                    <p className="text-slate-500">Try adjusting your search terms</p>
+                    <p className="text-slate-500">Try adjusting your search terms or batch filter</p>
                 </div>
             )}
         </div>
     );
 }
+

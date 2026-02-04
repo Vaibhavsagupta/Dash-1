@@ -30,6 +30,17 @@ def safe_int(val, default=0):
     except:
         return default
 
+def read_df(file_content, filename):
+    """Helper to read either CSV or Excel data."""
+    if filename.lower().endswith('.csv'):
+        try:
+            return pd.read_csv(io.BytesIO(file_content))
+        except:
+            # Try with different encoding if default fails
+            return pd.read_csv(io.BytesIO(file_content), encoding='latin1')
+    else:
+        return pd.read_excel(io.BytesIO(file_content))
+
 @router.post("/bulk-upload")
 async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends(get_db), current_admin: User = Depends(get_current_active_admin)):
     """
@@ -47,6 +58,11 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
     # Load existing students for upserting
     existing_students = {s.student_id: s for s in db.query(Student).all()}
     name_to_id_map = {clean_name(s.name): s.student_id for s in existing_students.values()}
+
+    # Determine default batch for NEW students
+    # If there are existing students (Batch 1), assign new ones to "Batch 2"
+    has_existing_students = len(existing_students) > 0
+    default_new_batch = "Batch 2" if has_existing_students else "Batch 1"
     
     # Track which students we've modified in this session
     students_to_upsert = {}
@@ -77,24 +93,47 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
     upload_logs = []
 
     # 1. Student Info (Master List)
-    info_f = next((k for k in file_map if "student batch info" in k), None)
+    info_f = next((k for k in file_map if ("student" in k and "assess" not in k and "attend" not in k and "score" not in k)), None)
     if info_f:
-        df_info = pd.read_excel(io.BytesIO(file_map[info_f]))
+        df_info = read_df(file_map[info_f], info_f)
         for _, row in df_info.iterrows():
             name = row.get("Name")
             if pd.isna(name): continue
-            s_id = str(row.get("College Roll no/ University Roll no.", ""))
+            s_id = str(row.get("College Roll no/ University Roll no.", row.get("S.No.") or ""))
+            if not s_id or s_id == "nan": 
+                s_id = f"TMP_{clean_name(name)}_{random.randint(1000,9999)}"
+                
             s = get_or_create_student_data(name, s_id)
-            email = row.get("Email Address")
-            if not pd.isna(email): s["email"] = email
+            
+            # Field Mapping
+            for df_col, dict_key in [
+                ("Email Address", "email"), ("Email", "email"),
+                ("Branch", "branch"), ("Year", "year"),
+                ("Batch", "batch_id"), ("Aadhar/Pancard Number", "identity_proof"), 
+                ("Identity Proof", "identity_proof")
+            ]:
+                val = row.get(df_col)
+                if not pd.isna(val): s[dict_key] = str(val)
+            
+            # Dates
+            for df_col, dict_key in [("Start Date", "start_date"), ("End Date", "end_date")]:
+                val = row.get(df_col)
+                if not pd.isna(val):
+                    try: s[dict_key] = pd.to_datetime(val).date()
+                    except: pass
+
         upload_logs.append(DatasetUpload(dataset_type="Student Batch Info", table_name="students", row_count=len(df_info)))
+
+    # To collect for surgical insertion (avoids FK issues)
+    all_new_assessments = []
+    all_new_logs = []
+    students_with_new_assessments = set()
+    dates_to_clean = set()
 
     # 2. Assessments
     ass_f = next((k for k in file_map if "assessment" in k), None)
     if ass_f:
-        df_ass = pd.read_excel(io.BytesIO(file_map[ass_f]))
-        all_new_assessments = []
-        students_with_new_assessments = set()
+        df_ass = read_df(file_map[ass_f], ass_f)
 
         def proc_ass(row, name_col, tech_col, verb_col, math_col, logic_col, ass_index):
             nm = row.get(name_col)
@@ -133,10 +172,8 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
             if "Name.2" in df_ass.columns: 
                 proc_ass(row, "Name.2", "Technical.2", "Verbal.2", "Maths/Numerical.2", "Logical Leasoning.2", 3)
 
-        # Surgical Clean: Remove old assessments ONLY for the students being updated
-        if students_with_new_assessments:
-            db.query(Assessment).filter(Assessment.student_id.in_(list(students_with_new_assessments))).delete(synchronize_session=False)
-            db.add_all(all_new_assessments)
+        # Deferred: db.query(Assessment).filter(Assessment.student_id.in_(list(students_with_new_assessments))).delete(synchronize_session=False)
+        # Deferred: db.add_all(all_new_assessments)
 
         for s in students_to_upsert.values():
             if "agg_scores" in s:
@@ -145,16 +182,20 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
         upload_logs.append(DatasetUpload(dataset_type="Assessment", table_name="assessments", row_count=len(all_new_assessments)))
 
     # 3. Attendance (Batch Optimized)
-    att_f = next((k for k in file_map if "attendance sheet" in k), None)
+    att_f = next((k for k in file_map if "attend" in k), None)
     if att_f:
-        df_att = pd.read_excel(io.BytesIO(file_map[att_f]), header=3)
+        df_att = read_df(file_map[att_f], att_f)
+        # Skip rows if it's the specific attendance template with title rows (often header starts at 3)
+        if not att_f.endswith('.csv') and len(df_att.columns) < 5: 
+            # Re-read with header=3 if it looks like the template
+            df_att = pd.read_excel(io.BytesIO(file_map[att_f]), header=3)
         name_col = next((c for c in df_att.columns if "Name" in str(c)), None)
         if name_col:
             cols = list(df_att.columns); name_idx = cols.index(name_col); date_cols = cols[name_idx+1:]
             
             # Pre-collect all logs to add and keep track of dates to clean
-            dates_to_clean = set()
-            new_logs = []
+            # dates_to_clean = set() # Moved to top
+            # new_logs = [] # using all_new_logs
             
             for _, row in df_att.iterrows():
                 nm = row.get(name_col)
@@ -172,25 +213,14 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
                                 if not pd.isna(dt):
                                     dt = dt.date()
                                     dates_to_clean.add(dt)
-                                    new_logs.append(AttendanceLog(student_id=s["student_id"], date=dt, status=enum))
+                                    all_new_logs.append(AttendanceLog(student_id=s["student_id"], date=dt, status=enum))
                                     if enum == AttendanceStatus.present: p_count += 1
                                     total_days += 1
                         except: pass
                 if total_days > 0: s["attendance"] = int((p_count / total_days) * 100)
 
-            # PostgreSQL-Safe Bulk Operation:
-            # 1. Clean existing records for the involved dates and students efficiently
-            if dates_to_clean:
-                # For safety, we only clean records for students who are in the current upload
-                upload_student_ids = [s["student_id"] for s in students_to_upsert.values()]
-                db.query(AttendanceLog).filter(
-                    AttendanceLog.date.in_(list(dates_to_clean)),
-                    AttendanceLog.student_id.in_(upload_student_ids)
-                ).delete(synchronize_session=False)
-                
-                # 2. Add all new logs in one go
-                db.add_all(new_logs)
-            upload_logs.append(DatasetUpload(dataset_type="Attendance Sheet", table_name="attendance_logs", row_count=len(new_logs)))
+            # Deferred: Bulk Operation moved to end after Students are flushed
+            upload_logs.append(DatasetUpload(dataset_type="Attendance Sheet", table_name="attendance_logs", row_count=len(all_new_logs)))
 
 
     # 4. Progression & 5. RAG
@@ -244,18 +274,20 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
     if post_f: 
         cnt = proc_growth(file_map[post_f], "post", is_csv=post_f.endswith('.csv'))
         upload_logs.append(DatasetUpload(dataset_type="Post-Observation", table_name="students", row_count=cnt))
-    if "rag analysis.csv.xlsx" in file_map:
-        df_rag = pd.read_excel(io.BytesIO(file_map["rag analysis.csv.xlsx"]))
-        rc = next((c for c in df_rag.columns if "RAG" in c), "RAG Status")
+    rag_f = next((k for k in file_map if "rag analysis" in k), None)
+    if rag_f:
+        df_rag = read_df(file_map[rag_f], rag_f)
+        rc = next((c for c in df_rag.columns if "RAG" in str(c)), "RAG Status")
         for _, row in df_rag.iterrows():
-            nm = row.get(next((c for c in df_rag.columns if "Name" in c), "Name"))
+            nm = row.get(next((c for c in df_rag.columns if "Name" in str(c)), "Name"))
             if not pd.isna(nm): get_or_create_student_data(nm)["rag_status"] = str(row.get(rc)).strip()
         upload_logs.append(DatasetUpload(dataset_type="RAG Analysis", table_name="students", row_count=len(df_rag)))
 
     # 6. Schedule & Agenda (Sector-wide refresh)
-    if any("schedule" in k for k in file_map):
+    sch_f = next((k for k in file_map if "schedule" in k), None)
+    if sch_f:
         db.query(Lecture).delete()
-        df_sch = pd.read_excel(io.BytesIO(file_map["schedule.csv.xlsx"]))
+        df_sch = read_df(file_map[sch_f], sch_f)
         tc = [c for c in df_sch.columns if all(x not in str(c) for x in ["Date", "Day", "Unnamed"])]
         for _, row in df_sch.iterrows():
             try:
@@ -270,9 +302,14 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
             except: continue
         upload_logs.append(DatasetUpload(dataset_type="Schedule", table_name="lectures", row_count=len(df_sch)))
 
-    if any("agenda" in k for k in file_map):
+    age_f = next((k for k in file_map if "agenda" in k), None)
+    if age_f:
         db.query(Unit).delete()
-        df_ag = pd.read_excel(io.BytesIO(file_map["agenda.csv.xlsx"]), header=1)
+        df_ag = read_df(file_map[age_f], age_f)
+        # Handle agenda header (often starts at row 1)
+        if not age_f.endswith('.csv') and len(df_ag.columns) < 3:
+            df_ag = pd.read_excel(io.BytesIO(file_map[age_f]), header=1)
+        
         for i, row in df_ag.iterrows():
             top = row.get("Topic")
             if not pd.isna(top): db.add(Unit(teacher_id="T01", unit_number=safe_int(row.get("S.No."), i+1), title=str(top), status="Pending", progress=0))
@@ -296,11 +333,14 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
                 "post_communication": "post_communication", "post_engagement": "post_engagement",
                 "post_subject_knowledge": "post_subject_knowledge", "post_confidence": "post_confidence",
                 "post_fluency": "post_fluency", "post_remarks": "post_remarks", "post_status": "post_status",
-                "rag_status": "rag_status", "batch_id": "pre_batch_id"
+                "rag_status": "rag_status", "batch_id": "batch_id",
+                "branch": "branch", "year": "year", "identity_proof": "identity_proof",
+                "start_date": "start_date", "end_date": "end_date"
             }
-            # Special check for post_batch_id if pre_batch_id wasn't found
-            if "post_batch_id" in d and "pre_batch_id" not in d:
-                field_map["batch_id"] = "post_batch_id"
+            # Fallbacks for batch_id from pre/post observation
+            if "batch_id" not in d:
+                if "pre_batch_id" in d: d["batch_id"] = d["pre_batch_id"]
+                elif "post_batch_id" in d: d["batch_id"] = d["post_batch_id"]
             
             for attr, key in field_map.items():
                 if key in d: setattr(st, attr, d[key])
@@ -311,14 +351,16 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
                 dsa_score=d.get("dsa", 0), ml_score=d.get("ml", 0), qa_score=d.get("qa", 0), 
                 projects_score=random.randint(70, 90), mock_interview_score=d.get("mock", 0), 
                 rag_status=d.get("rag_status", "Green"),
-                batch_id=d.get("pre_batch_id") or d.get("post_batch_id"),
+                batch_id=d.get("batch_id") or d.get("pre_batch_id") or d.get("post_batch_id") or default_new_batch,
                 pre_score=d.get("pre_score", 0.0), post_score=d.get("post_score", 0.0),
                 pre_communication=d.get("pre_communication", 0.0), pre_engagement=d.get("pre_engagement", 0.0),
                 pre_subject_knowledge=d.get("pre_subject_knowledge", 0.0), pre_confidence=d.get("pre_confidence", 0.0),
                 pre_fluency=d.get("pre_fluency", 0.0), pre_remarks=d.get("pre_remarks"), pre_status=d.get("pre_status"),
                 post_communication=d.get("post_communication", 0.0), post_engagement=d.get("post_engagement", 0.0),
                 post_subject_knowledge=d.get("post_subject_knowledge", 0.0), post_confidence=d.get("post_confidence", 0.0),
-                post_fluency=d.get("post_fluency", 0.0), post_remarks=d.get("post_remarks"), post_status=d.get("post_status")
+                post_fluency=d.get("post_fluency", 0.0), post_remarks=d.get("post_remarks"), post_status=d.get("post_status"),
+                branch=d.get("branch"), year=d.get("year"), identity_proof=d.get("identity_proof"),
+                start_date=d.get("start_date"), end_date=d.get("end_date")
             )
             new_students.append(st)
             if d.get("email"):
@@ -327,6 +369,24 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
 
     if new_students: db.add_all(new_students)
     if new_users: db.add_all(new_users)
+    
+    # CRITICAL: Flush students FIRST so that Foreign Keys exist for assessments and logs
+    db.flush()
+
+    # Surgical Assessment Clean & Add
+    if students_with_new_assessments:
+        db.query(Assessment).filter(Assessment.student_id.in_(list(students_with_new_assessments))).delete(synchronize_session=False)
+        db.add_all(all_new_assessments)
+
+    # Surgical Attendance Clean & Add
+    if dates_to_clean:
+        upload_student_ids = [s["student_id"] for s in students_to_upsert.values()]
+        db.query(AttendanceLog).filter(
+            AttendanceLog.date.in_(list(dates_to_clean)),
+            AttendanceLog.student_id.in_(upload_student_ids)
+        ).delete(synchronize_session=False)
+        db.add_all(all_new_logs)
+
     if upload_logs: db.add_all(upload_logs)
 
 

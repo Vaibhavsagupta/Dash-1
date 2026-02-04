@@ -46,6 +46,7 @@ ChartJS.register(
 interface StudentAnalytics {
     student_id: string;
     name: string;
+    batch_id?: string;
     prs_score: number;
     rank: number;
     percentile: number;
@@ -373,6 +374,7 @@ export default function StudentProgressionList() {
     const [students, setStudents] = useState<StudentAnalytics[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedBatch, setSelectedBatch] = useState('All');
     const [sortBy, setSortBy] = useState<'rank' | 'prs' | 'name'>('rank');
 
     useEffect(() => {
@@ -400,33 +402,13 @@ export default function StudentProgressionList() {
         fetchData();
     }, []);
 
-    const batchStats = useMemo(() => {
-        if (!students.length) return { dsa: 0, ml: 0, qa: 0, projects: 0, mock: 0, pre: 0, post: 0 };
-
-        const sum = students.reduce((acc, s) => ({
-            dsa: acc.dsa + s.dsa,
-            ml: acc.ml + s.ml,
-            qa: acc.qa + s.qa,
-            projects: acc.projects, // assuming projects score might be missing or raw? s.projects is numeric
-            mock: acc.mock + s.mock,
-            pre: acc.pre + (s.pre_score || 0),
-            post: acc.post + (s.post_score || 0)
-        }), { dsa: 0, ml: 0, qa: 0, projects: 0, mock: 0, pre: 0, post: 0 });
-
-        const n = students.length;
-        return {
-            dsa: Math.round(sum.dsa / n),
-            ml: Math.round(sum.ml / n),
-            qa: Math.round(sum.qa / n),
-            projects: 0, // Mock for now if not used in radar avg
-            mock: Math.round(sum.mock / n),
-            pre: parseFloat((sum.pre / n).toFixed(1)),
-            post: parseFloat((sum.post / n).toFixed(1))
-        };
-    }, [students]);
-
     const filteredStudents = useMemo(() => {
         let result = [...students];
+
+        // Filter by Batch
+        if (selectedBatch !== 'All') {
+            result = result.filter(s => s.batch_id === selectedBatch);
+        }
 
         // Filter
         if (searchTerm) {
@@ -446,7 +428,32 @@ export default function StudentProgressionList() {
         });
 
         return result;
-    }, [students, searchTerm, sortBy]);
+    }, [students, searchTerm, sortBy, selectedBatch]);
+
+    const batchStats = useMemo(() => {
+        if (!filteredStudents.length) return { dsa: 0, ml: 0, qa: 0, projects: 0, mock: 0, pre: 0, post: 0 };
+
+        const sum = filteredStudents.reduce((acc, s) => ({
+            dsa: acc.dsa + s.dsa,
+            ml: acc.ml + s.ml,
+            qa: acc.qa + s.qa,
+            projects: acc.projects || 0, // assuming projects score might be missing or raw? s.projects is numeric
+            mock: acc.mock + s.mock,
+            pre: acc.pre + (s.pre_score || 0),
+            post: acc.post + (s.post_score || 0)
+        }), { dsa: 0, ml: 0, qa: 0, projects: 0, mock: 0, pre: 0, post: 0 });
+
+        const n = filteredStudents.length;
+        return {
+            dsa: Math.round(sum.dsa / n),
+            ml: Math.round(sum.ml / n),
+            qa: Math.round(sum.qa / n),
+            projects: 0, // Mock for now if not used in radar avg
+            mock: Math.round(sum.mock / n),
+            pre: parseFloat((sum.pre / n).toFixed(1)),
+            post: parseFloat((sum.post / n).toFixed(1))
+        };
+    }, [filteredStudents]);
 
     if (loading) {
         return (
@@ -473,6 +480,18 @@ export default function StudentProgressionList() {
                     />
                 </div>
 
+                <div className="flex bg-slate-700/50 p-1 rounded-xl border border-slate-700">
+                    {['All', 'Batch 1', 'Batch 2', 'Batch 3'].map((b) => (
+                        <button
+                            key={b}
+                            onClick={() => setSelectedBatch(b)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedBatch === b ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            {b}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-400 font-medium hidden md:block">Sort by:</span>
                     <div className="flex bg-slate-700/50 p-1 rounded-xl border border-slate-700">
@@ -496,10 +515,10 @@ export default function StudentProgressionList() {
                         </button>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Grid */}
-            <motion.div
+            < motion.div
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
@@ -517,17 +536,19 @@ export default function StudentProgressionList() {
                         </motion.div>
                     ))}
                 </AnimatePresence>
-            </motion.div>
+            </motion.div >
 
-            {filteredStudents.length === 0 && (
-                <div className="text-center py-20">
-                    <div className="mx-auto h-24 w-24 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                        <Search size={40} className="text-slate-600" />
+            {
+                filteredStudents.length === 0 && (
+                    <div className="text-center py-20">
+                        <div className="mx-auto h-24 w-24 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                            <Search size={40} className="text-slate-600" />
+                        </div>
+                        <h3 className="text-lg font-medium text-slate-200">No students found</h3>
+                        <p className="text-slate-500">Try adjusting your search terms</p>
                     </div>
-                    <h3 className="text-lg font-medium text-slate-200">No students found</h3>
-                    <p className="text-slate-500">Try adjusting your search terms</p>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

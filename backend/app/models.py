@@ -41,6 +41,11 @@ class Student(Base):
     batch_id = Column(String, nullable=True, index=True)
     fees_paid = Column(Boolean, default=False)
     external_certifications = Column(Integer, default=0)
+
+    # Personal/Academic Details
+    branch = Column(String, nullable=True)
+    year = Column(String, nullable=True)
+    identity_proof = Column(String, nullable=True) # Aadhar/PAN
     
     # Progression Data
     pre_score = Column(Float, default=0.0)
@@ -214,3 +219,10 @@ class Admin(Base):
     approved_by = Column(String, nullable=True) # Could link to another admin ID
     approved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+    
+    key = Column(String, primary_key=True)
+    value = Column(String, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -11,6 +11,7 @@ export default function ManageData() {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<any>({});
+    const [selectedBatch, setSelectedBatch] = useState('All');
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -47,7 +48,8 @@ export default function ManageData() {
             ml_score: student.ml_score,
             qa_score: student.qa_score,
             projects_score: student.projects_score,
-            mock_interview_score: student.mock_interview_score
+            mock_interview_score: student.mock_interview_score,
+            batch_id: student.batch_id
         });
     };
 
@@ -76,7 +78,7 @@ export default function ManageData() {
 
     const [isAdding, setIsAdding] = useState(false);
     const [newStudent, setNewStudent] = useState({
-        student_id: '', name: '', attendance: 0, dsa_score: 0, ml_score: 0, qa_score: 0, projects_score: 0, mock_interview_score: 0
+        student_id: '', name: '', attendance: 0, dsa_score: 0, ml_score: 0, qa_score: 0, projects_score: 0, mock_interview_score: 0, batch_id: 'Batch 1'
     });
 
     const handleAdd = async () => {
@@ -98,7 +100,7 @@ export default function ManageData() {
             if (res.ok) {
                 setIsAdding(false);
                 setNewStudent({
-                    student_id: '', name: '', attendance: 0, dsa_score: 0, ml_score: 0, qa_score: 0, projects_score: 0, mock_interview_score: 0
+                    student_id: '', name: '', attendance: 0, dsa_score: 0, ml_score: 0, qa_score: 0, projects_score: 0, mock_interview_score: 0, batch_id: 'Batch 1'
                 });
                 fetchStudents();
             } else {
@@ -221,10 +223,14 @@ export default function ManageData() {
         reader.readAsText(file);
     };
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.student_id.toLowerCase().includes(search.toLowerCase())
-    );
+    const batches = ['All', ...Array.from(new Set(students.map(s => s.batch_id || 'N/A')))];
+
+    const filteredStudents = students.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+            s.student_id.toLowerCase().includes(search.toLowerCase());
+        const matchesBatch = selectedBatch === 'All' || (s.batch_id || 'N/A') === selectedBatch;
+        return matchesSearch && matchesBatch;
+    });
 
     return (
         <div className="text-slate-100">
@@ -253,15 +259,24 @@ export default function ManageData() {
                 </div>
             </header>
 
-            <div className="mb-6 relative">
-                <Search className="absolute left-3 top-3 text-slate-400" size={20} />
-                <input
-                    type="text"
-                    placeholder="Search by name or ID..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500"
-                />
+            <div className="mb-6 flex gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 text-slate-400" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Search by name or ID..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white"
+                    />
+                </div>
+                <select
+                    value={selectedBatch}
+                    onChange={(e) => setSelectedBatch(e.target.value)}
+                    className="px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white font-medium"
+                >
+                    {batches.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
             </div>
 
             <div className="glass rounded-xl border border-slate-700 overflow-hidden">
@@ -276,6 +291,7 @@ export default function ManageData() {
                             <th className="p-4">QA</th>
                             <th className="p-4">Proj</th>
                             <th className="p-4">Mock</th>
+                            <th className="p-4">Batch</th>
                             <th className="p-4">Action</th>
                         </tr>
                     </thead>
@@ -290,6 +306,15 @@ export default function ManageData() {
                                 <td className="p-2"><Input name="qa_score" val={newStudent.qa_score} set={setNewStudent} /></td>
                                 <td className="p-2"><Input name="projects_score" val={newStudent.projects_score} set={setNewStudent} /></td>
                                 <td className="p-2"><Input name="mock_interview_score" val={newStudent.mock_interview_score} set={setNewStudent} /></td>
+                                <td className="p-2">
+                                    <input
+                                        type="text"
+                                        value={newStudent.batch_id}
+                                        onChange={(e) => setNewStudent({ ...newStudent, batch_id: e.target.value })}
+                                        className="w-24 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none text-white"
+                                        placeholder="Batch"
+                                    />
+                                </td>
                                 <td className="p-4">
                                     <button onClick={handleAdd} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm">
                                         Save
@@ -310,6 +335,14 @@ export default function ManageData() {
                                         <td className="p-2"><Input name="qa_score" val={formData.qa_score} set={setFormData} /></td>
                                         <td className="p-2"><Input name="projects_score" val={formData.projects_score} set={setFormData} /></td>
                                         <td className="p-2"><Input name="mock_interview_score" val={formData.mock_interview_score} set={setFormData} /></td>
+                                        <td className="p-2">
+                                            <input
+                                                type="text"
+                                                value={formData.batch_id || ''}
+                                                onChange={(e) => setFormData({ ...formData, batch_id: e.target.value })}
+                                                className="w-24 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none text-white"
+                                            />
+                                        </td>
                                         <td className="p-4">
                                             <button onClick={() => handleSave(student.student_id)} className="text-green-400 hover:text-green-300">
                                                 <Save size={20} />
@@ -324,6 +357,11 @@ export default function ManageData() {
                                         <td className="p-4">{student.qa_score}</td>
                                         <td className="p-4">{student.projects_score}</td>
                                         <td className="p-4">{student.mock_interview_score}</td>
+                                        <td className="p-4">
+                                            <span className="px-2 py-1 rounded bg-slate-700 text-xs font-bold text-slate-300">
+                                                {student.batch_id || 'N/A'}
+                                            </span>
+                                        </td>
                                         <td className="p-4">
                                             <button onClick={() => handleEdit(student)} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
                                                 Edit

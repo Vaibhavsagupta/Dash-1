@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base, SessionLocal
 from sqlalchemy import text
-from .routers import auth, analytics, updates, attendance, dashboard, assignments, automation, autograder, ingest, ai_report, admin_workflow
+from .routers import auth, analytics, updates, attendance, dashboard, assignments, automation, autograder, ingest, ai_report, admin_workflow, settings
 
 # Create tables
 try:
@@ -74,6 +74,7 @@ app.include_router(autograder.router)
 app.include_router(ingest.router)
 app.include_router(ai_report.router)
 app.include_router(admin_workflow.router)
+app.include_router(settings.router)
 
 @app.get("/")
 def read_root():
