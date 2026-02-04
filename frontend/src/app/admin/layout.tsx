@@ -36,7 +36,7 @@ export default function AdminLayout({
             <Navbar />
             <div className="flex bg-[#0f172a] min-h-screen pt-[72px]">
                 <AdminSidebar />
-                <main className="flex-1 ml-64 p-8 overflow-y-auto">
+                <main className="flex-1 p-4 md:ml-64 md:p-8 overflow-y-auto">
                     {children}
                 </main>
             </div>

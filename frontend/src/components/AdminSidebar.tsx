@@ -36,7 +36,7 @@ export default function AdminSidebar() {
     };
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-[#1e293b] border-r border-slate-700 z-50 flex flex-col">
+        <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-[#1e293b] border-r border-slate-700 z-50 flex-col">
             <div className="p-6">
                 <div className="flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">

@@ -1,7 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine, Base
+from .database import engine, Base, SessionLocal
+from sqlalchemy import text
 from .routers import auth, analytics, updates, attendance, dashboard, assignments, automation, autograder, ingest, ai_report, admin_workflow
 
 # Create tables
@@ -53,7 +54,13 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": str(e)}
 
 
 app.include_router(auth.router)

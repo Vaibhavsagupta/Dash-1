@@ -10,7 +10,8 @@ import {
     Calendar,
     LogOut,
     Menu,
-    X
+    X,
+    Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -54,9 +55,22 @@ export default function Navbar() {
         { name: 'Batch Analysis', path: '/admin/batch-analytics', icon: BarChart3, role: 'admin' },
         { name: 'Student Progression', path: '/admin/progression', icon: TrendingUp, role: 'admin' },
         { name: 'Training Agenda', path: '/agenda', icon: Calendar },
+        // Mobile-only Admin Links (Sidebar replacements)
+        { name: 'Manage Students', path: '/admin/manage', icon: LayoutDashboard, role: 'admin', mobileOnly: true },
+        { name: 'Manage Teachers', path: '/admin/manage_teachers', icon: LayoutDashboard, role: 'admin', mobileOnly: true },
+        { name: 'Approvals', path: '/admin/approvals', icon: LayoutDashboard, role: 'admin', mobileOnly: true },
+        { name: 'Data Ingestion', path: '/admin/ingestion', icon: LayoutDashboard, role: 'admin', mobileOnly: true },
+        { name: 'Settings', path: '/admin/settings', icon: LayoutDashboard, role: 'admin', mobileOnly: true },
+
+        // Mobile-only Teacher Links (Sidebar replacements)
+        { name: 'Attendance', path: '/teacher/attendance', icon: Users, role: 'teacher', mobileOnly: true },
+        { name: 'Assignments', path: '/teacher/assignments', icon: BarChart3, role: 'teacher', mobileOnly: true },
+        { name: 'Progression', path: '/teacher/progression', icon: TrendingUp, role: 'teacher', mobileOnly: true },
+        { name: 'Leaderboard', path: '/teacher/leaderboard', icon: TrendingUp, role: 'teacher', mobileOnly: true },
+        { name: 'Manage Data', path: '/teacher/manage', icon: LayoutDashboard, role: 'teacher', mobileOnly: true },
     ];
 
-    // Filter links based on role if necessary, but request says "Global"
+    // Filter links based on role
     const filteredLinks = navLinks.filter(link => !link.role || link.role === userRole);
 
     return (
@@ -68,7 +82,7 @@ export default function Navbar() {
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-1 bg-slate-800/20 p-1 rounded-2xl border border-slate-700/30">
-                    {filteredLinks.map((link) => {
+                    {filteredLinks.filter(l => !l.mobileOnly).map((link) => {
                         const isActive = pathname === link.path;
                         return (
                             <Link

@@ -14,8 +14,16 @@ engine_args = {
 }
 
 # If using PostgreSQL (Supabase), disable prepared statements to support Transaction Pooler (Port 6543)
+# If using PostgreSQL (Supabase/Render), configure connection args
 if "postgres" in settings.DATABASE_URL:
-    engine_args["connect_args"] = {"prepare_threshold": None}
+    connect_args = {"prepare_threshold": None}
+    
+    # Force SSL for cloud databases (security best practice)
+    # We skip this for localhost to allow local testing without SSL certificates
+    if "localhost" not in settings.DATABASE_URL and "127.0.0.1" not in settings.DATABASE_URL:
+        connect_args["sslmode"] = "require"
+        
+    engine_args["connect_args"] = connect_args
 
 engine = create_engine(
     settings.DATABASE_URL,

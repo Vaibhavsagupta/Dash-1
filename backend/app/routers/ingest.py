@@ -6,7 +6,7 @@ import io
 import os
 import random
 from ..database import get_db
-from ..models import User, UserRole, Student, Teacher, AttendanceLog, AttendanceStatus, Lecture, Unit, Alert, Submission, DatasetUpload
+from ..models import User, UserRole, Student, Teacher, AttendanceLog, AttendanceStatus, Lecture, Unit, Alert, Submission, DatasetUpload, Assessment
 
 from ..auth import get_password_hash, get_current_active_admin
 from ..core.dynamic_tables import create_dynamic_table
@@ -37,6 +37,8 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
     Preserves all other data ("previous data") for non-uploaded sectors.
     """
     file_map = {}
+    print("Received bulk-upload request")
+    print(f"Processing {len(files)} files")
     for file in files:
         name = file.filename.lower()
         content = await file.read()
@@ -90,6 +92,7 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
     # 2. Assessments
     ass_f = next((k for k in file_map if "assessment" in k), None)
     if ass_f:
+        df_ass = pd.read_excel(io.BytesIO(file_map[ass_f]))
         all_new_assessments = []
         students_with_new_assessments = set()
 
@@ -366,5 +369,3 @@ async def ingest_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
     content = await file.read()
     # (Simplified for brevity)
     return {"message": "Sync complete"}
-
-
