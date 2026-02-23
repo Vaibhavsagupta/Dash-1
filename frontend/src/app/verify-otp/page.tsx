@@ -1,23 +1,32 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 
 function VerifyOTPContent() {
+    const [mounted, setMounted] = useState(false)
     const [otp, setOtp] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [resending, setResending] = useState(false)
     const router = useRouter()
     const searchParams = useSearchParams()
-    const email = searchParams.get("email")
+
+    // Move email extraction inside useEffect or use it conditionally
+    const email = mounted ? searchParams.get("email") : null
 
     useEffect(() => {
-        if (!email) {
+        setMounted(true)
+    }, [])
+
+    useEffect(() => {
+        if (mounted && !email) {
             router.push("/login")
         }
-    }, [email, router])
+    }, [mounted, email, router])
 
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -69,6 +78,14 @@ function VerifyOTPContent() {
         } finally {
             setResending(false)
         }
+    }
+
+    if (!mounted) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#0F172A]">
+                <div className="text-white animate-pulse">Initializing...</div>
+            </div>
+        )
     }
 
     return (
