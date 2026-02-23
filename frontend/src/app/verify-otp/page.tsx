@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 
-export default function VerifyOTPPage() {
+function VerifyOTPContent() {
     const [otp, setOtp] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
@@ -130,5 +130,17 @@ export default function VerifyOTPPage() {
                 </div>
             </motion.div>
         </div>
+    )
+}
+
+export default function VerifyOTPPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0F172A]">
+                <div className="text-white animate-pulse">Loading verification...</div>
+            </div>
+        }>
+            <VerifyOTPContent />
+        </Suspense>
     )
 }
