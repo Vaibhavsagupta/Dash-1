@@ -45,3 +45,30 @@ def approve_user(
         
     db.commit()
     return {"message": f"User {user.email} {'approved' if request.approve else 'denied'}"}
+
+@router.post("/approve-all")
+def approve_all_users(
+    request: schemas.BulkApprovalRequest,
+    db: Session = Depends(database.get_db),
+    current_admin: models.User = Depends(auth.get_current_active_admin)
+):
+    """Approve all users in a specific list"""
+    users = db.query(models.User).filter(models.User.user_id.in_(request.user_ids)).all()
+    
+    count = 0
+    for user in users:
+        if not user.approved:
+            user.approved = True
+            user.approved_by = current_admin.user_id
+            user.approved_at = datetime.utcnow()
+            
+            if user.role == models.UserRole.admin:
+                admin_entry = db.query(models.Admin).filter(models.Admin.email == user.email).first()
+                if admin_entry:
+                    admin_entry.approved = True
+                    admin_entry.approved_by = current_admin.user_id
+                    admin_entry.approved_at = datetime.utcnow()
+            count += 1
+            
+    db.commit()
+    return {"message": f"Successfully approved {count} users"}

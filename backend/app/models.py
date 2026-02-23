@@ -24,6 +24,11 @@ class User(Base):
     approved_by = Column(String, ForeignKey("users.user_id"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # OTP Verification fields
+    otp = Column(String(6), nullable=True)
+    otp_expiry = Column(DateTime(timezone=True), nullable=True)
+    is_verified = Column(Boolean, default=False)
 
 class Student(Base):
     __tablename__ = "students"

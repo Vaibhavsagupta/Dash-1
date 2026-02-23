@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   keywords: ["Student dashboard software India", "Coaching center analytics tool", "AI performance tracking system", "Education ERP", "Student performance prediction"],
 };
 
+import Providers from "@/components/Providers";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable}`} style={{ fontFamily: 'var(--font-outfit), sans-serif' }} suppressHydrationWarning={true}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

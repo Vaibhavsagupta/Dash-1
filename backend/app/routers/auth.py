@@ -66,3 +66,52 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+@router.post("/send-otp")
+def send_otp(request: schemas.OTPRequest, db: Session = Depends(database.get_db)):
+    import random
+    from datetime import datetime, timedelta
+    
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    otp = str(random.randint(100000, 999999))
+    user.otp = otp
+    user.otp_expiry = datetime.utcnow() + timedelta(minutes=10)
+    db.commit()
+    
+    # In a real app, you'd call an email service here.
+    # For now, we'll just return it or log it if in dev.
+    print(f"OTP for {request.email}: {otp}")
+    
+    return {"message": "OTP sent successfully"}
+
+@router.post("/verify-otp")
+def verify_otp(request: schemas.OTPVerify, db: Session = Depends(database.get_db)):
+    from datetime import datetime
+    
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.otp != request.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+    if user.otp_expiry < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="OTP expired")
+        
+    user.is_verified = True
+    user.otp = None # Clear OTP after verification
+    db.commit()
+    
+    return {"message": "Email verified successfully"}
+
+@router.get("/user-status")
+def get_user_status(email: str, db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        # Create user if not exists (for Google OAuth flow)
+        # In a real app, you might handle this in the register flow
+        return {"is_verified": False, "exists": False}
+    return {"is_verified": user.is_verified, "exists": True}

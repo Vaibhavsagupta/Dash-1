@@ -2,7 +2,9 @@
 import { API_BASE_URL } from '@/lib/api';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import styles from './login.module.css';
+import { Clock } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -55,7 +57,14 @@ export default function LoginPage() {
                     <p className={styles.subtitle}>Enter your credentials to access the portal</p>
                 </div>
 
-                {error && <div className={styles.error}>{error}</div>}
+                {error && (
+                    <div className={`${styles.error} flex items-center gap-2`}>
+                        {error === 'User account not approved' && <Clock size={16} className="text-amber-500" />}
+                        <span>{error === 'User account not approved'
+                            ? "Your account is still pending admin approval. Please check back later."
+                            : error}</span>
+                    </div>
+                )}
 
                 <form onSubmit={handleLogin}>
                     <div className="form-group">
@@ -88,6 +97,21 @@ export default function LoginPage() {
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>
+
+                <div className="flex items-center my-6">
+                    <div className="flex-grow border-t border-white/10"></div>
+                    <span className="mx-4 text-slate-500 text-sm">OR</span>
+                    <div className="flex-grow border-t border-white/10"></div>
+                </div>
+
+                <button
+                    onClick={() => signIn("google")}
+                    type="button"
+                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 rounded-lg transition-all shadow-lg"
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                    Sign in with Google
+                </button>
 
                 <div className={styles.footer}>
                     <span>Don't have an account? </span>

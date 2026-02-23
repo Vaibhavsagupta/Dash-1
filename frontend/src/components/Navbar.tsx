@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -21,6 +22,7 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [pendingCount, setPendingCount] = useState(0);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -31,6 +33,33 @@ export default function Navbar() {
         // Get user role for dynamic routing
         const role = localStorage.getItem('user_role');
         setUserRole(role);
+
+        const fetchPendingCount = async () => {
+            if (role !== 'admin') return;
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
+
+                const res = await fetch(`${API_BASE_URL}/admin/pending-approvals`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setPendingCount(data.length);
+                }
+            } catch (err) {
+                console.error("Navbar: Failed to fetch pending count", err);
+            }
+        };
+
+        if (role === 'admin') {
+            fetchPendingCount();
+            const interval = setInterval(fetchPendingCount, 30000);
+            return () => {
+                window.removeEventListener('scroll', handleScroll);
+                clearInterval(interval);
+            };
+        }
 
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -140,13 +169,24 @@ export default function Navbar() {
                                     key={link.name}
                                     href={link.path}
                                     onClick={() => setIsOpen(false)}
-                                    className={`flex items-center gap-3 p-4 rounded-2xl ${pathname === link.path
+                                    className={`flex items-center gap-3 p-4 rounded-2xl relative ${pathname === link.path
                                         ? 'bg-indigo-600 text-white'
                                         : 'bg-slate-800/30 text-slate-400'
                                         }`}
                                 >
                                     <link.icon size={20} />
                                     <span className="font-semibold">{link.name}</span>
+                                    {link.name === 'Approvals' && pendingCount > 0 && (
+                                        <div className="ml-auto flex items-center gap-2">
+                                            <div className="relative">
+                                                <div className="absolute inset-0 bg-red-500 rounded-full animate-ping" />
+                                                <div className="w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0f172a]" />
+                                            </div>
+                                            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+                                                {pendingCount}
+                                            </span>
+                                        </div>
+                                    )}
                                 </Link>
                             ))}
                             <button

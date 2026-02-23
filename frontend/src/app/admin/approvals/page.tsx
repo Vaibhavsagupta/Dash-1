@@ -106,6 +106,39 @@ export default function ApprovalsPage() {
         }
     };
 
+    const handleApproveAll = async () => {
+        const userIds = filteredUsers.map(u => u.user_id);
+        if (userIds.length === 0) return;
+
+        if (!confirm(`Are you sure you want to approve all ${userIds.length} ${activeTab}s?`)) return;
+
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                alert("No access token found. Please log in.");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE_URL}/admin/approve-all`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ user_ids: userIds })
+            });
+
+            if (res.ok) {
+                setUsers(prev => prev.filter(u => !userIds.includes(u.user_id)));
+            } else {
+                alert("Failed to process bulk approval");
+            }
+        } catch (error) {
+            console.error("Error processing bulk approval", error);
+            alert("An error occurred");
+        }
+    };
+
     const filteredUsers = users.filter(u => u.role === activeTab);
 
     return (
@@ -123,27 +156,39 @@ export default function ApprovalsPage() {
                 </div>
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-4 mb-8 bg-slate-800/50 p-1.5 rounded-2xl border border-slate-700 w-fit">
-                {(['student', 'teacher', 'admin'] as const).map(tab => (
+            {/* Tabs & Bulk Action */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div className="flex gap-4 bg-slate-800/50 p-1.5 rounded-2xl border border-slate-700 w-fit">
+                    {(['student', 'teacher', 'admin'] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-6 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${activeTab === tab
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                                }`}
+                        >
+                            {tab === 'student' && <GraduationCap size={18} />}
+                            {tab === 'teacher' && <School size={18} />}
+                            {tab === 'admin' && <ShieldCheck size={18} />}
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)}s
+                            <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === tab ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-400'
+                                }`}>
+                                {users.filter(u => u.role === tab).length}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {filteredUsers.length > 0 && (
                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-6 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${activeTab === tab
-                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                            }`}
+                        onClick={handleApproveAll}
+                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-emerald-600/20 border border-emerald-500/20 w-full sm:w-auto justify-center"
                     >
-                        {tab === 'student' && <GraduationCap size={18} />}
-                        {tab === 'teacher' && <School size={18} />}
-                        {tab === 'admin' && <ShieldCheck size={18} />}
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}s
-                        <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === tab ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-400'
-                            }`}>
-                            {users.filter(u => u.role === tab).length}
-                        </span>
+                        <CheckCircle size={18} />
+                        Approve All {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}s
                     </button>
-                ))}
+                )}
             </div>
 
             {/* List */}

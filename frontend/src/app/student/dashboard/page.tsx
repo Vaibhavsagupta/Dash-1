@@ -46,6 +46,7 @@ export default function StudentDashboard() {
     const router = useRouter();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -64,9 +65,13 @@ export default function StudentDashboard() {
                 if (res.ok) {
                     const result = await res.json();
                     setData(result);
+                } else {
+                    const err = await res.json();
+                    setError(err.detail || "Failed to load dashboard data");
                 }
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
+                setError("An unexpected error occurred while loading your dashboard.");
             } finally {
                 setLoading(false);
             }
@@ -75,10 +80,27 @@ export default function StudentDashboard() {
         fetchData();
     }, [router]);
 
-    if (loading || !data) {
+    if (loading) {
         return (
             <div className="flex justify-center items-center h-screen bg-[#0f172a] text-white">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+            </div>
+        );
+    }
+
+    if (error || !data) {
+        return (
+            <div className="flex flex-col justify-center items-center h-screen bg-[#0f172a] text-white p-4">
+                <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-3xl max-w-md text-center">
+                    <h2 className="text-2xl font-bold text-red-500 mb-4">Dashboard Error</h2>
+                    <p className="text-slate-400 mb-8">{error || "No data available. This might happen if your account is not correctly linked to a student record."}</p>
+                    <button
+                        onClick={() => router.push('/login')}
+                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all"
+                    >
+                        Return to Login
+                    </button>
+                </div>
             </div>
         );
     }

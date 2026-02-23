@@ -362,9 +362,15 @@ export default function ManageData() {
                                                 {student.batch_id || 'N/A'}
                                             </span>
                                         </td>
-                                        <td className="p-4">
+                                        <td className="p-4 flex gap-3">
                                             <button onClick={() => handleEdit(student)} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
                                                 Edit
+                                            </button>
+                                            <button
+                                                onClick={() => router.push(`/admin/student/${student.student_id}`)}
+                                                className="text-sky-400 hover:text-sky-300 text-sm font-medium border border-sky-400/30 px-2 py-0.5 rounded-md hover:bg-sky-400/10 transition"
+                                            >
+                                                View
                                             </button>
                                         </td>
                                     </>

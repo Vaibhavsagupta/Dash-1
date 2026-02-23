@@ -14,6 +14,8 @@
     "framer-motion": "^12.26.2",
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
+    "next-auth": "^4.24.13",
+    "nodemailer": "^7.0.13",
     "postcss": "^8.4.31",
     "react": "19.2.3",
     "react-chartjs-2": "^5.3.1",
@@ -21,7 +23,9 @@
     "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
+    "@types/next-auth": "^3.13.0",
     "@types/node": "^20.19.30",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

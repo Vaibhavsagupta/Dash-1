@@ -31,6 +31,9 @@ class UserApprovalRequest(BaseModel):
     user_id: str
     approve: bool
 
+class BulkApprovalRequest(BaseModel):
+    user_ids: list[str]
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -40,6 +43,13 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
+
+class OTPRequest(BaseModel):
+    email: str
+
+class OTPVerify(BaseModel):
+    email: str
+    otp: str
 
 class StudentUpdate(BaseModel):
     attendance: Optional[int] = None

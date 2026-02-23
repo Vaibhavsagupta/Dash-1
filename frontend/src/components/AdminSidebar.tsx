@@ -1,5 +1,6 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -29,6 +30,31 @@ const menuItems = [
 export default function AdminSidebar() {
     const pathname = usePathname();
     const router = useRouter();
+    const [pendingCount, setPendingCount] = useState(0);
+
+    useEffect(() => {
+        const fetchPendingCount = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
+
+                const res = await fetch(`${API_BASE_URL}/admin/pending-approvals`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setPendingCount(data.length);
+                }
+            } catch (err) {
+                console.error("Failed to fetch pending count", err);
+            }
+        };
+
+        fetchPendingCount();
+        // Check every 30 seconds
+        const interval = setInterval(fetchPendingCount, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -59,10 +85,21 @@ export default function AdminSidebar() {
                             >
                                 <item.icon size={20} className={isActive ? 'text-white' : 'group-hover:text-indigo-400'} />
                                 <span className="font-medium">{item.name}</span>
+                                {item.name === 'Approvals' && pendingCount > 0 && (
+                                    <div className="ml-auto flex items-center">
+                                        <div className="relative">
+                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                                            <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                        </div>
+                                        <span className="ml-2 bg-red-500/20 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-red-500/30">
+                                            {pendingCount}
+                                        </span>
+                                    </div>
+                                )}
                                 {isActive && (
                                     <motion.div
                                         layoutId="active-pill"
-                                        className="ml-auto w-1.5 h-1.5 rounded-full bg-white"
+                                        className={`ml-auto w-1.5 h-1.5 rounded-full bg-white ${item.name === 'Approvals' && pendingCount > 0 ? 'hidden' : ''}`}
                                     />
                                 )}
                             </Link>

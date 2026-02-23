@@ -6,6 +6,80 @@ from typing import Optional
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
+@router.get("/me")
+def get_analytics_me(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user_obj)
+):
+    if current_user.role == models.UserRole.student:
+        student = db.query(models.Student).filter(models.Student.student_id == current_user.linked_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Student record not found")
+        
+        # PRS Calculation
+        prs_score = calculate_prs(student)
+        
+        # Rank and Percentile
+        all_students = db.query(models.Student).all()
+        student_prs = []
+        for s in all_students:
+            student_prs.append((s.student_id, calculate_prs(s)))
+        
+        student_prs.sort(key=lambda x: x[1], reverse=True)
+        total_students = len(all_students)
+        
+        rank = 0
+        for i, (sid, score) in enumerate(student_prs):
+            if sid == student.student_id:
+                rank = i + 1
+                break
+        
+        percentile = round(((total_students - rank) / total_students * 100), 1) if total_students > 0 else 0.0
+        
+        return {
+            "student": student,
+            "prs_score": prs_score,
+            "rank": rank,
+            "percentile": percentile,
+            "total_students": total_students,
+            "breakdown": {
+                "dsa": student.dsa_score,
+                "ml": student.ml_score,
+                "qa": student.qa_score,
+                "projects": student.projects_score,
+                "mock": student.mock_interview_score,
+                "attendance": student.attendance
+            }
+        }
+    
+    elif current_user.role == models.UserRole.teacher:
+        teacher = db.query(models.Teacher).filter(models.Teacher.teacher_id == current_user.linked_id).first()
+        if not teacher:
+            raise HTTPException(status_code=404, detail="Teacher record not found")
+        
+        # TEI Calculation
+        tei_score = round(
+            (teacher.avg_improvement or 0) * 0.4 + 
+            (teacher.feedback_score * 20) * 0.3 + 
+            (teacher.content_quality_score * 20) * 0.2 + 
+            (teacher.placement_conversion or 0) * 0.1,
+            1
+        )
+        
+        return {
+            "teacher": teacher,
+            "tei_score": tei_score,
+            "breakdown": {
+                "improvement": teacher.avg_improvement,
+                "feedback": teacher.feedback_score,
+                "quality": teacher.content_quality_score,
+                "conversion": teacher.placement_conversion
+            }
+        }
+    
+    else:
+        raise HTTPException(status_code=403, detail="Role not supported for this endpoint")
+
 @router.get("/student/{student_id}/observations")
 def get_student_observations(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
     # Security check: Students can only see their own data
