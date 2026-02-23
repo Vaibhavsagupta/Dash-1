@@ -10,7 +10,7 @@ class UserRole(str, Enum):
     student = "student"
 
 class UserBase(BaseModel):
-    email: EmailStr
+    email: str
     role: UserRole
     linked_id: Optional[str] = None
 

@@ -10,6 +10,7 @@ import {
     School
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL } from '@/lib/api';
 
 type UserApproval = {
     user_id: string;
@@ -32,7 +33,13 @@ export default function ApprovalsPage() {
     const fetchPendingApprovals = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const apiUrl = 'http://127.0.0.1:7000/admin/pending-approvals';
+            if (!token) {
+                setError("No access token found. Please log in.");
+                setLoading(false);
+                return;
+            }
+
+            const apiUrl = `${API_BASE_URL}/admin/pending-approvals`;
 
             console.log('Fetching from:', apiUrl);
             console.log('Token exists:', !!token);
@@ -74,14 +81,17 @@ export default function ApprovalsPage() {
     const handleApproval = async (userId: string, approve: boolean) => {
         try {
             const token = localStorage.getItem('access_token');
-            const res = await fetch('http://127.0.0.1:7000/admin/approve-user', {
+            if (!token) {
+                alert("No access token found. Please log in.");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE_URL}/admin/approve-user`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                mode: 'cors',
-                credentials: 'include',
                 body: JSON.stringify({ user_id: userId, approve })
             });
 

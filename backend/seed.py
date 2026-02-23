@@ -98,7 +98,7 @@ def seed_real_data():
 
     # --- 2. Load Assessment Scores ---
     print("Loading Assessments...")
-    ass_path = os.path.join(DATA_DIR, "assessment.xlsx")
+    ass_path = os.path.join(DATA_DIR, "assessment 1 2 3.xlsx")
     df_ass = pd.read_excel(ass_path, header=1)
     
     assessments_to_add = []

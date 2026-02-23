@@ -6,8 +6,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
-  title: "Dashboard System",
-  description: "Advanced Role-Based Dashboard",
+  title: "DASH2 | AI-Powered Student Performance Dashboard for Coaching Institutes",
+  description: "A smart analytics dashboard that helps coaching centers track student performance, predict risks with AI, and improve results by 30%.",
+  keywords: ["Student dashboard software India", "Coaching center analytics tool", "AI performance tracking system", "Education ERP", "Student performance prediction"],
 };
 
 export default function RootLayout({
