@@ -50,8 +50,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    print(f"Registering user: {user.email}, role: {user.role}")
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
+        print(f"User already exists: {user.email}")
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = auth.get_password_hash(user.password)
@@ -62,9 +64,11 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
         linked_id=user.linked_id,
         approved=False # Explicitly set to False for Phase 2
     )
+    print(f"Creating new user in DB: {user.email}")
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    print(f"User registered successfully: {new_user.user_id}")
     return new_user
 
 @router.post("/send-otp")

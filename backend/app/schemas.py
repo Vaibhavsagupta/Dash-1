@@ -40,6 +40,10 @@ class Token(BaseModel):
     role: str
     redirect_url: str
 
+class GoogleAuth(BaseModel):
+    id_token: str
+    role: Optional[UserRole] = UserRole.student # Default to student if not specified
+
 class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None

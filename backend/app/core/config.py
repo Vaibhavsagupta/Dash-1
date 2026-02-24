@@ -21,5 +21,6 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440 # 24 hours
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
 
 settings = Settings()
