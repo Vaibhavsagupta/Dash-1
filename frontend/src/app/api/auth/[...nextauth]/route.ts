@@ -2,12 +2,19 @@ import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 
+console.log("[NextAuth] Initializing handler...");
+if (!process.env.NEXTAUTH_SECRET) {
+    console.warn("[NextAuth] WARNING: NEXTAUTH_SECRET is not set!");
+}
+
 const handler = NextAuth({
     providers: [
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        }),
+        ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
+            GoogleProvider({
+                clientId: process.env.GOOGLE_CLIENT_ID,
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            })
+        ] : []),
         CredentialsProvider({
             name: "Credentials",
             credentials: {
@@ -84,10 +91,14 @@ const handler = NextAuth({
             return token
         }
     },
-    secret: process.env.NEXTAUTH_SECRET,
+    session: {
+        strategy: "jwt",
+    },
+    secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-debug-only", // Fallback only if absolutely missing
     pages: {
-        signIn: '/login', // Redirect to custom login page
-    }
+        signIn: '/login',
+    },
+    debug: process.env.NODE_ENV === 'development',
 })
 
 export { handler as GET, handler as POST }
