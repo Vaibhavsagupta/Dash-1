@@ -17,12 +17,15 @@ const handler = NextAuth({
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
+                const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:7000";
+                console.log(`[NextAuth] Attempting login at: ${backendUrl}/auth/login`);
+
                 try {
                     const formData = new URLSearchParams();
                     formData.append('username', credentials.email);
                     formData.append('password', credentials.password);
 
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+                    const res = await fetch(`${backendUrl}/auth/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: formData,
@@ -30,16 +33,21 @@ const handler = NextAuth({
 
                     if (res.ok) {
                         const user = await res.json();
+                        console.log(`[NextAuth] Login successful for: ${credentials.email}`);
                         return {
-                            id: user.access_token, // Store token in ID or separate field
+                            id: user.access_token,
                             email: credentials.email,
                             role: user.role,
                             accessToken: user.access_token,
                             redirectUrl: user.redirect_url
                         };
+                    } else {
+                        const errorData = await res.json().catch(() => ({ detail: "Unknown error" }));
+                        console.error(`[NextAuth] Login failed (${res.status}):`, errorData);
+                        return null;
                     }
-                    return null;
-                } catch (e) {
+                } catch (e: any) {
+                    console.error(`[NextAuth] Connection error to backend:`, e.message);
                     return null;
                 }
             }
