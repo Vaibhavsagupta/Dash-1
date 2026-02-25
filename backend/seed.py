@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, engine
-from app.models import User, UserRole, Base, Student, Teacher, AttendanceLog, AttendanceStatus, Lecture, Unit, Alert, Submission, Assessment, RAGLog
+from app.models import User, UserRole, Base, Student, Teacher, AttendanceLog, AttendanceStatus, Lecture, Unit, Alert, Submission, Assessment, RAGLog, Admin
 from app.auth import get_password_hash
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Student data", "Student data")
@@ -488,13 +488,23 @@ def seed_real_data():
     for admin_email in ["admin@example.com"]:
         if admin_email not in added_emails:
             if not db.query(User).filter(User.email == admin_email).first():
-                db.add(User(email=admin_email, password_hash=get_password_hash("admin"), role=UserRole.admin))
+                db.add(User(email=admin_email, password_hash=get_password_hash("admin"), role=UserRole.admin, approved=True))
             added_emails.add(admin_email)
+            
+    # Permanent Super Admin
+    super_email = "vaibhav@gmail.com"
+    if super_email not in added_emails:
+        if not db.query(User).filter(User.email == super_email).first():
+            db.add(User(email=super_email, password_hash=get_password_hash("Vaibhav"), role=UserRole.admin, approved=True))
+            # Also add to dedicated Admin table for super-admin privileges
+            if not db.query(Admin).filter(Admin.email == super_email).first():
+                db.add(Admin(email=super_email, password=get_password_hash("Vaibhav"), is_super_admin=True, approved=True))
+        added_emails.add(super_email)
             
     for teacher_email in ["teacher@example.com"]:
         if teacher_email not in added_emails:
             if not db.query(User).filter(User.email == teacher_email).first():
-                db.add(User(email=teacher_email, password_hash=get_password_hash("password"), role=UserRole.teacher, linked_id="T01"))
+                db.add(User(email=teacher_email, password_hash=get_password_hash("password"), role=UserRole.teacher, linked_id="T01", approved=True))
             added_emails.add(teacher_email)
 
 

@@ -61,7 +61,7 @@ def get_current_user_obj(token: str = Depends(oauth2_scheme), db: Session = Depe
 
 def get_current_active_admin(user: models.User = Depends(get_current_user_obj), db: Session = Depends(database.get_db)):
     # Phase 1 Requirement: Only specific admins can fetch data
-    allowed_admins = ["admin@college.com", "admin@samatrix.com"]
+    allowed_admins = ["admin@college.com", "admin@samatrix.com", "admin@example.com", "vaibhav@gmail.com"]
     
     if user.role != models.UserRole.admin:
         raise HTTPException(

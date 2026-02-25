@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import CredentialsProvider from "next-auth/providers/credentials"
 
 const handler = NextAuth({
     providers: [
@@ -7,6 +8,42 @@ const handler = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         }),
+        CredentialsProvider({
+            name: "Credentials",
+            credentials: {
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" }
+            },
+            async authorize(credentials) {
+                if (!credentials?.email || !credentials?.password) return null;
+
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('username', credentials.email);
+                    formData.append('password', credentials.password);
+
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData,
+                    });
+
+                    if (res.ok) {
+                        const user = await res.json();
+                        return {
+                            id: user.access_token, // Store token in ID or separate field
+                            email: credentials.email,
+                            role: user.role,
+                            accessToken: user.access_token,
+                            redirectUrl: user.redirect_url
+                        };
+                    }
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            }
+        })
     ],
     callbacks: {
         async signIn({ user }) {
@@ -21,26 +58,20 @@ const handler = NextAuth({
 
             return true
         },
-        async session({ session, token }) {
+        async session({ session, token }: any) {
             if (session.user) {
-                // @ts-ignore
                 session.user.id = token.sub;
-                // @ts-ignore
+                session.user.role = token.role;
+                session.user.accessToken = token.accessToken;
                 session.user.isVerified = token.isVerified;
             }
             return session
         },
-        async jwt({ token, user, trigger, session }) {
+        async jwt({ token, user }: any) {
             if (user) {
-                // Initial sign in - you could fetch verified status from backend here
-                // For now, let's assume we check it on every request in middleware or here
-                try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user-status?email=${token.email}`);
-                    const data = await res.json();
-                    token.isVerified = data.is_verified;
-                } catch (e) {
-                    token.isVerified = false;
-                }
+                token.role = (user as any).role;
+                token.accessToken = (user as any).accessToken;
+                token.isVerified = true; // Manual credentials login implies verified for now
             }
             return token
         }

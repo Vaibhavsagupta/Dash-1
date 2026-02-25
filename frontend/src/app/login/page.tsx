@@ -18,33 +18,54 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
 
-        // Using URLSearchParams for x-www-form-urlencoded which OAuth2PasswordRequestForm expects
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData,
+            const res = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
             });
 
-            if (!res.ok) {
-                const errData = await res.json();
+            if (res?.error) {
+                setError("Invalid credentials or account not approved");
+                setLoading(false);
+                return;
+            }
+
+            // After successful signIn, next-auth creates the session cookie.
+            // However, the existing dashboard pages STILL rely on localStorage for API calls.
+            // To keep compatibility without refactoring every dashboard, we'll still store the token.
+            // Now we need to GET the token. Since next-auth doesn't return it directly in the signIn response easily,
+            // we'll fetch it from our backend again OR assume it's now fine because of the cookie.
+
+            // Actually, we can just do the manual fetch first to get the token, THEN call signIn.
+            // Or better: hit the backend, get token, then use a custom signIn if we had one.
+
+            // Wait! The simplest way to maintain compatibility is:
+            const authRes = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ username: email, password }),
+            });
+
+            if (!authRes.ok) {
+                const errData = await authRes.json();
                 throw new Error(errData.detail || 'Invalid credentials');
             }
 
-            const data = await res.json();
-
-            // Store token safely
+            const data = await authRes.json();
             localStorage.setItem('access_token', data.access_token);
             localStorage.setItem('user_role', data.role);
 
-            router.push(data.redirect_url);
+            // Now call next-auth signIn to establish the session for the middleware
+            await signIn("credentials", {
+                email,
+                password,
+                redirect: true,
+                callbackUrl: data.redirect_url
+            });
+
         } catch (err: any) {
             setError(err.message);
-        } finally {
             setLoading(false);
         }
     };
