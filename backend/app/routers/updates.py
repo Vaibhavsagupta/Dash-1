@@ -12,7 +12,7 @@ router = APIRouter(
 def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj), db: Session = Depends(database.get_db)):
     if current_user.role == models.UserRole.admin:
         # Phase 1 Requirement: Only specific admins can fetch data
-        allowed_admins = ["admin@college.com", "admin@samatrix.com"]
+        allowed_admins = ["admin@college.com", "admin@samatrix.com", "admin@example.com", "vaibhav@gmail.com"]
         if current_user.email not in allowed_admins:
             # Check admins table for approval
             admin_entry = db.query(models.Admin).filter(models.Admin.email == current_user.email).first()

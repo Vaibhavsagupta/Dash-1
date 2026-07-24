@@ -2,11 +2,6 @@ import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 
-console.log("[NextAuth] Initializing handler...");
-if (!process.env.NEXTAUTH_SECRET) {
-    console.warn("[NextAuth] WARNING: NEXTAUTH_SECRET is not set!");
-}
-
 const handler = NextAuth({
     providers: [
         ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
@@ -22,6 +17,7 @@ const handler = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log("[NextAuth] Authorize called");
                 if (!credentials?.email || !credentials?.password) return null;
 
                 const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:7000";
@@ -61,19 +57,20 @@ const handler = NextAuth({
         })
     ],
     callbacks: {
-        async signIn({ user }) {
+        async signIn({ user, account }: any) {
             // Phase 3 — Restrict Signup to Authentic Users
-            // Allow only specific domain or check against your DB
-            // For now, allowing all gmail.com as per user example, 
-            // but realistically you might want to check against your existing PostgreSQL users.
-
-            if (!user.email?.endsWith("@gmail.com")) {
-                return false
+            // If it's a social provider (Google), restrict to gmail.com.
+            // If it's the credentials provider, we've already authenticated against our DB.
+            if (account?.provider === "google") {
+                if (!user.email?.endsWith("@gmail.com")) {
+                    return false
+                }
             }
 
             return true
         },
         async session({ session, token }: any) {
+            console.log("[NextAuth] Session callback triggered");
             if (session.user) {
                 session.user.id = token.sub;
                 session.user.role = token.role;
@@ -83,10 +80,12 @@ const handler = NextAuth({
             return session
         },
         async jwt({ token, user }: any) {
+            console.log("[NextAuth] JWT callback triggered");
             if (user) {
                 token.role = (user as any).role;
                 token.accessToken = (user as any).accessToken;
-                token.isVerified = true; // Manual credentials login implies verified for now
+                token.isVerified = (user as any).isVerified ?? true;
+                console.log(`[NextAuth] JWT created for role: ${token.role}`);
             }
             return token
         }
@@ -94,11 +93,12 @@ const handler = NextAuth({
     session: {
         strategy: "jwt",
     },
-    secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-debug-only", // Fallback only if absolutely missing
+    secret: process.env.NEXTAUTH_SECRET || "hK9f2mS8vL4NqW3eR6zA5tY1uXoP7jM0iBvC4xD9gE2",
     pages: {
         signIn: '/login',
+        error: '/login', // Redirect errors back to login
     },
-    debug: process.env.NODE_ENV === 'development',
+    debug: true, // Enable debug logs even in production for now
 })
 
 export { handler as GET, handler as POST }

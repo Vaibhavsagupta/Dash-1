@@ -231,3 +231,113 @@ class SystemSetting(Base):
     key = Column(String, primary_key=True)
     value = Column(String, nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+# AI-Powered Adaptive Test Models
+class Test(Base):
+    __tablename__ = "tests"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    teacher_id = Column(String, ForeignKey("teachers.teacher_id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    duration = Column(Integer, nullable=False) # in minutes
+    passing_marks = Column(Integer, nullable=False)
+    difficulty = Column(String, nullable=False) # Easy, Medium, Hard
+    approved = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Question(Base):
+    __tablename__ = "questions"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    test_id = Column(String, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_text = Column(Text, nullable=False)
+    question_type = Column(String, nullable=False) # MCQ, Multiple Select, True/False, Fill in the Blank, Short Answer
+    options = Column(Text, nullable=True) # JSON array of options if applicable
+    correct_answer = Column(Text, nullable=False) # string or JSON
+    explanation = Column(Text, nullable=True)
+    difficulty = Column(String, nullable=False) # Easy, Medium, Hard
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    subtopic = Column(String, nullable=True)
+
+class TestAssignment(Base):
+    __tablename__ = "test_assignments"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    test_id = Column(String, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(String, ForeignKey("students.student_id"), nullable=False, index=True)
+    assigned_by = Column(String, ForeignKey("teachers.teacher_id"), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    randomize_questions = Column(Boolean, default=False)
+    randomize_options = Column(Boolean, default=False)
+    allow_retake = Column(Boolean, default=False)
+    show_result_immediately = Column(Boolean, default=True)
+    show_correct_answers = Column(Boolean, default=False)
+    status = Column(String, default="Pending") # Pending, In Progress, Completed, Expired
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class TestAttempt(Base):
+    __tablename__ = "test_attempts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    test_assignment_id = Column(String, ForeignKey("test_assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(String, ForeignKey("students.student_id"), nullable=False, index=True)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    score = Column(Float, nullable=True)
+    percentage = Column(Float, nullable=True)
+    correct_count = Column(Integer, default=0)
+    incorrect_count = Column(Integer, default=0)
+    unanswered_count = Column(Integer, default=0)
+    accuracy = Column(Float, default=0.0)
+    time_taken = Column(Integer, nullable=True) # in seconds
+    tab_switch_count = Column(Integer, default=0)
+    fullscreen_exit_count = Column(Integer, default=0)
+    auto_submitted = Column(Boolean, default=False)
+
+class StudentAnswer(Base):
+    __tablename__ = "student_answers"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    attempt_id = Column(String, ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_id = Column(String, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False, index=True)
+    answer_text = Column(Text, nullable=True) # Selected/typed answer
+    is_correct = Column(Boolean, nullable=True)
+    marked_for_review = Column(Boolean, default=False)
+    saved_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class TestActivityLog(Base):
+    __tablename__ = "test_activity_logs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    attempt_id = Column(String, ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = Column(String, nullable=False) # started, viewed, answered, tab_switched, fullscreen_exited, submitted, auto_submitted, time_expired
+    details = Column(Text, nullable=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+class StudentTopicPerformance(Base):
+    __tablename__ = "student_topic_performance"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    student_id = Column(String, ForeignKey("students.student_id"), nullable=False, index=True)
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    total_questions = Column(Integer, default=0)
+    correct_questions = Column(Integer, default=0)
+    accuracy = Column(Float, default=0.0)
+
+class SavedSyllabus(Base):
+    __tablename__ = "saved_syllabi"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    teacher_id = Column(String, ForeignKey("teachers.teacher_id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+

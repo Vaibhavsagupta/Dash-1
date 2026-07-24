@@ -37,7 +37,8 @@ def seed_real_data():
     db = SessionLocal()
 
     # --- 0. Clear Existing Data ---
-    print(f"Clearing existing data from {engine.url.drivername}...")
+    db_type = engine.url.drivername
+    print(f"Clearing existing data from {db_type} database...")
     try:
         # Delete in reverse order of foreign key dependencies
         db.query(RAGLog).delete()
@@ -48,7 +49,7 @@ def seed_real_data():
         db.query(Lecture).delete()
         db.query(Unit).delete()
         db.query(Student).delete()
-        db.query(User).filter(User.role == UserRole.student).delete()
+        db.query(User).delete()
         # Keep admin and teacher users to avoid lockout, or re-add them later
         db.commit()
         print("Data cleared successfully.")
@@ -137,6 +138,7 @@ def seed_real_data():
                 percentage=float((tech + math + logic + verbal) / 4.0)
             ))
 
+    
     for index, row in df_ass.iterrows():
         process_block(row, "Name", "Technical", "Verbal", "Maths/Numerical", "Logical Leasoning", "Assessment 1")
         process_block(row, "Name.1", "Technical.1", "Verbal.1", "Maths/Numerical.1", "Logical Leasoning.1", "Assessment 2")
@@ -319,12 +321,24 @@ def seed_real_data():
         df_rag = pd.read_excel(rag_path)
         
         # Identify Columns
+        # Identify Columns
+        df_rag.columns = [str(c).strip() for c in df_rag.columns]
+        # De-duplicate normalized columns to avoid Series ambiguity
+        cols = []
+        for c in df_rag.columns:
+            new_c = c
+            counter = 1
+            while new_c in cols:
+                new_c = f"{c}.{counter}"
+                counter += 1
+            cols.append(new_c)
+        df_rag.columns = cols
+
         name_col_rag = next((c for c in df_rag.columns if "Name" in c), "Name")
         final_rag_col = next((c for c in df_rag.columns if "Final RAG" in str(c) or "RAG Status" in str(c)), None)
         
-        # Identify date columns (assume anything containing a month or date range like 'July', 'Aug', '-')
-        # Excluding known non-date columns
-        non_date_cols = ["S.No.", "Name", "Name ", "Final RAG", "Unnamed", "nan"]
+        # Identify date columns
+        non_date_cols = ["S.No.", "Name", "Name ", "Final RAG", "Unnamed", "nan", "Supabase"]
         date_cols = [
             c for c in df_rag.columns 
             if not any(x in str(c) for x in non_date_cols) and "Unnamed" not in str(c)
@@ -479,23 +493,25 @@ def seed_real_data():
                 email=email,
                 password_hash=get_password_hash("password123"),
                 role=UserRole.student,
-                linked_id=s_id
+                linked_id=s_id,
+                approved=True,
+                is_verified=True
             )
             db.add(user)
             added_emails.add(email)
     
     # Admin/Teacher
-    for admin_email in ["admin@example.com"]:
+    for admin_email in ["admin@example.com", "admin@college.com"]:
         if admin_email not in added_emails:
             if not db.query(User).filter(User.email == admin_email).first():
-                db.add(User(email=admin_email, password_hash=get_password_hash("admin"), role=UserRole.admin, approved=True))
+                db.add(User(email=admin_email, password_hash=get_password_hash("admin"), role=UserRole.admin, approved=True, is_verified=True))
             added_emails.add(admin_email)
             
     # Permanent Super Admin
     super_email = "vaibhav@gmail.com"
     if super_email not in added_emails:
         if not db.query(User).filter(User.email == super_email).first():
-            db.add(User(email=super_email, password_hash=get_password_hash("Vaibhav"), role=UserRole.admin, approved=True))
+            db.add(User(email=super_email, password_hash=get_password_hash("Vaibhav"), role=UserRole.admin, approved=True, is_verified=True))
             # Also add to dedicated Admin table for super-admin privileges
             if not db.query(Admin).filter(Admin.email == super_email).first():
                 db.add(Admin(email=super_email, password=get_password_hash("Vaibhav"), is_super_admin=True, approved=True))
@@ -542,7 +558,7 @@ def seed_real_data():
             db.add(log)
 
     try:
-        print("Committing transaction to Supabase...")
+        print(f"Committing transaction to {db_type}...")
         db.commit()
         print("Database seeding completed.")
     except Exception as e:

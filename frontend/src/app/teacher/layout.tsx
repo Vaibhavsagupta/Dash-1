@@ -37,6 +37,7 @@ export default function TeacherLayout({
         { name: "Assignments", href: "/teacher/assignments", icon: BookOpen },
         { name: "Progression", href: "/teacher/progression", icon: TrendingUp },
         { name: "Leaderboard", href: "/teacher/leaderboard", icon: Trophy },
+        { name: "AI Tests", href: "/teacher/tests", icon: BookOpen },
         { name: "Manage Data", href: "/teacher/manage", icon: Database },
     ];
 

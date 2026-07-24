@@ -10,8 +10,10 @@ router = APIRouter(
 
 @router.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+    print(f"Login attempt: username={form_data.username}, password={form_data.password}")
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user:
+        print(f"User not found: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -20,6 +22,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     verify_result = auth.verify_password(form_data.password, user.password_hash)
     
     if not verify_result:
+        print(f"Password mismatch for user: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

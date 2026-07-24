@@ -392,6 +392,11 @@ export default function StudentProgressionList() {
                     setStudents(data);
                 } else {
                     console.error('Failed to fetch students:', response.statusText);
+                    if (response.status === 401) {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('user_role');
+                        window.location.href = '/login';
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch students', error);

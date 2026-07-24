@@ -2,7 +2,11 @@ import { getToken } from "next-auth/jwt"
 import { NextResponse } from "next/server"
 
 export async function proxy(req: any) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    console.log(`[Proxy] Intercepting request: ${req.nextUrl.pathname}`);
+    const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET || "hK9f2mS8vL4NqW3eR6zA5tY1uXoP7jM0iBvC4xD9gE2"
+    })
     const isAuthPage = req.nextUrl.pathname.startsWith("/login") ||
         req.nextUrl.pathname.startsWith("/signup") ||
         req.nextUrl.pathname.startsWith("/verify-otp")

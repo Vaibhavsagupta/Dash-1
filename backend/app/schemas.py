@@ -182,3 +182,93 @@ class DatasetUploadResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# AI Test Module Schemas
+class QuestionCreate(BaseModel):
+    question_text: str
+    question_type: str
+    options: Optional[list[str]] = None
+    correct_answer: str
+    explanation: Optional[str] = None
+    difficulty: str
+    subject: str
+    topic: str
+    subtopic: Optional[str] = None
+
+class QuestionResponse(QuestionCreate):
+    id: str
+    test_id: str
+
+    class Config:
+        from_attributes = True
+
+class TestCreate(BaseModel):
+    name: str
+    subject: str
+    topic: str
+    description: Optional[str] = None
+    duration: int
+    passing_marks: int
+    difficulty: str
+
+class TestResponse(TestCreate):
+    id: str
+    teacher_id: str
+    approved: bool
+    created_at: datetime
+    questions: Optional[list[QuestionResponse]] = None
+
+    class Config:
+        from_attributes = True
+
+class TestAssignmentCreate(BaseModel):
+    student_ids: list[str]
+    start_date: date
+    end_date: date
+    randomize_questions: bool = False
+    randomize_options: bool = False
+    allow_retake: bool = False
+    show_result_immediately: bool = True
+    show_correct_answers: bool = False
+
+class TestAssignmentResponse(BaseModel):
+    id: str
+    test_id: str
+    student_id: str
+    assigned_by: str
+    start_date: date
+    end_date: date
+    randomize_questions: bool
+    randomize_options: bool
+    allow_retake: bool
+    show_result_immediately: bool
+    show_correct_answers: bool
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class StudentAnswerSubmit(BaseModel):
+    question_id: str
+    answer_text: Optional[str] = None
+    marked_for_review: bool = False
+
+class ActivityLogCreate(BaseModel):
+    event_type: str
+    details: Optional[str] = None
+
+class SavedSyllabusCreate(BaseModel):
+    title: str
+    subject: str
+    topic: str
+    content: str
+
+class SavedSyllabusResponse(SavedSyllabusCreate):
+    id: str
+    teacher_id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+

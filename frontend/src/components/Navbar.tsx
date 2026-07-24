@@ -12,7 +12,8 @@ import {
     LogOut,
     Menu,
     X,
-    Users
+    Users,
+    BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -97,6 +98,8 @@ export default function Navbar() {
         { name: 'Progression', path: '/teacher/progression', icon: TrendingUp, role: 'teacher', mobileOnly: true },
         { name: 'Leaderboard', path: '/teacher/leaderboard', icon: TrendingUp, role: 'teacher', mobileOnly: true },
         { name: 'Manage Data', path: '/teacher/manage', icon: LayoutDashboard, role: 'teacher', mobileOnly: true },
+        { name: 'My Tests', path: '/student/tests', icon: BookOpen, role: 'student' },
+        { name: 'AI Tests', path: '/teacher/tests', icon: BookOpen, role: 'teacher', mobileOnly: true },
     ];
 
     // Filter links based on role
