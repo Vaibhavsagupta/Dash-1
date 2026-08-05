@@ -98,7 +98,7 @@ const handler = NextAuth({
         signIn: '/login',
         error: '/login', // Redirect errors back to login
     },
-    debug: true, // Enable debug logs even in production for now
+    debug: process.env.NODE_ENV === 'development',
 })
 
 export { handler as GET, handler as POST }
