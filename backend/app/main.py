@@ -3,12 +3,62 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base, SessionLocal
 from sqlalchemy import text
-from .routers import auth, analytics, updates, attendance, dashboard, assignments, automation, autograder, ingest, ai_report, admin_workflow, settings, tests, student_tests
+from .routers import auth, analytics, updates, attendance, dashboard, assignments, automation, autograder, ingest, ai_report, admin_workflow, settings, tests, student_tests, marks_parameters, college_sandbox
+from . import models
 
 # Create tables
 try:
     Base.metadata.create_all(bind=engine)
     print("Connected to database successfully")
+    
+    # Auto-seed marks parameters
+    def populate_default_marks_parameters():
+        db = SessionLocal()
+        try:
+            count = db.query(models.MarksParameter).count()
+            if count == 0:
+                print("Seeding default Marks Parameters and backfilling student scores...")
+                defaults = [
+                    {"name": "DSA", "subject": "Data Structures", "desc": "Data Structures and Algorithms score"},
+                    {"name": "ML", "subject": "Machine Learning", "desc": "Machine Learning fundamentals score"},
+                    {"name": "QA", "subject": "Quantitative Aptitude", "desc": "Quantitative Aptitude score"},
+                    {"name": "Projects", "subject": "Projects", "desc": "Project completion score"},
+                    {"name": "Mock Interview", "subject": "Mock Interview", "desc": "Mock interview performance score"}
+                ]
+                params_created = {}
+                for d in defaults:
+                    p = models.MarksParameter(
+                        parameter_name=d["name"],
+                        description=d["desc"],
+                        max_marks=100.0,
+                        weightage=20.0,
+                        subject=d["subject"],
+                        semester="Semester 1",
+                        status="Active"
+                    )
+                    db.add(p)
+                    db.commit()
+                    db.refresh(p)
+                    params_created[d["name"]] = p.id
+                
+                students = db.query(models.Student).all()
+                for s in students:
+                    db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["DSA"], score=float(s.dsa_score or 0)))
+                    db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["ML"], score=float(s.ml_score or 0)))
+                    db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["QA"], score=float(s.qa_score or 0)))
+                    db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["Projects"], score=float(s.projects_score or 0)))
+                    db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["Mock Interview"], score=float(s.mock_interview_score or 0)))
+                
+                db.commit()
+                print("Successfully backfilled all student scores into student_parameter_marks.")
+        except Exception as e:
+            print(f"Error seeding marks parameters: {e}")
+            db.rollback()
+        finally:
+            db.close()
+
+    populate_default_marks_parameters()
+
 except Exception as e:
     print(f"Database connection failed or tables already exist: {e}")
 
@@ -77,6 +127,8 @@ app.include_router(admin_workflow.router)
 app.include_router(settings.router)
 app.include_router(tests.router)
 app.include_router(student_tests.router)
+app.include_router(marks_parameters.router)
+app.include_router(college_sandbox.router)
 
 @app.get("/")
 def read_root():

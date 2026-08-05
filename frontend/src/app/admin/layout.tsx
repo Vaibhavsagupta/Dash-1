@@ -25,8 +25,8 @@ export default function AdminLayout({
 
     if (!isAuthorized) {
         return (
-            <div className="flex justify-center items-center h-screen bg-[#0f172a] text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+            <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
@@ -34,9 +34,9 @@ export default function AdminLayout({
     return (
         <>
             <Navbar />
-            <div className="flex bg-[#0f172a] min-h-screen pt-[72px]">
+            <div className="flex bg-slate-50 min-h-screen pt-[72px]">
                 <AdminSidebar />
-                <main className="flex-1 p-4 md:ml-64 md:p-8 overflow-y-auto">
+                <main className="flex-1 p-4 md:ml-64 md:p-8 overflow-y-auto text-slate-900">
                     {children}
                 </main>
             </div>

@@ -189,14 +189,17 @@ export default function StudentTestResultPage() {
                 <div className="space-y-4">
                     {result.questions.map((q, idx) => {
                         const showCorrect = q.correct_answer !== undefined;
+                        const isShortAnswer = q.question_type.toLowerCase() === "short answer";
                         
                         return (
                             <div key={q.id} className={`bg-slate-900/50 p-6 rounded-2xl border backdrop-blur space-y-4 transition-all relative ${
-                                q.student_answer === null || q.student_answer.trim() === ""
-                                    ? "border-slate-800" 
-                                    : q.is_correct 
-                                        ? "border-emerald-500/20 bg-emerald-500/[0.01]" 
-                                        : "border-red-500/20 bg-red-500/[0.01]"
+                                isShortAnswer
+                                    ? "border-amber-500/25 bg-amber-500/[0.01]"
+                                    : q.student_answer === null || q.student_answer.trim() === ""
+                                        ? "border-slate-800" 
+                                        : q.is_correct 
+                                            ? "border-emerald-500/20 bg-emerald-500/[0.01]" 
+                                            : "border-red-500/20 bg-red-500/[0.01]"
                             }`}>
                                 <div className="flex gap-2 items-center flex-wrap">
                                     <span className="text-xs font-bold text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-full uppercase">
@@ -205,7 +208,9 @@ export default function StudentTestResultPage() {
                                     <span className="text-[9px] text-slate-500 uppercase font-semibold bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
                                         {q.question_type}
                                     </span>
-                                    {q.student_answer === null || q.student_answer.trim() === "" ? (
+                                    {isShortAnswer ? (
+                                        <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1.5 ml-auto"><Info size={12} /> Pending Manual Evaluation</span>
+                                    ) : q.student_answer === null || q.student_answer.trim() === "" ? (
                                         <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 ml-auto"><Info size={12} /> Unanswered</span>
                                     ) : q.is_correct ? (
                                         <span className="text-[10px] font-bold text-emerald-400 uppercase flex items-center gap-1 ml-auto"><Check size={12} /> Correct</span>

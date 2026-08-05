@@ -49,12 +49,12 @@ export default function TeacherLayout({
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-[#0f172a] flex pt-[72px]">
+            <div className="min-h-screen bg-slate-50 text-slate-900 flex pt-[72px]">
                 {/* Sidebar (Desktop Only) */}
-                <aside className="hidden lg:flex fixed top-[72px] bottom-0 w-64 bg-slate-900 border-r border-slate-800 shadow-2xl z-40 flex-col overflow-y-auto">
+                <aside className="hidden lg:flex fixed top-[72px] bottom-0 w-64 bg-white border-r border-slate-200 shadow-sm z-40 flex-col overflow-y-auto">
                     <div className="p-8">
-                        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-                            EduSpace
+                        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                            SAGE University
                         </h1>
                         <p className="text-xs text-slate-500 mt-1">Teacher Portal</p>
                     </div>
@@ -67,8 +67,8 @@ export default function TeacherLayout({
                                     key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                        ? "bg-cyan-500/10 text-cyan-400 font-semibold"
-                                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                                        ? "bg-indigo-50 text-indigo-600 font-semibold shadow-sm"
+                                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                                         }`}
                                 >
                                     <item.icon size={20} />
@@ -78,10 +78,10 @@ export default function TeacherLayout({
                         })}
                     </nav>
 
-                    <div className="p-4 border-t border-slate-800">
+                    <div className="p-4 border-t border-slate-200">
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-400 hover:bg-red-500/10 transition-all"
+                            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-600 hover:bg-red-50 transition-all"
                         >
                             <LogOut size={20} />
                             Logout

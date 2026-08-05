@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, database, auth
 import math
-from typing import Optional
+import json
+from datetime import date, datetime
+from typing import Optional, Dict, Any
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -17,13 +19,14 @@ def get_analytics_me(
             raise HTTPException(status_code=404, detail="Student record not found")
         
         # PRS Calculation
-        prs_score = calculate_prs(student)
+        ranking_cfg = get_ranking_config_from_db(db)
+        prs_score = calculate_prs(student, ranking_cfg)
         
         # Rank and Percentile
         all_students = db.query(models.Student).all()
         student_prs = []
         for s in all_students:
-            student_prs.append((s.student_id, calculate_prs(s)))
+            student_prs.append((s.student_id, calculate_prs(s, ranking_cfg)))
         
         student_prs.sort(key=lambda x: x[1], reverse=True)
         total_students = len(all_students)
@@ -36,12 +39,20 @@ def get_analytics_me(
         
         percentile = round(((total_students - rank) / total_students * 100), 1) if total_students > 0 else 0.0
         
+        # Count of pending secure test assignments
+        pending_tests_count = db.query(models.TestAssignment).filter(
+            models.TestAssignment.student_id == student.student_id,
+            models.TestAssignment.status.in_(["Pending", "In Progress"]),
+            models.TestAssignment.end_date >= date.today()
+        ).count()
+
         return {
             "student": student,
             "prs_score": prs_score,
             "rank": rank,
             "percentile": percentile,
             "total_students": total_students,
+            "pending_tests_count": pending_tests_count,
             "breakdown": {
                 "dsa": student.dsa_score,
                 "ml": student.ml_score,
@@ -154,17 +165,54 @@ def get_batch_observations(batch_id: str, db: Session = Depends(database.get_db)
         "student_count": len(students)
     }
 
-def calculate_prs(student):
-    # Placement Readiness Score calculation
-    # Formula: Average of DSA, ML, QA, Projects, Mock
-    total = sum([
-        student.dsa_score or 0,
-        student.ml_score or 0,
-        student.qa_score or 0,
-        student.projects_score or 0,
-        student.mock_interview_score or 0
-    ])
-    return round(total / 5.0, 1) if total else 0.0
+DEFAULT_RANKING_CONFIG = {
+    "dsa":        {"enabled": True, "weight": 20.0, "label": "DSA"},
+    "ml":         {"enabled": True, "weight": 20.0, "label": "Machine Learning"},
+    "qa":         {"enabled": True, "weight": 20.0, "label": "Quantitative Aptitude"},
+    "projects":   {"enabled": True, "weight": 20.0, "label": "Projects"},
+    "mock":       {"enabled": True, "weight": 10.0, "label": "Mock Interview"},
+    "attendance": {"enabled": True, "weight": 10.0, "label": "Attendance"},
+}
+
+
+def get_ranking_config_from_db(db: Session) -> Dict[str, Any]:
+    """Fetch ranking config from DB, fallback to default."""
+    setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == "ranking_config").first()
+    if setting:
+        try:
+            return json.loads(setting.value)
+        except Exception:
+            pass
+    return DEFAULT_RANKING_CONFIG
+
+
+def calculate_prs(student, config: Dict[str, Any] = None) -> float:
+    """Calculate Placement Readiness Score using admin-configured weights."""
+    if config is None:
+        config = DEFAULT_RANKING_CONFIG
+
+    param_map = {
+        "dsa":        getattr(student, "dsa_score", 0) or 0,
+        "ml":         getattr(student, "ml_score", 0) or 0,
+        "qa":         getattr(student, "qa_score", 0) or 0,
+        "projects":   getattr(student, "projects_score", 0) or 0,
+        "mock":       getattr(student, "mock_interview_score", 0) or 0,
+        "attendance": getattr(student, "attendance", 0) or 0,
+    }
+
+    total_weight = 0.0
+    weighted_sum = 0.0
+    for key, cfg in config.items():
+        if cfg.get("enabled", True):
+            w = cfg.get("weight", 0.0)
+            score = param_map.get(key, 0)
+            weighted_sum += (score / 100.0) * w
+            total_weight += w
+
+    if total_weight == 0:
+        return 0.0
+    # Normalise to 0-100
+    return round((weighted_sum / total_weight) * 100.0, 1)
 
 @router.get("/students/all")
 def get_students(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
@@ -188,9 +236,10 @@ def get_students(db: Session = Depends(database.get_db), current_user: models.Us
     students = query.all()
     results = []
     
+    ranking_cfg = get_ranking_config_from_db(db)
     student_prs = []
     for s in students:
-        prs = calculate_prs(s)
+        prs = calculate_prs(s, ranking_cfg)
         student_prs.append((s, prs))
     
     # Sort by PRS descending
@@ -248,6 +297,7 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
     student = db.query(models.Student).filter(models.Student.student_id == student_id).first()
     if not student: raise HTTPException(status_code=404, detail="Student not found")
     
+    ranking_cfg = get_ranking_config_from_db(db)
     all_students = db.query(models.Student).all()
     
     # Analyze detailed metrics
@@ -369,7 +419,7 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
         "strengths": strengths,
         "weaknesses": weaknesses,
         "placement_readiness": placement_readiness,
-        "rank": db.query(models.Student).count() - sum(1 for s in db.query(models.Student).all() if calculate_prs(s) < calculate_prs(student))
+        "rank": db.query(models.Student).count() - sum(1 for s in db.query(models.Student).all() if calculate_prs(s, ranking_cfg) < calculate_prs(student, ranking_cfg))
     }
 
 @router.get("/dashboard/admin")
@@ -381,9 +431,10 @@ def get_admin_dashboard_data(batch_filter: Optional[str] = None, db: Session = D
     total_students = len(students)
     
     # Top 5 students by PRS
+    ranking_cfg = get_ranking_config_from_db(db)
     student_prs = []
     for s in students:
-        prs = calculate_prs(s)
+        prs = calculate_prs(s, ranking_cfg)
         student_prs.append({"id": s.student_id, "name": s.name, "prs": prs})
     
     student_prs.sort(key=lambda x: x["prs"], reverse=True)
@@ -788,4 +839,63 @@ def get_student_batch_info(
         "end_date": student.end_date.isoformat() if student.end_date else None,
         "attendance": f"{student.attendance}%",
         "assessment_avg": f"{avg_score}%"
+    }
+
+@router.get("/faculty-comparison")
+def get_faculty_comparison(
+    subject: Optional[str] = None,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user_obj)
+):
+    query = db.query(models.Teacher)
+    if subject and subject.lower() != 'all':
+        query = query.filter(models.Teacher.subject.ilike(f"%{subject}%"))
+    
+    teachers = query.all()
+    
+    comparison_data = []
+    for t in teachers:
+        tei = round(
+            (t.avg_improvement or 0) * 0.4 + 
+            (t.feedback_score * 20) * 0.3 + 
+            (t.content_quality_score * 20) * 0.2 + 
+            (t.placement_conversion or 0) * 0.1,
+            1
+        )
+        
+        # Calculate avg student score in teacher's subject
+        student_scores = db.query(models.Student).all()
+        subj_clean = (t.subject or '').lower()
+        scores_list = []
+        for s in student_scores:
+            if 'dsa' in subj_clean:
+                scores_list.append(s.dsa_score or 0)
+            elif 'ml' in subj_clean or 'ai' in subj_clean:
+                scores_list.append(s.ml_score or 0)
+            elif 'qa' in subj_clean or 'logic' in subj_clean:
+                scores_list.append(s.qa_score or 0)
+            elif 'project' in subj_clean:
+                scores_list.append(s.projects_score or 0)
+            else:
+                scores_list.append(s.mock_interview_score or 0)
+        
+        avg_student_score = round(sum(scores_list) / max(len(scores_list), 1), 1)
+        
+        comparison_data.append({
+            "teacher_id": t.teacher_id,
+            "name": t.name,
+            "subject": t.subject,
+            "tei_score": tei,
+            "avg_improvement": t.avg_improvement or 0.0,
+            "feedback_score": round(t.feedback_score * 20, 1), # Out of 100
+            "content_quality": round(t.content_quality_score * 20, 1), # Out of 100
+            "placement_conversion": t.placement_conversion or 0.0,
+            "avg_student_score": avg_student_score,
+            "course_completed": getattr(t, 'course_completed', None) or 75
+        })
+        
+    return {
+        "subject_filter": subject or "All",
+        "total_faculty": len(teachers),
+        "comparison": comparison_data
     }

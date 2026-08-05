@@ -13,3 +13,4 @@ uvicorn[standard]
 pandas
 openpyxl
 google-auth
+requests

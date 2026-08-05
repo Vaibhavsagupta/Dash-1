@@ -7,7 +7,7 @@ Use these credentials to access the Dashboard app across different user roles.
 ## 👑 Admin Portal
 Full administrative access to manage students, teachers, approvals, and data ingestion.
 
-*   **Email:** ` `
+*   **Email:** 'admin@example.com`
 *   **Password:** `admin`
 
 ---

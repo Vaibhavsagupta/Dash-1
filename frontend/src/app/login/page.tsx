@@ -98,6 +98,7 @@ export default function LoginPage() {
                             placeholder="name@university.edu"
                             required
                             autoComplete="email"
+                            suppressHydrationWarning
                         />
                     </div>
 
@@ -111,10 +112,11 @@ export default function LoginPage() {
                             placeholder="••••••••"
                             required
                             autoComplete="current-password"
+                            suppressHydrationWarning
                         />
                     </div>
 
-                    <button type="submit" className="btn-primary" disabled={loading}>
+                    <button type="submit" className="btn-primary" disabled={loading} suppressHydrationWarning>
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>
@@ -129,6 +131,7 @@ export default function LoginPage() {
                     onClick={() => signIn("google")}
                     type="button"
                     className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 rounded-lg transition-all shadow-lg"
+                    suppressHydrationWarning
                 >
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
                     Sign in with Google

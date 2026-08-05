@@ -38,6 +38,15 @@ interface QuestionStat {
     accuracy_percent: number;
 }
 
+interface TopicAnalysisItem {
+    subtopic: string;
+    total_attempts: number;
+    correct_attempts: number;
+    accuracy_percent: number;
+    weak_students: string[];
+    strong_students: string[];
+}
+
 interface AnalyticsData {
     test_id: string;
     name: string;
@@ -51,6 +60,7 @@ interface AnalyticsData {
     average_accuracy: number;
     students: StudentAttempt[];
     questions: QuestionStat[];
+    topic_analysis?: TopicAnalysisItem[];
 }
 
 export default function TeacherTestAnalyticsPage() {
@@ -180,6 +190,74 @@ export default function TeacherTestAnalyticsPage() {
                             </strong>.
                             Consider targeting these areas in future lectures or review sessions.
                         </p>
+                    </div>
+                </div>
+            )}
+            {/* Topic & Subtopic Performance Analysis */}
+            {analytics.topic_analysis && analytics.topic_analysis.length > 0 && (
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-850 space-y-6">
+                    <div className="border-b border-slate-850 pb-4">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <TrendingUp size={20} className="text-cyan-400" /> Subtopic Accuracy & Weakness Targeting
+                        </h3>
+                        <p className="text-slate-500 text-xs mt-0.5">Identifies subtopic-level conceptual grasp and highlights students needing instruction.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {analytics.topic_analysis.map((topicItem, index) => {
+                            return (
+                                <div key={index} className="bg-slate-900/40 p-5 rounded-2xl border border-slate-850/60 space-y-4">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <div className="max-w-[70%]">
+                                            <h4 className="text-sm font-bold text-white leading-snug truncate" title={topicItem.subtopic}>{topicItem.subtopic}</h4>
+                                            <span className="text-[10px] text-slate-500 font-bold block mt-0.5">{topicItem.correct_attempts}/{topicItem.total_attempts} Answers Correct</span>
+                                        </div>
+                                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${
+                                            topicItem.accuracy_percent >= 80 ? "bg-emerald-500/10 text-emerald-400" :
+                                            topicItem.accuracy_percent >= 60 ? "bg-cyan-500/10 text-cyan-400" : "bg-red-500/10 text-red-400"
+                                        }`}>{Math.round(topicItem.accuracy_percent)}%</span>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-900">
+                                        <div className={`h-full ${
+                                            topicItem.accuracy_percent >= 80 ? "bg-emerald-500" :
+                                            topicItem.accuracy_percent >= 60 ? "bg-cyan-500" : "bg-red-500"
+                                        }`} style={{ width: `${topicItem.accuracy_percent}%` }} />
+                                    </div>
+
+                                    {/* Weak students */}
+                                    <div className="space-y-2 pt-2 border-t border-slate-900/65">
+                                        <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider block">Needs Help ({topicItem.weak_students.length})</span>
+                                        {topicItem.weak_students.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1">
+                                                {topicItem.weak_students.slice(0, 4).map((s, idx) => (
+                                                    <span key={idx} className="bg-red-500/5 text-red-400 border border-red-500/10 text-[9px] font-bold px-2 py-0.5 rounded-full">{s}</span>
+                                                ))}
+                                                {topicItem.weak_students.length > 4 && <span className="text-[9px] text-slate-500 font-bold px-1.5 py-0.5">+{topicItem.weak_students.length - 4} more</span>}
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-500 italic block">None - class grasped this well</span>
+                                        )}
+                                    </div>
+
+                                    {/* Strong students */}
+                                    <div className="space-y-2 pt-1">
+                                        <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider block">Top Performers ({topicItem.strong_students.length})</span>
+                                        {topicItem.strong_students.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1">
+                                                {topicItem.strong_students.slice(0, 4).map((s, idx) => (
+                                                    <span key={idx} className="bg-emerald-500/5 text-emerald-400 border border-emerald-500/10 text-[9px] font-bold px-2 py-0.5 rounded-full">{s}</span>
+                                                ))}
+                                                {topicItem.strong_students.length > 4 && <span className="text-[9px] text-slate-500 font-bold px-1.5 py-0.5">+{topicItem.strong_students.length - 4} more</span>}
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-500 italic block">None</span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}

@@ -56,7 +56,7 @@ npm install
 # 3. Start the Development Server
 npm run dev
 ```
-*The frontend runs on `http://127.0.0.1:5173`*
+*The frontend runs on `http://127.0.0.1:3001`*
 
 ---
 

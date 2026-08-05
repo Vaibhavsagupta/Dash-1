@@ -11,6 +11,18 @@ Ensure you have the following installed:
 
 ---
 
+## ⚡ Quick Start: One-Click Launch (Recommended)
+
+To run both frontend and backend automatically:
+1. Double-click the **`run_dashboard.bat`** file in the root of the project.
+2. This script automatically:
+   - Sets up the database seeder if needed.
+   - Starts the backend server on port `7000`.
+   - Starts the frontend server on port `3001` (moved from port `5173` to prevent port conflicts).
+   - Opens `http://127.0.0.1:3001` in your browser.
+
+---
+
 ## 🛠️ Step 1: Backend Setup (FastAPI & PostgreSQL)
 
 The backend handles the database, authentication, and analytics logic. It is now powered by **PostgreSQL** for production stability.
@@ -63,14 +75,14 @@ The frontend handles the user interface.
     ```powershell
     npm run dev
     ```
-    *The frontend will start at `http://127.0.0.1:5173`*
+    *The frontend will start at `http://127.0.0.1:3001`*
 
 ---
 
 ## 🌐 Step 3: Accessing the Dashboard
 
 Open your web browser and navigate to:
-**[http://127.0.0.1:5173](http://127.0.0.1:5173)**
+**[http://127.0.0.1:3001](http://127.0.0.1:3001)**
 
 ---
 
@@ -78,7 +90,7 @@ Open your web browser and navigate to:
 
 If you see a "Failed to fetch" error on the login or signup page:
 
-1.  **Use 127.0.0.1**: Always access the site via `http://127.0.0.1:5173` instead of `localhost:5173`.
+1.  **Use 127.0.0.1**: Always access the site via `http://127.0.0.1:3001` instead of `localhost:3001`.
 2.  **Restart Frontend**: If you changed `.env.local`, you **MUST** stop the frontend (`Ctrl+C`) and run `npm run dev` again.
 3.  **Hard Refresh**: Press `Ctrl + F5` in your browser to clear the cache.
 4.  **Check Backend**: Ensure the backend terminal shows "Uvicorn running on http://127.0.0.1:7000".

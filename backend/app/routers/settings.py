@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, database, auth
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict
+import json
 
 router = APIRouter(
     prefix="/settings",
@@ -74,3 +75,61 @@ def export_database(db: Session = Depends(database.get_db), current_admin: model
 def purge_cache(db: Session = Depends(database.get_db), current_admin: models.User = Depends(auth.get_current_active_admin)):
     # Simulating cache purge
     return {"message": "System cache purged successfully"}
+
+
+# ─── Ranking Configuration ─────────────────────────────────────────────────────
+
+DEFAULT_RANKING_CONFIG = {
+    "dsa":        {"enabled": True, "weight": 20.0, "label": "DSA"},
+    "ml":         {"enabled": True, "weight": 20.0, "label": "Machine Learning"},
+    "qa":         {"enabled": True, "weight": 20.0, "label": "Quantitative Aptitude"},
+    "projects":   {"enabled": True, "weight": 20.0, "label": "Projects"},
+    "mock":       {"enabled": True, "weight": 10.0, "label": "Mock Interview"},
+    "attendance": {"enabled": True, "weight": 10.0, "label": "Attendance"},
+}
+
+
+class RankingParamConfig(BaseModel):
+    enabled: bool
+    weight: float
+    label: str
+
+
+class RankingConfigPayload(BaseModel):
+    config: Dict[str, RankingParamConfig]
+
+
+@router.get("/ranking-config")
+def get_ranking_config(
+    db: Session = Depends(database.get_db),
+    current_admin: models.User = Depends(auth.get_current_active_admin)
+):
+    setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == "ranking_config").first()
+    if setting:
+        return json.loads(setting.value)
+    return DEFAULT_RANKING_CONFIG
+
+
+@router.post("/ranking-config")
+def update_ranking_config(
+    payload: RankingConfigPayload,
+    db: Session = Depends(database.get_db),
+    current_admin: models.User = Depends(auth.get_current_active_admin)
+):
+    # Validate total weight of enabled parameters
+    total = sum(p.weight for p in payload.config.values() if p.enabled)
+    if abs(total - 100.0) > 0.5:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total weight of enabled parameters must equal 100%. Current total: {round(total, 1)}%"
+        )
+
+    value = json.dumps({k: v.dict() for k, v in payload.config.items()})
+    setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == "ranking_config").first()
+    if setting:
+        setting.value = value
+    else:
+        setting = models.SystemSetting(key="ranking_config", value=value)
+        db.add(setting)
+    db.commit()
+    return {"message": "Ranking configuration saved successfully"}

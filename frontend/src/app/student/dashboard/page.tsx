@@ -25,8 +25,10 @@ import {
     Activity,
     Code,
     Book,
-    Calendar
+    Calendar,
+    Bell
 } from 'lucide-react';
+import Link from 'next/link';
 
 ChartJS.register(
     CategoryScale,
@@ -82,21 +84,21 @@ export default function StudentDashboard() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen bg-[#0f172a] text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+            <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
 
     if (error || !data) {
         return (
-            <div className="flex flex-col justify-center items-center h-screen bg-[#0f172a] text-white p-4">
-                <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-3xl max-w-md text-center">
-                    <h2 className="text-2xl font-bold text-red-500 mb-4">Dashboard Error</h2>
-                    <p className="text-slate-400 mb-8">{error || "No data available. This might happen if your account is not correctly linked to a student record."}</p>
+            <div className="flex flex-col justify-center items-center h-screen bg-slate-50 text-slate-900 p-4">
+                <div className="bg-red-50 border border-red-200 p-8 rounded-3xl max-w-md text-center">
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">Dashboard Error</h2>
+                    <p className="text-slate-600 mb-8">{error || "No data available. This might happen if your account is not correctly linked to a student record."}</p>
                     <button
                         onClick={() => router.push('/login')}
-                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-sm"
                     >
                         Return to Login
                     </button>
@@ -121,15 +123,15 @@ export default function StudentDashboard() {
                     breakdown.mock,
                     breakdown.attendance
                 ],
-                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                borderColor: 'rgba(16, 185, 129, 1)',
+                backgroundColor: 'rgba(79, 70, 229, 0.25)',
+                borderColor: '#4f46e5',
                 borderWidth: 2,
             },
             {
                 label: 'Batch Avg',
                 data: [75, 78, 72, 60, 70, 85], // Mock Batch Avg
                 backgroundColor: 'rgba(148, 163, 184, 0.1)',
-                borderColor: 'rgba(148, 163, 184, 0.4)',
+                borderColor: 'rgba(148, 163, 184, 0.5)',
                 borderWidth: 1,
                 borderDash: [5, 5],
             }
@@ -144,7 +146,7 @@ export default function StudentDashboard() {
                 data: [prs_score, 100 - prs_score],
                 backgroundColor: [
                     prs_score > 75 ? '#10b981' : prs_score > 50 ? '#f59e0b' : '#ef4444',
-                    'rgba(255, 255, 255, 0.1)'
+                    '#e2e8f0'
                 ],
                 borderWidth: 0,
                 circumference: 240,
@@ -156,17 +158,34 @@ export default function StudentDashboard() {
     };
 
     return (
-        <div className="min-h-screen p-4 md:p-8 pt-24 bg-[#0f172a] text-slate-100">
+        <div className="min-h-screen p-4 md:p-8 pt-24 bg-slate-50 text-slate-900">
             <header className="mb-10">
                 <div className="flex flex-col md:flex-row justify-between items-end">
                     <div>
-                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-500">
+                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                             Student Performance Hub
                         </h1>
-                        <p className="text-slate-400 mt-2">Personalized metrics for {student.name}</p>
+                        <p className="text-slate-600 mt-2 font-medium">Personalized metrics for {student.name}</p>
                     </div>
                 </div>
             </header>
+
+            {data.pending_tests_count > 0 && (
+                <div className="bg-indigo-50 border border-indigo-200 text-indigo-900 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-indigo-100 rounded-xl text-indigo-600">
+                            <Bell className="animate-bounce" size={20} />
+                        </div>
+                        <div>
+                            <strong className="text-slate-900 text-sm block">New Assessment Assigned!</strong>
+                            <p className="text-xs text-slate-600 mt-0.5">You have {data.pending_tests_count} pending test{data.pending_tests_count > 1 ? 's' : ''} awaiting completion in the portal.</p>
+                        </div>
+                    </div>
+                    <Link href="/student/tests" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
+                        Go to My Tests
+                    </Link>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -175,11 +194,11 @@ export default function StudentDashboard() {
 
                     {/* PRS Meter */}
                     <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
+                        initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="glass p-8 rounded-3xl border border-emerald-900/30 bg-gradient-to-b from-slate-800/80 to-slate-900/80 flex flex-col items-center justify-center relative"
+                        className="p-8 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col items-center justify-center relative"
                     >
-                        <h2 className="text-slate-400 text-sm font-bold tracking-widest mb-4">PLACEMENT READINESS SCORE</h2>
+                        <h2 className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4">PLACEMENT READINESS SCORE</h2>
                         <div className="h-64 w-64 relative flex items-center justify-center">
                             <Doughnut
                                 data={gaugeData}
@@ -188,8 +207,8 @@ export default function StudentDashboard() {
                                 }}
                             />
                             <div className="absolute flex flex-col items-center">
-                                <span className="text-5xl font-bold text-white">{prs_score}%</span>
-                                <span className={`text-sm font-medium ${prs_score > 75 ? 'text-emerald-400' : 'text-amber-400'} mt-1`}>
+                                <span className="text-5xl font-bold text-slate-900">{prs_score}%</span>
+                                <span className={`text-sm font-semibold ${prs_score > 75 ? 'text-emerald-600' : 'text-amber-600'} mt-1`}>
                                     {prs_score > 75 ? 'Placement Ready' : 'Keep Pushing'}
                                 </span>
                             </div>
@@ -197,29 +216,29 @@ export default function StudentDashboard() {
                     </motion.div>
 
                     {/* Rank Card */}
-                    <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                    <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm flex justify-between items-center">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-yellow-500/10 text-yellow-500">
+                            <div className="p-3 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
                                 <Trophy size={28} />
                             </div>
                             <div>
-                                <div className="text-sm text-slate-400">Class Rank</div>
-                                <div className="text-2xl font-bold text-white">#{rank} <span className="text-slate-500 text-sm font-normal">/ {total_students}</span></div>
+                                <div className="text-xs font-semibold uppercase text-slate-500">Class Rank</div>
+                                <div className="text-2xl font-bold text-slate-900">#{rank} <span className="text-slate-500 text-sm font-normal">/ {total_students}</span></div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-sm text-slate-400">Percentile</div>
-                            <div className="text-xl font-bold text-emerald-400">{percentile}%</div>
+                            <div className="text-xs font-semibold uppercase text-slate-500">Percentile</div>
+                            <div className="text-xl font-bold text-indigo-600">{percentile}%</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Middle Column: Skills Radar */}
                 <div className="lg:col-span-2">
-                    <div className="glass p-8 h-full rounded-3xl border border-slate-700 bg-slate-800/50">
+                    <div className="p-8 h-full rounded-3xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold flex items-center gap-2">
-                                <Target size={20} className="text-emerald-400" /> Skill Proficiency
+                            <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+                                <Target size={20} className="text-indigo-600" /> Skill Proficiency
                             </h2>
                         </div>
                         <div className="h-80 w-full flex items-center justify-center">
@@ -229,9 +248,9 @@ export default function StudentDashboard() {
                                     maintainAspectRatio: false,
                                     scales: {
                                         r: {
-                                            angleLines: { color: 'rgba(255,255,255,0.1)' },
-                                            grid: { color: 'rgba(255,255,255,0.1)' },
-                                            pointLabels: { color: '#94a3b8', font: { size: 12 } },
+                                            angleLines: { color: '#e2e8f0' },
+                                            grid: { color: '#e2e8f0' },
+                                            pointLabels: { color: '#475569', font: { size: 12, weight: 'bold' } },
                                             ticks: { display: false, backdropColor: 'transparent' }
                                         }
                                     },
@@ -258,13 +277,13 @@ export default function StudentDashboard() {
 
 function ScorePill({ label, score, max = 100, icon }: any) {
     return (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 border border-slate-700/50">
-            <div className={`p-2 rounded-md ${score >= (max * 0.8) ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-400 bg-slate-700/30'}`}>
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div className={`p-2 rounded-lg ${score >= (max * 0.8) ? 'text-indigo-600 bg-indigo-100' : 'text-slate-600 bg-slate-200'}`}>
                 {icon}
             </div>
             <div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider">{label}</div>
-                <div className="font-bold text-slate-200">{score} <span className="text-xs text-slate-600">/ {max}</span></div>
+                <div className="text-xs text-slate-500 uppercase font-semibold tracking-wider">{label}</div>
+                <div className="font-bold text-slate-900">{score} <span className="text-xs text-slate-500">/ {max}</span></div>
             </div>
         </div>
     )

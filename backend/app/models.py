@@ -341,3 +341,28 @@ class SavedSyllabus(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+
+class MarksParameter(Base):
+    __tablename__ = "marks_parameters"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    parameter_name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    max_marks = Column(Float, nullable=False, default=100.0)
+    weightage = Column(Float, nullable=True)
+    subject = Column(String, nullable=False)
+    semester = Column(String, nullable=True)
+    status = Column(String, default="Active") # Active, Inactive
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class StudentParameterMark(Base):
+    __tablename__ = "student_parameter_marks"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    student_id = Column(String, ForeignKey("students.student_id", ondelete="CASCADE"), nullable=False, index=True)
+    parameter_id = Column(String, ForeignKey("marks_parameters.id", ondelete="CASCADE"), nullable=False, index=True)
+    score = Column(Float, nullable=False, default=0.0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+

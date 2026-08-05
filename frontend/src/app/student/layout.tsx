@@ -20,7 +20,7 @@ export default function StudentLayout({
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-[#0f172a] pt-[72px]">
+            <div className="min-h-screen bg-slate-50 text-slate-900 pt-[72px]">
                 {children}
             </div>
         </>

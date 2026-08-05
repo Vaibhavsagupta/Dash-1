@@ -92,21 +92,21 @@ export default function TeacherDashboard() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen bg-[#0f172a] text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+            <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
 
     if (error || !analyticsData || !dashboardData) {
         return (
-            <div className="flex flex-col justify-center items-center h-screen bg-[#0f172a] text-white p-4">
-                <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-3xl max-w-md text-center">
-                    <h2 className="text-2xl font-bold text-red-500 mb-4">Dashboard Error</h2>
-                    <p className="text-slate-400 mb-8">{error || "No data available. This might happen if your account is not correctly linked to a teacher record."}</p>
+            <div className="flex flex-col justify-center items-center h-screen bg-slate-50 text-slate-900 p-4">
+                <div className="bg-red-50 border border-red-200 p-8 rounded-3xl max-w-md text-center">
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">Dashboard Error</h2>
+                    <p className="text-slate-600 mb-8">{error || "No data available. This might happen if your account is not correctly linked to a teacher record."}</p>
                     <button
                         onClick={() => router.push('/login')}
-                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-all"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-sm"
                     >
                         Return to Login
                     </button>
@@ -145,15 +145,15 @@ export default function TeacherDashboard() {
             {
                 label: 'My Metrics',
                 data: [breakdown.feedback * 20, breakdown.quality * 20, breakdown.improvement * 4, breakdown.conversion * 4],
-                backgroundColor: 'rgba(6, 182, 212, 0.2)',
-                borderColor: 'rgba(6, 182, 212, 1)',
+                backgroundColor: 'rgba(79, 70, 229, 0.25)',
+                borderColor: '#4f46e5',
                 borderWidth: 2,
             },
             {
                 label: 'Dept Average',
                 data: [85, 80, 75, 70], // Mock dept averages
-                backgroundColor: 'rgba(148, 163, 184, 0.2)',
-                borderColor: 'rgba(148, 163, 184, 0.6)',
+                backgroundColor: 'rgba(148, 163, 184, 0.1)',
+                borderColor: 'rgba(148, 163, 184, 0.5)',
                 borderWidth: 1,
                 borderDash: [5, 5],
             }
@@ -168,13 +168,13 @@ export default function TeacherDashboard() {
     }) : [];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 text-slate-900">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                         Dashboard
                     </h1>
-                    <p className="text-slate-400 mt-1">Overview for {teacher.name} — <span className="text-cyan-400">{teacher.subject}</span></p>
+                    <p className="text-slate-600 mt-1 font-medium">Overview for {teacher.name} — <span className="text-indigo-600 font-semibold">{teacher.subject}</span></p>
                 </div>
             </div>
 
@@ -185,21 +185,19 @@ export default function TeacherDashboard() {
 
                     {/* Hero Card */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="glass p-6 md:p-8 rounded-3xl border border-cyan-900/30 bg-gradient-to-br from-slate-800/80 to-slate-900/80 relative overflow-hidden"
+                        className="p-6 md:p-8 rounded-3xl border border-slate-200 bg-white shadow-sm relative overflow-hidden"
                     >
-                        <div className="absolute top-0 right-0 p-32 bg-cyan-500/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
-
                         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center">
                             <div>
-                                <h2 className="text-slate-400 text-sm font-uppercase tracking-wider">TEACHER EFFECTIVENESS INDEX</h2>
-                                <div className="text-7xl font-bold text-white mt-2 tracking-tighter">
+                                <h2 className="text-slate-500 text-xs font-bold tracking-wider uppercase">TEACHER EFFECTIVENESS INDEX</h2>
+                                <div className="text-7xl font-bold text-indigo-600 mt-2 tracking-tighter">
                                     {tei_score}
                                 </div>
                                 <div className="mt-4 flex gap-3">
-                                    <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-sm font-medium">Top 10%</span>
-                                    <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-medium">+2.4 pts vs last month</span>
+                                    <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-sm font-semibold border border-indigo-100">Top 10%</span>
+                                    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold border border-emerald-100">+2.4 pts vs last month</span>
                                 </div>
                             </div>
 
@@ -210,9 +208,9 @@ export default function TeacherDashboard() {
                                     options={{
                                         scales: {
                                             r: {
-                                                angleLines: { color: 'rgba(255,255,255,0.1)' },
-                                                grid: { color: 'rgba(255,255,255,0.1)' },
-                                                pointLabels: { color: '#94a3b8', font: { size: 10 } },
+                                                angleLines: { color: '#e2e8f0' },
+                                                grid: { color: '#e2e8f0' },
+                                                pointLabels: { color: '#475569', font: { size: 10, weight: 'bold' } },
                                                 ticks: { display: false }
                                             }
                                         },
@@ -227,32 +225,30 @@ export default function TeacherDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* 1. Today's Lecture Plan */}
-                        <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50">
-                            <h3 className="text-lg font-semibold mb-4 text-cyan-400 flex items-center gap-2">
+                        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <h3 className="text-lg font-bold mb-4 text-indigo-600 flex items-center gap-2">
                                 <BookOpen size={18} /> Today's Lecture Plan
                             </h3>
                             <div className="space-y-3">
                                 {lectures.length === 0 ? (
-                                    <div className="text-slate-500 text-sm py-8 text-center bg-slate-800/30 rounded-xl">
+                                    <div className="text-slate-500 text-sm py-8 text-center bg-slate-50 rounded-xl border border-slate-200">
                                         No lectures scheduled today.
-                                        <br />
-                                        <span className="text-xs opacity-50">(Use 'Seed Data' in Admin or backend to test)</span>
                                     </div>
                                 ) : (
                                     lectures.map((lecture: any, i: number) => {
                                         const status = getLectureStatus(lecture.start_time, lecture.end_time);
                                         return (
-                                            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/30 border-l-2 border-cyan-500 transition-colors hover:bg-slate-700/50">
-                                                <div className="text-xs font-bold text-slate-400 w-24">
+                                            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border-l-4 border-indigo-600 transition-colors hover:bg-slate-100 border border-slate-200">
+                                                <div className="text-xs font-bold text-slate-500 w-24">
                                                     {lecture.start_time} - {lecture.end_time}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <div className="text-sm font-semibold text-white">{lecture.topic}</div>
-                                                    <div className="text-xs text-slate-400">{lecture.batch} • {lecture.room}</div>
+                                                    <div className="text-sm font-bold text-slate-900">{lecture.topic}</div>
+                                                    <div className="text-xs text-slate-500 font-medium">{lecture.batch} • {lecture.room}</div>
                                                 </div>
-                                                <div className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${status === 'In Progress' ? 'bg-green-500/20 text-green-400' :
-                                                    status === 'Finished' ? 'bg-slate-600/50 text-slate-400' :
-                                                        'bg-cyan-500/20 text-cyan-400'
+                                                <div className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${status === 'In Progress' ? 'bg-emerald-100 text-emerald-700' :
+                                                    status === 'Finished' ? 'bg-slate-200 text-slate-600' :
+                                                        'bg-indigo-100 text-indigo-700'
                                                     }`}>
                                                     {status}
                                                 </div>
@@ -264,41 +260,41 @@ export default function TeacherDashboard() {
                         </div>
 
                         {/* 2. Attendance Summary */}
-                        <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50">
-                            <h3 className="text-lg font-semibold mb-4 text-green-400 flex items-center gap-2">
+                        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <h3 className="text-lg font-bold mb-4 text-emerald-600 flex items-center gap-2">
                                 <Users size={18} /> Attendance Overview
                             </h3>
                             <div className="flex flex-col gap-4">
-                                <div className="p-4 rounded-xl bg-slate-700/30">
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                                     <div className="flex justify-between text-sm mb-2">
-                                        <span className="text-slate-300">
+                                        <span className="text-slate-700 font-medium">
                                             {attendance_marked ? "Today's Present" : "Attendance Pending"}
                                         </span>
-                                        <span className={`font-bold ${attendance_marked ? 'text-white' : 'text-slate-500'}`}>
+                                        <span className={`font-bold ${attendance_marked ? 'text-slate-900' : 'text-slate-500'}`}>
                                             {attendance_marked ? `${attendancePercentage}%` : '--'}
                                         </span>
                                     </div>
-                                    <div className="w-full bg-slate-600 rounded-full h-2">
+                                    <div className="w-full bg-slate-200 rounded-full h-2">
                                         <div
-                                            className="bg-green-400 h-2 rounded-full transition-all duration-1000"
+                                            className="bg-emerald-500 h-2 rounded-full transition-all duration-1000"
                                             style={{ width: `${attendance_marked ? attendancePercentage : 0}%` }}
                                         ></div>
                                     </div>
                                     <div className="flex justify-between mt-2 text-xs text-slate-500">
                                         <span>Count: {attendance_count} / {total_students}</span>
-                                        {attendance_marked && <span className="text-green-400 font-medium flex items-center gap-1"><CheckCircle size={10} /> Submitted</span>}
+                                        {attendance_marked && <span className="text-emerald-600 font-bold flex items-center gap-1"><CheckCircle size={10} /> Submitted</span>}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => router.push('/teacher/attendance?mode=mark')}
-                                        className="py-2 px-3 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-xs font-semibold text-white transition-all shadow-lg hover:shadow-cyan-500/25"
+                                        className="py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-xs font-semibold text-white transition-all shadow-sm"
                                     >
                                         {attendance_marked ? 'Update Attendance' : 'Mark Attendance'}
                                     </button>
                                     <button
                                         onClick={() => router.push('/teacher/attendance?mode=view')}
-                                        className="py-2 px-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-semibold text-slate-300 transition-all"
+                                        className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-semibold text-slate-700 border border-slate-200 transition-all"
                                     >
                                         View Register
                                     </button>
@@ -307,8 +303,8 @@ export default function TeacherDashboard() {
                         </div>
 
                         {/* 3. Weekly Overview */}
-                        <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50 md:col-span-2">
-                            <h3 className="text-lg font-semibold mb-4 text-purple-400 flex items-center gap-2">
+                        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm md:col-span-2">
+                            <h3 className="text-lg font-bold mb-4 text-purple-600 flex items-center gap-2">
                                 <Target size={18} /> Weekly Plan Overview
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center">
@@ -316,9 +312,9 @@ export default function TeacherDashboard() {
                                     <div className="col-span-5 text-slate-500 text-sm">No upcoming lectures scheduled.</div>
                                 ) : (
                                     processedWeeklyPlan.map((day: any, i: number) => (
-                                        <div key={i} className="p-3 bg-slate-700/30 rounded-lg">
-                                            <div className="text-xs font-bold text-purple-300 mb-1">{day.day}</div>
-                                            <div className="text-xs text-slate-300 line-clamp-2">{day.focus}</div>
+                                        <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                            <div className="text-xs font-bold text-purple-700 mb-1">{day.day}</div>
+                                            <div className="text-xs text-slate-700 font-medium line-clamp-2">{day.focus}</div>
                                         </div>
                                     ))
                                 )}
@@ -326,26 +322,26 @@ export default function TeacherDashboard() {
                         </div>
 
                         {/* 4. Course Unit Status */}
-                        <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50 md:col-span-2">
-                            <h3 className="text-lg font-semibold mb-4 text-orange-400 flex items-center gap-2">
+                        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm md:col-span-2">
+                            <h3 className="text-lg font-bold mb-4 text-amber-600 flex items-center gap-2">
                                 <BookOpen size={18} /> Course Unit Status
                             </h3>
                             <div className="space-y-4">
                                 {units && units.length > 0 ? units.map((unit: any, i: number) => (
                                     <div key={i} className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
                                             {unit.unit_number}
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-slate-300 font-medium">{unit.title}</span>
-                                                <span className={unit.status === 'Completed' ? 'text-green-400' : unit.status === 'In Progress' ? 'text-cyan-400' : 'text-slate-500'}>
+                                                <span className="text-slate-800 font-semibold">{unit.title}</span>
+                                                <span className={unit.status === 'Completed' ? 'text-emerald-600 font-bold' : unit.status === 'In Progress' ? 'text-indigo-600 font-bold' : 'text-slate-500'}>
                                                     {unit.status} ({unit.progress}%)
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                                                 <div
-                                                    className={`h-1.5 rounded-full ${unit.status === 'Completed' ? 'bg-green-400' : unit.status === 'In Progress' ? 'bg-cyan-400' : 'bg-slate-500'}`}
+                                                    className={`h-2 rounded-full ${unit.status === 'Completed' ? 'bg-emerald-500' : unit.status === 'In Progress' ? 'bg-indigo-600' : 'bg-slate-400'}`}
                                                     style={{ width: `${unit.progress}%` }}
                                                 ></div>
                                             </div>
@@ -368,9 +364,9 @@ export default function TeacherDashboard() {
                         <AlertsWidget />
                     </div>
 
-                    <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <MessageSquare size={18} className="text-cyan-400" /> Recent Feedback
+                    <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900">
+                            <MessageSquare size={18} className="text-indigo-600" /> Recent Feedback
                         </h3>
                         <div className="space-y-4">
                             <FeedbackItem
@@ -392,8 +388,8 @@ export default function TeacherDashboard() {
                     </div>
 
                     {/* 4. Notice Board */}
-                    <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50">
-                        <h3 className="text-lg font-semibold mb-4 text-yellow-400 flex items-center gap-2">
+                    <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 text-amber-700 flex items-center gap-2">
                             Notice Board
                         </h3>
                         {notices.length === 0 ? (
@@ -401,36 +397,36 @@ export default function TeacherDashboard() {
                         ) : (
                             <div className="space-y-3">
                                 {notices.map((notice: any, i: number) => (
-                                    <div key={i} className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/15 transition-colors cursor-pointer">
+                                    <div key={i} className="p-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer">
                                         <div className="flex justify-between items-start mb-1">
-                                            <h4 className="text-sm font-semibold text-yellow-100 line-clamp-1">{notice.title}</h4>
+                                            <h4 className="text-sm font-bold text-amber-900 line-clamp-1">{notice.title}</h4>
                                             {notice.type === 'admin' && <span className="w-2 h-2 rounded-full bg-red-500" title="Admin Notice"></span>}
                                         </div>
-                                        <p className="text-xs text-slate-300 mb-2 line-clamp-2">{notice.content}</p>
-                                        <p className="text-[10px] text-yellow-500/60 uppercase tracking-wide">{notice.date_posted}</p>
+                                        <p className="text-xs text-slate-700 mb-2 line-clamp-2">{notice.content}</p>
+                                        <p className="text-[10px] text-amber-700 font-bold uppercase tracking-wide">{notice.date_posted}</p>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* 5. Calendar / Holidays (Static for now) */}
-                    <div className="glass p-6 rounded-2xl border border-slate-700 bg-slate-800/50">
-                        <h3 className="text-lg font-semibold mb-4 text-pink-400 flex items-center gap-2">
+                    {/* 5. Calendar / Holidays */}
+                    <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 text-purple-600 flex items-center gap-2">
                             <Calendar size={18} /> Upcoming Holidays
                         </h3>
                         <ul className="space-y-3">
-                            <li className="flex justify-between items-center text-sm p-2 hover:bg-slate-700/30 rounded-lg transition-colors">
-                                <span className="text-slate-300">Republic Day</span>
-                                <span className="text-xs font-mono py-1 px-2 rounded bg-slate-700 text-slate-400">Jan 26</span>
+                            <li className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg transition-colors border-b border-slate-100">
+                                <span className="text-slate-800 font-medium">Republic Day</span>
+                                <span className="text-xs font-mono py-1 px-2 rounded bg-slate-100 text-slate-700 font-bold">Jan 26</span>
                             </li>
-                            <li className="flex justify-between items-center text-sm p-2 hover:bg-slate-700/30 rounded-lg transition-colors">
-                                <span className="text-slate-300">Maha Shivaratri</span>
-                                <span className="text-xs font-mono py-1 px-2 rounded bg-slate-700 text-slate-400">Mar 08</span>
+                            <li className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg transition-colors border-b border-slate-100">
+                                <span className="text-slate-800 font-medium">Maha Shivaratri</span>
+                                <span className="text-xs font-mono py-1 px-2 rounded bg-slate-100 text-slate-700 font-bold">Mar 08</span>
                             </li>
-                            <li className="flex justify-between items-center text-sm p-2 hover:bg-slate-700/30 rounded-lg transition-colors">
-                                <span className="text-slate-300">Holi</span>
-                                <span className="text-xs font-mono py-1 px-2 rounded bg-slate-700 text-slate-400">Mar 25</span>
+                            <li className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                                <span className="text-slate-800 font-medium">Holi</span>
+                                <span className="text-xs font-mono py-1 px-2 rounded bg-slate-100 text-slate-700 font-bold">Mar 25</span>
                             </li>
                         </ul>
                     </div>
@@ -444,16 +440,16 @@ export default function TeacherDashboard() {
 
 function FeedbackItem({ text, author, score }: any) {
     return (
-        <div className="p-3 rounded-xl bg-slate-700/30">
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
             <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-cyan-400">{author}</span>
+                <span className="text-xs font-bold text-indigo-600">{author}</span>
                 <div className="flex gap-0.5">
                     {[...Array(score)].map((_, i) => (
-                        <Star key={i} size={10} className="fill-yellow-500 text-yellow-500" />
+                        <Star key={i} size={10} className="fill-amber-400 text-amber-400" />
                     ))}
                 </div>
             </div>
-            <p className="text-xs text-slate-300 italic">"{text}"</p>
+            <p className="text-xs text-slate-600 italic">"{text}"</p>
         </div>
     )
 }
@@ -461,4 +457,3 @@ function FeedbackItem({ text, author, score }: any) {
 function CheckCircle({ size }: { size: number }) {
     return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
 }
-

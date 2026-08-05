@@ -272,3 +272,38 @@ class SavedSyllabusResponse(SavedSyllabusCreate):
     class Config:
         from_attributes = True
 
+
+class MarksParameterCreate(BaseModel):
+    parameter_name: str
+    description: Optional[str] = None
+    max_marks: float = 100.0
+    weightage: Optional[float] = None
+    subject: str
+    semester: Optional[str] = None
+    status: str = "Active"
+
+
+class MarksParameterResponse(MarksParameterCreate):
+    id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class StudentParameterMarkSubmit(BaseModel):
+    student_id: str
+    score: float
+
+
+class StudentParameterMarkResponse(BaseModel):
+    id: str
+    student_id: str
+    parameter_id: str
+    score: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+

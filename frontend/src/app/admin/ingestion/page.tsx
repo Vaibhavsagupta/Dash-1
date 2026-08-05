@@ -88,30 +88,30 @@ export default function DataIngestion() {
     ];
 
     return (
-        <div className="text-slate-100">
+        <div className="bg-slate-50 min-h-screen text-slate-900">
             <header className="mb-12">
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                <h1 className="text-3xl font-extrabold text-slate-900">
                     Smart Data Ingestion
                 </h1>
-                <p className="text-slate-400 mt-2">Deep batch ingestion and synchronization</p>
+                <p className="text-slate-500 mt-2 font-medium">Deep batch ingestion and synchronization</p>
             </header>
 
             <div className="max-w-4xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Left: Instructions & Dropzone */}
                     <div className="space-y-8">
-                        <section className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                <CheckCircle2 size={18} className="text-indigo-400" />
+                        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <CheckCircle2 size={18} className="text-indigo-600" />
                                 Requirements
                             </h2>
-                            <p className="text-slate-400 text-sm mb-4">
+                            <p className="text-slate-500 text-sm mb-4">
                                 Deep analysis requires the following files with their original structure:
                             </p>
                             <ul className="grid grid-cols-1 gap-2">
                                 {expectedFiles.map((f, i) => (
-                                    <li key={i} className="flex items-center gap-2 text-xs text-slate-300 bg-slate-700/30 p-2 rounded border border-slate-700/50">
-                                        <FileText size={14} className="text-slate-500" />
+                                    <li key={i} className="flex items-center gap-2 text-xs text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                        <FileText size={14} className="text-slate-400" />
                                         {f}
                                     </li>
                                 ))}
@@ -119,14 +119,14 @@ export default function DataIngestion() {
                         </section>
 
                         <div
-                            className={`border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center transition-all ${files.length > 0 ? 'border-indigo-500/50 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'
+                            className={`border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center transition-all ${files.length > 0 ? 'border-indigo-400 bg-indigo-50' : 'border-slate-300 hover:border-indigo-400 bg-white'
                                 }`}
                         >
-                            <div className="bg-indigo-500/10 p-4 rounded-full mb-4">
-                                <Upload size={32} className="text-indigo-400" />
+                            <div className="bg-indigo-50 p-4 rounded-full mb-4 border border-indigo-100">
+                                <Upload size={32} className="text-indigo-600" />
                             </div>
-                            <h3 className="text-xl font-medium mb-2">Upload Data Files</h3>
-                            <p className="text-slate-400 text-center text-sm mb-6">
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">Upload Data Files</h3>
+                            <p className="text-slate-500 text-center text-sm mb-6">
                                 Drag and drop all your Excel files here <br /> or click to browse
                             </p>
                             <input
@@ -148,13 +148,13 @@ export default function DataIngestion() {
 
                     {/* Right: File List & Action */}
                     <div className="space-y-6">
-                        <div className="glass p-6 rounded-3xl border border-slate-700 min-h-[400px] flex flex-col bg-slate-800/40">
-                            <h2 className="text-xl font-semibold mb-6">Selected Files ({files.length})</h2>
+                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col">
+                            <h2 className="text-xl font-bold text-slate-900 mb-6">Selected Files ({files.length})</h2>
 
                             <div className="flex-grow space-y-3 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
                                 <AnimatePresence>
                                     {files.length === 0 ? (
-                                        <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50 italic">
+                                        <div className="h-full flex flex-col items-center justify-center text-slate-400 italic text-sm">
                                             No files selected yet
                                         </div>
                                     ) : (
@@ -164,17 +164,17 @@ export default function DataIngestion() {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0, x: -20 }}
                                                 key={file.name + i}
-                                                className="flex items-center justify-between p-3 bg-slate-700/40 rounded-xl border border-slate-600"
+                                                className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="bg-slate-600 p-2 rounded-lg">
-                                                        <FileText size={16} className="text-slate-200" />
+                                                    <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100">
+                                                        <FileText size={16} className="text-indigo-600" />
                                                     </div>
-                                                    <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                                                    <span className="text-sm font-medium text-slate-900 truncate max-w-[200px]">{file.name}</span>
                                                 </div>
                                                 <button
                                                     onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
-                                                    className="text-slate-400 hover:text-red-400 p-1"
+                                                    className="text-slate-400 hover:text-rose-600 p-1"
                                                 >
                                                     <AlertCircle size={16} />
                                                 </button>
@@ -201,8 +201,8 @@ export default function DataIngestion() {
                                     onClick={handleIngest}
                                     disabled={loading || files.length === 0}
                                     className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${loading || files.length === 0
-                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20'
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/20'
                                         }`}
                                 >
                                     {loading ? (
@@ -217,7 +217,7 @@ export default function DataIngestion() {
                                         </>
                                     )}
                                 </button>
-                                <p className="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-widest">
+                                <p className="text-center text-[10px] text-slate-400 mt-4 uppercase tracking-widest font-bold">
                                     Warning: This will overwrite existing student records
                                 </p>
                             </div>

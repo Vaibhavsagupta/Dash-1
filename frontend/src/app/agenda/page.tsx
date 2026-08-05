@@ -12,44 +12,46 @@ export default function TrainingAgendaPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-slate-100">
+        <div className="min-h-screen bg-slate-50 text-slate-900">
             <Navbar />
             <main className="pt-32 pb-20 px-6">
                 <div className="max-w-4xl mx-auto">
                     <header className="mb-12">
-                        <h1 className="text-4xl font-bold mb-3">Training Agenda</h1>
-                        <p className="text-slate-400">Your daily schedule and learning milestones</p>
+                        <h1 className="text-4xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                            Training Agenda
+                        </h1>
+                        <p className="text-slate-600 font-medium">Your daily schedule and learning milestones</p>
                     </header>
 
                     <div className="space-y-6">
                         {agenda.map((item, i) => (
-                            <div key={i} className="glass p-6 rounded-3xl border border-slate-700 bg-slate-800/30 flex items-center gap-6 hover:border-indigo-500/50 transition-all group">
-                                <div className="hidden md:flex flex-col items-center justify-center min-w-[100px] py-2 border-r border-slate-700">
-                                    <Clock size={16} className="text-indigo-400 mb-1" />
-                                    <span className="text-sm font-bold">{item.time.split(' ')[0]}</span>
-                                    <span className="text-[10px] text-slate-500 uppercase">{item.time.split(' ')[1]}</span>
+                            <div key={i} className="p-6 rounded-3xl border border-slate-200 bg-white flex items-center gap-6 hover:border-indigo-400 hover:shadow-md transition-all group shadow-sm">
+                                <div className="hidden md:flex flex-col items-center justify-center min-w-[100px] py-2 border-r border-slate-200">
+                                    <Clock size={16} className="text-indigo-600 mb-1" />
+                                    <span className="text-sm font-bold text-slate-900">{item.time.split(' ')[0]}</span>
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase">{item.time.split(' ')[1]}</span>
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${item.type === 'Tech' ? 'bg-blue-500/10 text-blue-400' :
-                                                item.type === 'Soft Skill' ? 'bg-purple-500/10 text-purple-400' :
-                                                    'bg-slate-700 text-slate-400'
+                                        <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${item.type === 'Tech' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' :
+                                                item.type === 'Soft Skill' ? 'bg-purple-50 border-purple-200 text-purple-700' :
+                                                    'bg-slate-100 border-slate-200 text-slate-600'
                                             }`}>
                                             {item.type}
                                         </span>
                                     </div>
-                                    <h3 className="text-xl font-bold group-hover:text-indigo-400 transition-colors uppercase">{item.title}</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase">{item.title}</h3>
                                     <div className="flex flex-wrap gap-4 mt-2">
-                                        <div className="flex items-center gap-1.5 text-xs text-slate-400 uppercase">
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold uppercase">
                                             <MapPin size={12} />
                                             {item.location}
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-xs text-slate-400 uppercase italic">
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium uppercase italic">
                                             Instructor: {item.instructor}
                                         </div>
                                     </div>
                                 </div>
-                                <button className="p-3 rounded-full bg-slate-700/50 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all">
+                                <button className="p-3 rounded-full bg-slate-100 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-slate-200">
                                     <CheckCircle size={24} />
                                 </button>
                             </div>

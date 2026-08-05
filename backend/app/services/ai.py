@@ -149,47 +149,73 @@ FALLBACK_QUESTIONS = [
     }
 ]
 
-def generate_mock_questions(subject: str, topic: str, count: int, question_types: List[str], difficulty: str) -> List[Dict[str, Any]]:
+def generate_mock_questions(subject: str, topic: str, count: int, question_types: Any, difficulty: str) -> List[Dict[str, Any]]:
     """Generates structured questions from the mock pool based on criteria."""
     sub_pool = MOCK_QUESTIONS_POOL.get(subject, {})
-    topic_pool = sub_pool.get(topic, [])
+    topic_pool = []
     
-    if not topic_pool:
-        # Check case-insensitive
-        for sub_k, sub_val in MOCK_QUESTIONS_POOL.items():
-            if sub_k.lower() == subject.lower():
-                for top_k, top_val in sub_val.items():
-                    if top_k.lower() == topic.lower():
-                        topic_pool = top_val
-                        break
-    
-    # If still empty, collect all from subject or use general fallback
-    if not topic_pool:
-        if sub_pool:
-            for val in sub_pool.values():
-                topic_pool.extend(val)
-        else:
-            topic_pool = FALLBACK_QUESTIONS
+    # Check case-insensitive subject
+    for sub_k, sub_val in MOCK_QUESTIONS_POOL.items():
+        if sub_k.lower() == subject.lower():
+            sub_pool = sub_val
+            break
             
-    # Filter by requested question types if present
-    typed_pool = [q for q in topic_pool if q["question_type"] in question_types] if question_types else topic_pool
-    if not typed_pool:
-        typed_pool = topic_pool
-
+    # Check case-insensitive topic
+    if isinstance(sub_pool, dict):
+        for top_k, top_val in sub_pool.items():
+            if top_k.lower() == topic.lower():
+                topic_pool = top_val
+                break
+                
+    # If topic not found, gather all questions from the subject
+    if not topic_pool and isinstance(sub_pool, dict):
+        for val in sub_pool.values():
+            topic_pool.extend(val)
+            
+    # If still empty, use fallback pool
+    if not topic_pool:
+        topic_pool = FALLBACK_QUESTIONS
+        
     results = []
-    for i in range(count):
-        base_q = random.choice(typed_pool)
-        q_copy = base_q.copy()
-        
-        if i >= len(typed_pool):
-            q_copy["question_text"] = f"[Version {i//len(typed_pool) + 1}] " + q_copy["question_text"]
+    
+    if isinstance(question_types, dict):
+        # Generate exact counts per type
+        for q_type, q_count in question_types.items():
+            type_pool = [q for q in topic_pool if q["question_type"].lower() == q_type.lower()]
+            if not type_pool:
+                # Fallback to general fallback questions matching the type
+                type_pool = [q for q in FALLBACK_QUESTIONS if q["question_type"].lower() == q_type.lower()]
+            if not type_pool:
+                # Absolute fallback to whatever is available
+                type_pool = topic_pool
+                
+            for i in range(q_count):
+                base_q = random.choice(type_pool)
+                q_copy = base_q.copy()
+                if i >= len(type_pool):
+                    q_copy["question_text"] = f"[Version {i//len(type_pool) + 1}] " + q_copy["question_text"]
+                q_copy["subject"] = subject
+                q_copy["topic"] = topic
+                q_copy["difficulty"] = difficulty
+                results.append(q_copy)
+    else:
+        # List of question types
+        typed_pool = [q for q in topic_pool if q["question_type"] in question_types] if question_types else topic_pool
+        if not typed_pool:
+            typed_pool = topic_pool
+
+        for i in range(count):
+            base_q = random.choice(typed_pool)
+            q_copy = base_q.copy()
+            if i >= len(typed_pool):
+                q_copy["question_text"] = f"[Version {i//len(typed_pool) + 1}] " + q_copy["question_text"]
+            q_copy["subject"] = subject
+            q_copy["topic"] = topic
+            q_copy["difficulty"] = difficulty
+            results.append(q_copy)
             
-        q_copy["subject"] = subject
-        q_copy["topic"] = topic
-        q_copy["difficulty"] = difficulty
-        results.append(q_copy)
-        
-    return results
+    # Ensure correct count
+    return results[:count] if len(results) > count else results
 
 def call_gemini_api(api_key: str, prompt: str) -> List[Dict[str, Any]]:
     """Calls Gemini API directly with HTTP POST and returns parsed question list."""
@@ -255,24 +281,33 @@ def generate_questions(
     subject: str,
     topic: str,
     syllabus: str,
-    question_types: List[str],
+    question_types: Any,  # List[str] or Dict[str, int]
     count: int,
     difficulty: str
 ) -> List[Dict[str, Any]]:
     """Primary service entry point that routes to AI APIs or fallback mock generator."""
     
+    if isinstance(question_types, dict):
+        distribution_desc = ", ".join([f"{c} questions of type '{t}'" for t, c in question_types.items()])
+        allowed_types_list = list(question_types.keys())
+    else:
+        distribution_desc = f"total of {count} questions of types: {', '.join(question_types)}"
+        allowed_types_list = question_types
+
     prompt = f"""
 Generate exactly {count} test questions based on the following:
 Subject: {subject}
 Topic: {topic}
 Syllabus / Content: {syllabus}
-Allowed Question Types: {", ".join(question_types)}
+Allowed Question Types: {", ".join(allowed_types_list)}
 Difficulty: {difficulty}
+
+Please generate: {distribution_desc}
 
 Return STRICT JSON format containing an array of questions.
 Each question MUST have the following keys:
 - question_text (string)
-- question_type (must be one of: {", ".join(question_types)})
+- question_type (must be one of: {", ".join(allowed_types_list)})
 - options (array of strings, only for MCQ and 'Multiple Select', else empty array or null)
 - correct_answer (string. For 'Multiple Select', this should be a JSON array string representing list of correct options. For 'True/False', must be 'True' or 'False'. For others, the exact text.)
 - explanation (string explaining why it is correct)

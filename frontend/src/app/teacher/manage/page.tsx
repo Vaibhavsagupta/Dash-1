@@ -3,6 +3,7 @@ import { API_BASE_URL } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Search, UploadCloud } from 'lucide-react';
+import MarksParametersSection from '@/components/MarksParametersSection';
 
 export default function ManageData() {
     const router = useRouter();
@@ -11,6 +12,7 @@ export default function ManageData() {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<any>({});
+    const [activeTab, setActiveTab] = useState<'students' | 'parameters'>('students');
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -238,97 +240,126 @@ export default function ManageData() {
                 </div>
             </nav>
 
-            <div className="mb-6 relative">
-                <Search className="absolute left-3 top-3 text-slate-400" size={20} />
-                <input
-                    type="text"
-                    placeholder="Search by name or ID..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500"
-                />
+            <div className="flex gap-4 mb-6 border-b border-slate-700/60 pb-3">
+                <button
+                    onClick={() => setActiveTab('students')}
+                    className={`pb-1 text-sm font-semibold border-b-2 transition-all ${
+                        activeTab === 'students' 
+                            ? 'border-indigo-500 text-indigo-400' 
+                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                >
+                    Student Directory
+                </button>
+                <button
+                    onClick={() => setActiveTab('parameters')}
+                    className={`pb-1 text-sm font-semibold border-b-2 transition-all ${
+                        activeTab === 'parameters' 
+                            ? 'border-indigo-500 text-indigo-400' 
+                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                >
+                    Marks Parameters
+                </button>
             </div>
 
-            <div className="glass rounded-xl border border-slate-700 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-800/80 text-slate-400 text-xs uppercase">
-                        <tr>
-                            <th className="p-4">ID</th>
-                            <th className="p-4">Name</th>
-                            <th className="p-4">Att (%)</th>
-                            <th className="p-4">DSA</th>
-                            <th className="p-4">ML</th>
-                            <th className="p-4">QA</th>
-                            <th className="p-4">Proj</th>
-                            <th className="p-4">Mock</th>
-                            <th className="p-4 text-green-400">Fees</th>
-                            <th className="p-4 text-green-400">Certs</th>
-                            <th className="p-4">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-700">
-                        {isAdding && (
-                            <tr className="bg-indigo-900/20 border-b border-indigo-500/30">
-                                <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
-                                <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
-                                <td className="p-2"><Input name="attendance" val={newStudent.attendance} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="dsa_score" val={newStudent.dsa_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="ml_score" val={newStudent.ml_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="qa_score" val={newStudent.qa_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="projects_score" val={newStudent.projects_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="mock_interview_score" val={newStudent.mock_interview_score} set={setNewStudent} /></td>
-                                <td className="p-4">
-                                    <button onClick={handleAdd} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm">
-                                        Save
-                                    </button>
-                                </td>
-                            </tr>
-                        )}
-                        {filteredStudents.map(student => (
-                            <tr key={student.student_id} className="hover:bg-slate-800/30 transition">
-                                <td className="p-4 font-mono text-sm text-slate-400">{student.student_id}</td>
-                                <td className="p-4 font-medium">{student.name}</td>
+            {activeTab === 'students' ? (
+                <>
+                    <div className="mb-6 relative">
+                        <Search className="absolute left-3 top-3 text-slate-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search by name or ID..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500"
+                        />
+                    </div>
 
-                                {editingId === student.student_id ? (
-                                    <>
-                                        <td className="p-2"><Input name="attendance" val={formData.attendance} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="dsa_score" val={formData.dsa_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="ml_score" val={formData.ml_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="qa_score" val={formData.qa_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="projects_score" val={formData.projects_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="mock_interview_score" val={formData.mock_interview_score} set={setFormData} /></td>
+                    <div className="glass rounded-xl border border-slate-700 overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-800/80 text-slate-400 text-xs uppercase">
+                                <tr>
+                                    <th className="p-4">ID</th>
+                                    <th className="p-4">Name</th>
+                                    <th className="p-4">Att (%)</th>
+                                    <th className="p-4">DSA</th>
+                                    <th className="p-4">ML</th>
+                                    <th className="p-4">QA</th>
+                                    <th className="p-4">Proj</th>
+                                    <th className="p-4">Mock</th>
+                                    <th className="p-4 text-green-400">Fees</th>
+                                    <th className="p-4 text-green-400">Certs</th>
+                                    <th className="p-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700">
+                                {isAdding && (
+                                    <tr className="bg-indigo-900/20 border-b border-indigo-500/30">
+                                        <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
+                                        <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
+                                        <td className="p-2"><Input name="attendance" val={newStudent.attendance} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="dsa_score" val={newStudent.dsa_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="ml_score" val={newStudent.ml_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="qa_score" val={newStudent.qa_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="projects_score" val={newStudent.projects_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="mock_interview_score" val={newStudent.mock_interview_score} set={setNewStudent} /></td>
                                         <td className="p-4">
-                                            <button onClick={() => handleSave(student.student_id)} className="text-green-400 hover:text-green-300">
-                                                <Save size={20} />
+                                            <button onClick={handleAdd} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm">
+                                                Save
                                             </button>
                                         </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td className="p-4">{student.attendance}</td>
-                                        <td className="p-4">{student.dsa_score}</td>
-                                        <td className="p-4">{student.ml_score}</td>
-                                        <td className="p-4">{student.qa_score}</td>
-                                        <td className="p-4">{student.projects_score}</td>
-                                        <td className="p-4">{student.mock_interview_score}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-0.5 rounded text-xs ${student.fees_paid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                                {student.fees_paid ? 'Paid' : 'Due'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">{student.external_certifications || 0}</td>
-                                        <td className="p-4">
-                                            <button onClick={() => handleEdit(student)} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
-                                                Edit
-                                            </button>
-                                        </td>
-                                    </>
+                                    </tr>
                                 )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                {filteredStudents.map(student => (
+                                    <tr key={student.student_id} className="hover:bg-slate-800/30 transition">
+                                        <td className="p-4 font-mono text-sm text-slate-400">{student.student_id}</td>
+                                        <td className="p-4 font-medium">{student.name}</td>
+
+                                        {editingId === student.student_id ? (
+                                            <>
+                                                <td className="p-2"><Input name="attendance" val={formData.attendance} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="dsa_score" val={formData.dsa_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="ml_score" val={formData.ml_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="qa_score" val={formData.qa_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="projects_score" val={formData.projects_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="mock_interview_score" val={formData.mock_interview_score} set={setFormData} /></td>
+                                                <td className="p-4">
+                                                    <button onClick={() => handleSave(student.student_id)} className="text-green-400 hover:text-green-300">
+                                                        <Save size={20} />
+                                                    </button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td className="p-4">{student.attendance}</td>
+                                                <td className="p-4">{student.dsa_score}</td>
+                                                <td className="p-4">{student.ml_score}</td>
+                                                <td className="p-4">{student.qa_score}</td>
+                                                <td className="p-4">{student.projects_score}</td>
+                                                <td className="p-4">{student.mock_interview_score}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-0.5 rounded text-xs ${student.fees_paid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                        {student.fees_paid ? 'Paid' : 'Due'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">{student.external_certifications || 0}</td>
+                                                <td className="p-4">
+                                                    <button onClick={() => handleEdit(student)} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                                        Edit
+                                                    </button>
+                                                </td>
+                                            </>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            ) : (
+                <MarksParametersSection />
+            )}
         </div>
     );
 }

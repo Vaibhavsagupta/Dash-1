@@ -44,7 +44,7 @@ def generate_test_questions(
     subject: str = Form(...),
     topic: str = Form(...),
     syllabus: str = Form(...),
-    question_types_json: str = Form(...),  # JSON array string
+    question_types_json: str = Form(...),  # JSON array or object string
     count: int = Form(...),
     difficulty: str = Form(...),
     current_user: models.User = Depends(get_current_user)
@@ -55,8 +55,13 @@ def generate_test_questions(
     try:
         question_types = json.loads(question_types_json)
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON array for question_types_json")
+        raise HTTPException(status_code=400, detail="Invalid JSON array or object for question_types_json")
         
+    if isinstance(question_types, dict):
+        type_count_sum = sum(question_types.values())
+        if type_count_sum != count:
+            count = type_count_sum
+
     try:
         questions = generate_questions(
             subject=subject,
@@ -339,11 +344,12 @@ def get_eligible_students(
         recommendations.append({
             "student_id": s.student_id,
             "name": s.name,
+            "batch_id": s.batch_id,
             "subject_score": subject_score,
             "rag_status": s.rag_status,
             "topic_accuracy": topic_perf.accuracy if topic_perf else None,
             "recommended": recommended,
-            "reason": reason
+            "reason": reason or "None"
         })
         
     return recommendations
@@ -481,7 +487,59 @@ def get_test_analytics(
             "correct_attempts": correct_answers,
             "accuracy_percent": accuracy
         })
+
+    # Topic breakdown (how students performed on each question/subtopic)
+    topic_map = {}
+    for q in questions:
+        key = q.subtopic or q.topic or "Core Concept"
+        if key not in topic_map:
+            topic_map[key] = {
+                "subtopic": key,
+                "question_ids": [],
+                "correct_attempts": 0,
+                "total_attempts": 0
+            }
+        topic_map[key]["question_ids"].append(q.id)
+
+    for sub_name, sub_data in topic_map.items():
+        sub_answers = db.query(models.StudentAnswer).filter(
+            models.StudentAnswer.question_id.in_(sub_data["question_ids"])
+        ).all() if sub_data["question_ids"] else []
         
+        sub_data["total_attempts"] = len(sub_answers)
+        sub_data["correct_attempts"] = sum(1 for ans in sub_answers if ans.is_correct)
+        sub_data["accuracy_percent"] = (sub_data["correct_attempts"] / sub_data["total_attempts"] * 100) if sub_data["total_attempts"] > 0 else 0.0
+
+        weak_students = []
+        strong_students = []
+        
+        # Group by student
+        student_sub_answers = {}
+        for ans in sub_answers:
+            attempt_rec = db.query(models.TestAttempt).filter(models.TestAttempt.id == ans.attempt_id).first()
+            if not attempt_rec:
+                continue
+            s_id = attempt_rec.student_id
+            if s_id not in student_sub_answers:
+                student_sub_answers[s_id] = {"correct": 0, "total": 0}
+            student_sub_answers[s_id]["total"] += 1
+            if ans.is_correct:
+                student_sub_answers[s_id]["correct"] += 1
+
+        for s_id, s_stats in student_sub_answers.items():
+            acc = s_stats["correct"] / s_stats["total"]
+            student_rec = db.query(models.Student).filter(models.Student.student_id == s_id).first()
+            s_name = student_rec.name if student_rec else s_id
+            if acc < 0.60:
+                weak_students.append(s_name)
+            elif acc >= 0.80:
+                strong_students.append(s_name)
+
+        sub_data["weak_students"] = weak_students
+        sub_data["strong_students"] = strong_students
+
+    topic_analysis = list(topic_map.values())
+
     return {
         "test_id": id,
         "name": test.name,
@@ -494,5 +552,6 @@ def get_test_analytics(
         "average_score": avg_score,
         "average_accuracy": avg_accuracy * 100,
         "students": student_details,
-        "questions": question_stats
+        "questions": question_stats,
+        "topic_analysis": topic_analysis
     }

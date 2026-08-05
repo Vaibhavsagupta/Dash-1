@@ -1,3 +1,8 @@
+# Local-only files (do not commit)
+*.pdf
+tunnel_*.ps1
+run_dashboard.bat
+
 # Python
 __pycache__/
 *.py[cod]

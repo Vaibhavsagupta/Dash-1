@@ -203,52 +203,52 @@ const TiltCard = ({ student, batchStats }: { student: StudentAnalytics, batchSta
                 )}
             </AnimatePresence>
 
-            <div className="absolute inset-0 bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden transform transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-violet-500/20 group-hover:border-violet-500/50">
+            <div className="absolute inset-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transform transition-all duration-300 group-hover:shadow-md group-hover:border-indigo-300">
                 {/* Header Pattern */}
-                <div className="h-32 bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950 relative overflow-hidden ring-1 ring-white/10">
+                <div className="h-32 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 relative overflow-hidden">
                     {/* ... header contents ... */}
-                    <button onClick={generateAIReport} className="absolute top-4 left-4 z-20 bg-white/10 hover:bg-white/20 hover:scale-105 backdrop-blur-md p-2 rounded-lg border border-white/10 transition-all group/btn" title="Generate AI Report"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-200 group-hover/btn:text-white"><path d="M12 2a10 10 0 1 0 10 10H12V2z" /><path d="M12 2a10 10 0 0 1 10 10" /><path d="M2.05 10.5a10 10 0 0 1 9.95-8.5" /></svg></button>
+                    <button onClick={generateAIReport} className="absolute top-4 left-4 z-20 bg-white/20 hover:bg-white/30 hover:scale-105 backdrop-blur-md p-2 rounded-lg border border-white/20 transition-all group/btn" title="Generate AI Report"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M12 2a10 10 0 1 0 10 10H12V2z" /><path d="M12 2a10 10 0 0 1 10 10" /><path d="M2.05 10.5a10 10 0 0 1 9.95-8.5" /></svg></button>
                     <div className="absolute top-0 right-0 p-4 opacity-10 transform rotate-12"><TrendingUp size={100} color="white" /></div>
                     <div className="absolute top-4 right-4 flex gap-2 z-20">
-                        <div className={`px-3 py-1 rounded-full border border-white/10 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${student.rag === 'Red' ? 'bg-rose-500/50' : student.rag === 'Amber' ? 'bg-amber-500/50' : 'bg-emerald-500/50'}`}>{student.rag}</div>
-                        <div className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-white text-xs font-bold">Rank #{student.rank}</div>
+                        <div className={`px-3 py-1 rounded-full border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${student.rag === 'Red' ? 'bg-rose-500/80' : student.rag === 'Amber' ? 'bg-amber-500/80' : 'bg-emerald-500/80'}`}>{student.rag}</div>
+                        <div className="bg-black/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-white text-xs font-bold">Rank #{student.rank}</div>
                     </div>
-                    <div className="absolute bottom-4 left-4 text-white"><h3 className="text-xl font-bold tracking-tight">{student.name}</h3><p className="text-indigo-200 text-sm font-medium">{student.student_id}</p></div>
+                    <div className="absolute bottom-4 left-4 text-white"><h3 className="text-xl font-bold tracking-tight">{student.name}</h3><p className="text-indigo-100 text-sm font-medium">{student.student_id}</p></div>
                 </div>
 
                 {/* Floating Stat Circle */}
-                <div className="absolute top-24 right-6 w-16 h-16 bg-slate-800 rounded-full p-1 shadow-lg flex items-center justify-center z-10 group-hover:scale-110 transition-transform duration-300 border border-slate-700">
-                    <div className="w-full h-full rounded-full border-4 border-violet-500 flex flex-col items-center justify-center bg-slate-800"><span className="text-sm font-bold text-violet-400">{Math.round(student.prs_score)}</span><span className="text-[9px] text-slate-400 font-bold -mt-1">PRS</span></div>
+                <div className="absolute top-24 right-6 w-16 h-16 bg-white rounded-full p-1 shadow-md flex items-center justify-center z-10 group-hover:scale-110 transition-transform duration-300 border border-slate-200">
+                    <div className="w-full h-full rounded-full border-4 border-indigo-600 flex flex-col items-center justify-center bg-white"><span className="text-sm font-bold text-indigo-600">{Math.round(student.prs_score)}</span><span className="text-[9px] text-slate-500 font-bold -mt-1">PRS</span></div>
                 </div>
 
                 {/* Content Wrapper */}
-                <div className="p-5 pt-8 flex flex-col h-[calc(100%-8rem)] justify-between relative bg-slate-800/0">
+                <div className="p-5 pt-8 flex flex-col h-[calc(100%-8rem)] justify-between relative bg-white">
 
                     {/* Main Info - Fades out on Hover */}
                     <div className="space-y-4 group-hover:opacity-0 transition-opacity duration-300 absolute inset-x-5 top-8">
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
-                                <div className="flex items-center gap-2 mb-1 text-slate-400"><Calendar size={14} /> <span className="text-xs font-semibold">Attendance</span></div>
-                                <div className="text-lg font-bold text-slate-200">{student.attendance}%</div>
-                                <div className="w-full bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden"><div className="bg-green-500 h-full rounded-full" style={{ width: `${student.attendance}%` }} /></div>
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div className="flex items-center gap-2 mb-1 text-slate-500"><Calendar size={14} /> <span className="text-xs font-semibold">Attendance</span></div>
+                                <div className="text-lg font-bold text-slate-900">{student.attendance}%</div>
+                                <div className="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden"><div className="bg-emerald-500 h-full rounded-full" style={{ width: `${student.attendance}%` }} /></div>
                             </div>
-                            <div className="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50">
-                                <div className="flex items-center gap-2 mb-1 text-slate-400"><Award size={14} /> <span className="text-xs font-semibold">Percentile</span></div>
-                                <div className="text-lg font-bold text-slate-200">{student.percentile}%</div>
-                                <div className="w-full bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden"><div className="bg-blue-500 h-full rounded-full" style={{ width: `${student.percentile}%` }} /></div>
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div className="flex items-center gap-2 mb-1 text-slate-500"><Award size={14} /> <span className="text-xs font-semibold">Percentile</span></div>
+                                <div className="text-lg font-bold text-slate-900">{student.percentile}%</div>
+                                <div className="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden"><div className="bg-indigo-600 h-full rounded-full" style={{ width: `${student.percentile}%` }} /></div>
                             </div>
                         </div>
                         <div className="mt-6">
                             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Top Strength</h4>
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-pink-500/10 text-pink-400 rounded-lg border border-pink-500/20"><TrendingUp size={20} /></div>
-                                <div><div className="font-bold text-slate-200">{Object.entries({ DSA: student.dsa, ML: student.ml, QA: student.qa, Proj: student.projects }).sort((a, b) => b[1] - a[1])[0][0]}</div><div className="text-xs text-slate-500">Keep it up!</div></div>
+                                <div className="p-2 bg-purple-50 text-purple-600 rounded-lg border border-purple-100"><TrendingUp size={20} /></div>
+                                <div><div className="font-bold text-slate-900">{Object.entries({ DSA: student.dsa, ML: student.ml, QA: student.qa, Proj: student.projects }).sort((a, b) => b[1] - a[1])[0][0]}</div><div className="text-xs text-slate-500">Keep it up!</div></div>
                             </div>
                         </div>
                         <div className="flex justify-center pt-8">
                             <button
                                 onClick={toggleBatchInfo}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-violet-500/20 text-slate-400 hover:text-violet-400 rounded-xl border border-slate-700/50 hover:border-violet-500/30 transition-all group/batch"
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-xl border border-slate-200 transition-all group/batch font-medium"
                             >
                                 <span className="text-xs font-bold uppercase tracking-widest">Batch Info</span>
                                 <motion.div animate={{ rotate: isBatchOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
@@ -376,6 +376,7 @@ export default function StudentProgressionList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBatch, setSelectedBatch] = useState('All');
     const [sortBy, setSortBy] = useState<'rank' | 'prs' | 'name'>('rank');
+    const [ragFilter, setRagFilter] = useState<'All' | 'Green' | 'Amber' | 'Red'>('All');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -410,6 +411,14 @@ export default function StudentProgressionList() {
     const filteredStudents = useMemo(() => {
         let result = [...students];
 
+        // Filter by RAG Color
+        if (ragFilter !== 'All') {
+            result = result.filter(s => {
+                const status = s.rag || (s.attendance < 60 || s.prs_score < 40 ? 'Red' : s.attendance <= 75 || s.prs_score <= 60 ? 'Amber' : 'Green');
+                return status === ragFilter;
+            });
+        }
+
         // Filter by Batch
         if (selectedBatch !== 'All') {
             result = result.filter(s => s.batch_id === selectedBatch);
@@ -433,7 +442,7 @@ export default function StudentProgressionList() {
         });
 
         return result;
-    }, [students, searchTerm, sortBy, selectedBatch]);
+    }, [students, searchTerm, sortBy, selectedBatch, ragFilter]);
 
     const batchStats = useMemo(() => {
         if (!filteredStudents.length) return { dsa: 0, ml: 0, qa: 0, projects: 0, mock: 0, pre: 0, post: 0 };
@@ -471,26 +480,41 @@ export default function StudentProgressionList() {
     return (
         <div className="space-y-8">
             {/* Controls Header */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-800/50 p-4 rounded-2xl shadow-sm border border-slate-700 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <div className="relative w-full md:w-96 group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-slate-400 group-focus-within:text-violet-400 transition-colors" />
+                        <Search className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2 border border-slate-600 rounded-xl leading-5 bg-slate-900/50 text-slate-100 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all duration-200 sm:text-sm"
+                        className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl leading-5 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/50 focus:border-transparent transition-all duration-200 sm:text-sm font-medium shadow-sm"
                         placeholder="Search students by name or ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                <div className="flex bg-slate-700/50 p-1 rounded-xl border border-slate-700">
+                <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                    {(['All', 'Green', 'Amber', 'Red'] as const).map((color) => (
+                        <button
+                            key={color}
+                            onClick={() => setRagFilter(color)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${ragFilter === color ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                            {color === 'Green' && <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>}
+                            {color === 'Amber' && <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>}
+                            {color === 'Red' && <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>}
+                            {color}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
                     {['All', 'Batch 1', 'Batch 2', 'Batch 3'].map((b) => (
                         <button
                             key={b}
                             onClick={() => setSelectedBatch(b)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedBatch === b ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedBatch === b ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             {b}
                         </button>
@@ -498,32 +522,32 @@ export default function StudentProgressionList() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-400 font-medium hidden md:block">Sort by:</span>
-                    <div className="flex bg-slate-700/50 p-1 rounded-xl border border-slate-700">
+                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider hidden md:block">Sort by:</span>
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
                         <button
                             onClick={() => setSortBy('rank')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${sortBy === 'rank' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'rank' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             Rank
                         </button>
                         <button
                             onClick={() => setSortBy('prs')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${sortBy === 'prs' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'prs' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             PRS
                         </button>
                         <button
                             onClick={() => setSortBy('name')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${sortBy === 'name' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'name' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             Name
                         </button>
                     </div>
                 </div>
-            </div >
+            </div>
 
             {/* Grid */}
-            < motion.div
+            <motion.div
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >

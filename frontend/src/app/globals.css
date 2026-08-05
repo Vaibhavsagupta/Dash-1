@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --primary: #6366f1;
-  --primary-glow: rgba(99, 102, 241, 0.4);
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #4f46e5;
+  --primary-glow: rgba(79, 70, 229, 0.15);
   --secondary: #ec4899;
-  --accent: #8b5cf6;
+  --accent: #7c3aed;
   --error: #ef4444;
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(226, 232, 240, 0.8);
 }
 
 body {
@@ -22,8 +22,8 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   background-image:
-    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
-    radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 40%);
+    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.05), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.04), transparent 40%);
 }
 
 * {
@@ -36,11 +36,11 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
 .title-gradient {
-  background: linear-gradient(to right, #c084fc, #6366f1);
+  background: linear-gradient(to right, #4f46e5, #7c3aed);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -55,13 +55,13 @@ label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #cbd5e1;
+  color: #334155;
 }
 
 input {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--glass-border);
-  color: #fff;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
   padding: 0.875rem 1rem;
   border-radius: 0.75rem;
   width: 100%;
@@ -87,12 +87,12 @@ input:focus {
   transition: all 0.3s ease;
   width: 100%;
   font-size: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px var(--primary-glow), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.35);
 }
 
 .btn-primary:active {

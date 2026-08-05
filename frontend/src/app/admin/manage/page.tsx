@@ -239,21 +239,21 @@ export default function ManageData() {
     });
 
     return (
-        <div className="text-slate-100">
+        <div className="bg-slate-50 min-h-screen text-slate-900">
             <header className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Manage Student Data</h1>
-                    <p className="text-slate-400 mt-1">Direct oversight of student metrics and scores</p>
+                    <h1 className="text-3xl font-extrabold text-slate-900">Manage Student Data</h1>
+                    <p className="text-slate-500 mt-1 font-medium">Direct oversight of student metrics and scores</p>
                 </div>
                 <div className="flex gap-3">
-                    <label className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 cursor-pointer text-white px-4 py-2 rounded-lg transition shadow-lg shadow-emerald-900/20">
-                        <ScanBarcode size={18} />
-                        <span className="text-sm">Sync HR Data</span>
+                    <label className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer text-white px-4 py-2 rounded-xl transition shadow-sm text-sm font-bold">
+                        <ScanBarcode size={16} />
+                        <span>Sync HR Data</span>
                         <input type="file" accept=".csv,.txt" className="hidden" onChange={handleHRSync} />
                     </label>
-                    <label className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 cursor-pointer text-white px-4 py-2 rounded-lg transition border border-slate-600">
-                        <UploadCloud size={18} />
-                        <span className="text-sm">Bulk Upload</span>
+                    <label className="flex items-center gap-2 bg-white hover:bg-slate-50 cursor-pointer text-slate-700 px-4 py-2 rounded-xl transition border border-slate-200 shadow-sm text-sm font-bold">
+                        <UploadCloud size={16} className="text-indigo-600" />
+                        <span>Bulk Upload</span>
                         <input type="file" accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
                     </label>
                     <button
@@ -273,21 +273,21 @@ export default function ManageData() {
                         placeholder="Search by name or ID..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-medium shadow-sm"
                     />
                 </div>
                 <select
                     value={selectedBatch}
                     onChange={(e) => setSelectedBatch(e.target.value)}
-                    className="px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white font-medium"
+                    className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-bold shadow-sm"
                 >
                     {batches.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
             </div>
 
-            <div className="glass rounded-xl border border-slate-700 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-800/80 text-slate-400 text-xs uppercase">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <table className="w-full text-left border-collapse text-sm">
+                    <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-extrabold border-b border-slate-200">
                         <tr>
                             <th className="p-4">ID</th>
                             <th className="p-4">Name</th>
@@ -301,11 +301,11 @@ export default function ManageData() {
                             <th className="p-4">Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700">
+                    <tbody className="divide-y divide-slate-100">
                         {isAdding && (
-                            <tr className="bg-indigo-900/20 border-b border-indigo-500/30">
-                                <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
-                                <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
+                            <tr className="bg-indigo-50 border-b border-indigo-200">
+                                <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
+                                <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
                                 <td className="p-2"><Input name="attendance" val={newStudent.attendance} set={setNewStudent} /></td>
                                 <td className="p-2"><Input name="dsa_score" val={newStudent.dsa_score} set={setNewStudent} /></td>
                                 <td className="p-2"><Input name="ml_score" val={newStudent.ml_score} set={setNewStudent} /></td>
@@ -317,21 +317,21 @@ export default function ManageData() {
                                         type="text"
                                         value={newStudent.batch_id}
                                         onChange={(e) => setNewStudent({ ...newStudent, batch_id: e.target.value })}
-                                        className="w-24 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none text-white"
+                                        className="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium"
                                         placeholder="Batch"
                                     />
                                 </td>
                                 <td className="p-4">
-                                    <button onClick={handleAdd} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm">
+                                    <button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
                                         Save
                                     </button>
                                 </td>
                             </tr>
                         )}
                         {filteredStudents.map((student, i) => (
-                            <tr key={`${student.student_id}-${i}`} className="hover:bg-slate-800/30 transition">
-                                <td className="p-4 font-mono text-sm text-slate-400">{student.student_id}</td>
-                                <td className="p-4 font-medium">{student.name}</td>
+                            <tr key={`${student.student_id}-${i}`} className="hover:bg-slate-50 transition text-slate-800">
+                                <td className="p-4 font-mono text-xs text-slate-500">{student.student_id}</td>
+                                <td className="p-4 font-bold text-slate-900">{student.name}</td>
 
                                 {editingId === student.student_id ? (
                                     <>
@@ -346,35 +346,35 @@ export default function ManageData() {
                                                 type="text"
                                                 value={formData.batch_id || ''}
                                                 onChange={(e) => setFormData({ ...formData, batch_id: e.target.value })}
-                                                className="w-24 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none text-white"
+                                                className="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium"
                                             />
                                         </td>
                                         <td className="p-4">
-                                            <button onClick={() => handleSave(student.student_id)} className="text-green-400 hover:text-green-300">
+                                            <button onClick={() => handleSave(student.student_id)} className="text-emerald-600 hover:text-emerald-700">
                                                 <Save size={20} />
                                             </button>
                                         </td>
                                     </>
                                 ) : (
                                     <>
-                                        <td className="p-4">{student.attendance}</td>
-                                        <td className="p-4">{student.dsa_score}</td>
-                                        <td className="p-4">{student.ml_score}</td>
-                                        <td className="p-4">{student.qa_score}</td>
-                                        <td className="p-4">{student.projects_score}</td>
-                                        <td className="p-4">{student.mock_interview_score}</td>
+                                        <td className="p-4 font-bold text-slate-700">{student.attendance}</td>
+                                        <td className="p-4 font-bold text-slate-700">{student.dsa_score}</td>
+                                        <td className="p-4 font-bold text-slate-700">{student.ml_score}</td>
+                                        <td className="p-4 font-bold text-slate-700">{student.qa_score}</td>
+                                        <td className="p-4 font-bold text-slate-700">{student.projects_score}</td>
+                                        <td className="p-4 font-bold text-slate-700">{student.mock_interview_score}</td>
                                         <td className="p-4">
-                                            <span className="px-2 py-1 rounded bg-slate-700 text-xs font-bold text-slate-300">
+                                            <span className="px-2 py-1 rounded-lg bg-indigo-50 text-xs font-bold text-indigo-700 border border-indigo-100">
                                                 {student.batch_id || 'N/A'}
                                             </span>
                                         </td>
                                         <td className="p-4 flex gap-3">
-                                            <button onClick={() => handleEdit(student)} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                            <button onClick={() => handleEdit(student)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-50 transition">
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={() => router.push(`/admin/student/${student.student_id}`)}
-                                                className="text-sky-400 hover:text-sky-300 text-sm font-medium border border-sky-400/30 px-2 py-0.5 rounded-md hover:bg-sky-400/10 transition"
+                                                className="text-sky-600 hover:text-sky-800 text-xs font-bold border border-sky-200 px-2 py-1 rounded-lg hover:bg-sky-50 transition"
                                             >
                                                 View
                                             </button>
@@ -396,7 +396,7 @@ function Input({ name, val, set }: any) {
             type="number"
             value={val}
             onChange={(e) => set((prev: any) => ({ ...prev, [name]: parseInt(e.target.value) || 0 }))}
-            className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none"
+            className="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm text-slate-900 font-bold focus:border-indigo-500 outline-none shadow-sm"
         />
     )
 }

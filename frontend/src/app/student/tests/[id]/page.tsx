@@ -90,6 +90,24 @@ export default function StudentTestAttemptPage() {
         };
     }, []);
 
+    // 2.5 Reconnection sync
+    useEffect(() => {
+        if (!offline && isStarted && attemptId) {
+            const syncOfflineAnswers = async () => {
+                for (const q of questions) {
+                    if (typeof window !== "undefined") {
+                        const localVal = localStorage.getItem(`test_${assignmentId}_ans_${q.id}`);
+                        if (localVal !== null && answers[q.id] !== localVal) {
+                            // Sync with backend
+                            await saveAnswer(q.id, localVal, markedReview[q.id] || false);
+                        }
+                    }
+                }
+            };
+            syncOfflineAnswers();
+        }
+    }, [offline, isStarted, attemptId]);
+
     // 3. Security listeners (Tab switches & Fullscreen check)
     useEffect(() => {
         if (!isStarted || submitting) return;
@@ -151,14 +169,29 @@ export default function StudentTestAttemptPage() {
             }
         };
 
-        // Disable copy-paste and context-menu
+        // Disable copy-paste, context-menu and key combinations
         const disableInteraction = (e: Event) => e.preventDefault();
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "F12") {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "C" || e.key === "J" || e.key === "i" || e.key === "c" || e.key === "j")) {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && (e.key === "u" || e.key === "U")) {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && (e.key === "c" || e.key === "v" || e.key === "x" || e.key === "C" || e.key === "V" || e.key === "X")) {
+                e.preventDefault();
+            }
+        };
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
         document.addEventListener("fullscreenchange", handleFullscreenChange);
         document.addEventListener("copy", disableInteraction);
         document.addEventListener("paste", disableInteraction);
         document.addEventListener("contextmenu", disableInteraction);
+        window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -166,6 +199,7 @@ export default function StudentTestAttemptPage() {
             document.removeEventListener("copy", disableInteraction);
             document.removeEventListener("paste", disableInteraction);
             document.removeEventListener("contextmenu", disableInteraction);
+            window.removeEventListener("keydown", handleKeyDown);
         };
     }, [isStarted, tabSwitches, submitting, assignmentId]);
 
@@ -214,7 +248,9 @@ export default function StudentTestAttemptPage() {
             const data = await res.json();
             setAttemptId(data.attempt_id);
             setQuestions(data.questions);
-            setTimeRemaining(testInfo.duration * 60);
+            setTimeRemaining(data.remaining_seconds || testInfo.duration * 60);
+            if (data.answers) setAnswers(data.answers);
+            if (data.marked_review) setMarkedReview(data.marked_review);
             setIsStarted(true);
             setIsFullscreen(true);
         } catch (err: any) {
@@ -435,7 +471,7 @@ export default function StudentTestAttemptPage() {
 
                     <div className="flex justify-end pt-4">
                         <button onClick={handleStartTest} className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-slate-950 font-bold px-8 py-3.5 rounded-2xl transition-all shadow-xl shadow-indigo-500/15">
-                            I Agree, Start Secured Exam <Play size={16} />
+                            {testInfo?.status === "In Progress" ? "Resume Secure Assessment" : "I Agree, Start Secured Exam"} <Play size={16} />
                         </button>
                     </div>
                 </div>
