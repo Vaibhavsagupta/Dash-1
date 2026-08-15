@@ -1,5 +1,5 @@
 "use client";
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL, smartFetch } from '@/lib/api';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -20,17 +20,12 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            // 1. Authenticate against FastAPI backend to retrieve token and role
-            const authRes = await fetch(`${API_BASE_URL}/auth/login`, {
+            // 1. Authenticate against FastAPI backend with automatic retry while backend wakes up
+            const authRes = await smartFetch('/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ username: email, password }),
             });
-
-            const contentType = authRes.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Backend service is waking up or starting. Please wait 30 seconds and try again.');
-            }
 
             if (!authRes.ok) {
                 const errData = await authRes.json().catch(() => ({ detail: 'Invalid username or password' }));
