@@ -2,10 +2,11 @@ services:
   # Python FastAPI Backend Service
   - type: web
     name: dash-1-backend
-    runtime: python
+    env: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -17,17 +18,11 @@ services:
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "1440"
-      - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: dash-1-frontend
-          property: url
-    healthCheckPath: /health
 
   # Next.js Frontend Web Service
   - type: web
     name: dash-1-frontend
-    runtime: node
+    env: node
     rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
