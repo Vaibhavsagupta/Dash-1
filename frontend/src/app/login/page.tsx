@@ -27,12 +27,21 @@ export default function LoginPage() {
                 body: new URLSearchParams({ username: email, password }),
             });
 
+            const contentType = authRes.headers.get('content-type') || '';
+
+            if (!contentType.includes('application/json')) {
+                throw new Error('Render is currently deploying or starting the backend service. Please wait 1-2 minutes and refresh the page.');
+            }
+
             if (!authRes.ok) {
                 const errData = await authRes.json().catch(() => ({ detail: 'Invalid username or password' }));
                 throw new Error(errData.detail || 'Invalid username or password');
             }
 
-            const data = await authRes.json();
+            const data = await authRes.json().catch(() => {
+                throw new Error('Invalid response from server. Please refresh and try again.');
+            });
+
             localStorage.setItem('access_token', data.access_token);
             localStorage.setItem('user_role', data.role);
 
