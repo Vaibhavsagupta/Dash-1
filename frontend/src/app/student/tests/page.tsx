@@ -4,7 +4,7 @@ import { API_BASE_URL } from "@/lib/api";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { 
-    BookOpen, Clock, AlertTriangle, CheckCircle, HelpCircle, 
+    BookOpen, Clock, AlertTriangle, CheckCircle, 
     ChevronRight, Sparkles, Bell
 } from "lucide-react";
 
@@ -65,33 +65,33 @@ export default function StudentTestsDashboard() {
     const activeList = tests[activeTab] || [];
 
     return (
-        <div className="max-w-6xl mx-auto px-6 py-10 space-y-8 min-h-screen text-slate-100">
+        <div className="max-w-6xl mx-auto px-6 py-8 space-y-6 min-h-screen text-slate-900">
             {/* Header / Notice */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900/50 p-6 rounded-3xl border border-slate-800 backdrop-blur gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-2">
-                        <BookOpen className="text-indigo-400" /> My Assessments
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <BookOpen className="text-indigo-600" size={26} /> My Assessments
                     </h1>
-                    <p className="text-slate-400 text-sm mt-1">View your assigned, pending, and completed exams.</p>
+                    <p className="text-slate-500 text-sm mt-1">View your assigned, pending, and completed exams.</p>
                 </div>
                 
                 {newCount > 0 && (
-                    <div className="bg-indigo-500/10 border border-indigo-500/30 px-4 py-2.5 rounded-2xl flex items-center gap-2 text-indigo-300 font-bold text-sm shadow-xl">
-                        <Bell size={16} className="animate-bounce" />
+                    <div className="bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-xl flex items-center gap-2 text-indigo-700 font-bold text-xs shadow-sm">
+                        <Bell size={15} className="animate-bounce text-indigo-600" />
                         <span>{newCount} New Test{newCount > 1 ? "s" : ""} Assigned!</span>
                     </div>
                 )}
             </div>
 
             {error && (
-                <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center gap-3">
-                    <AlertTriangle size={20} />
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3 text-sm">
+                    <AlertTriangle size={18} className="text-red-500 shrink-0" />
                     <span>{error}</span>
                 </div>
             )}
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-slate-800 gap-1 overflow-x-auto pb-1">
+            <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-0.5">
                 {(["pending", "in_progress", "completed", "expired"] as const).map((tab) => {
                     const count = tests[tab]?.length || 0;
                     return (
@@ -100,13 +100,13 @@ export default function StudentTestsDashboard() {
                             onClick={() => setActiveTab(tab)}
                             className={`flex items-center gap-2 px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
                                 activeTab === tab 
-                                    ? "border-indigo-500 text-indigo-400 bg-indigo-500/5 font-bold" 
-                                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+                                    ? "border-indigo-600 text-indigo-600 bg-indigo-50/50 font-bold" 
+                                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                             }`}
                         >
                             <span className="capitalize">{tab.replace("_", " ")}</span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                                activeTab === tab ? "bg-indigo-500/20 text-indigo-300" : "bg-slate-800 text-slate-500"
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                                activeTab === tab ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
                             }`}>
                                 {count}
                             </span>
@@ -116,89 +116,89 @@ export default function StudentTestsDashboard() {
             </div>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <div className="flex flex-col items-center justify-center py-16 bg-white border border-slate-200/80 rounded-2xl shadow-sm text-slate-500">
                     <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                        className="w-10 h-10 border-4 border-t-indigo-500 border-slate-800 rounded-full"
+                        className="w-8 h-8 border-3 border-t-indigo-600 border-slate-200 rounded-full mb-3"
                     />
-                    <p className="text-slate-500 text-sm">Retrieving your test schedules...</p>
+                    <p className="text-slate-600 text-sm font-medium">Retrieving your test schedules...</p>
                 </div>
             ) : activeList.length === 0 ? (
-                <div className="text-center py-20 bg-slate-950 border border-slate-850 rounded-3xl space-y-4">
-                    <div className="w-16 h-16 bg-slate-900 border border-slate-800 text-slate-600 rounded-full flex items-center justify-center mx-auto">
-                        <CheckCircle size={32} />
+                <div className="text-center py-16 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-3">
+                    <div className="w-14 h-14 bg-slate-100 border border-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle size={28} />
                     </div>
                     <div className="space-y-1">
-                        <h3 className="text-lg font-bold text-white">No assessments found</h3>
+                        <h3 className="text-base font-bold text-slate-900">No assessments found</h3>
                         <p className="text-slate-500 text-xs max-w-sm mx-auto">There are no tests categorized under {activeTab.replace("_", " ")} at this time.</p>
                     </div>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {activeList.map((test) => (
-                        <div key={test.assignment_id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-6 rounded-3xl transition-all shadow-xl hover:shadow-2xl flex flex-col justify-between space-y-6 relative overflow-hidden group">
+                        <div key={test.assignment_id} className="bg-white border border-slate-200/80 hover:border-indigo-300 p-6 rounded-2xl transition-all shadow-sm hover:shadow-md flex flex-col justify-between space-y-6 relative overflow-hidden group">
                             {/* Accent line */}
-                            <div className={`absolute top-0 left-0 right-0 h-1 ${
+                            <div className={`absolute top-0 left-0 right-0 h-1.5 ${
                                 test.status === "Completed" ? "bg-emerald-500" :
                                 test.status === "In Progress" ? "bg-amber-500" :
-                                test.status === "Expired" ? "bg-red-500" : "bg-indigo-500"
+                                test.status === "Expired" ? "bg-slate-300" : "bg-indigo-600"
                             }`} />
 
                             <div className="space-y-3">
                                 <div className="flex justify-between items-start">
-                                    <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full uppercase">
+                                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
                                         {test.subject}
                                     </span>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                                        test.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-400" :
-                                        test.difficulty === "Medium" ? "bg-amber-500/10 text-amber-400" : "bg-red-500/10 text-red-400"
+                                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md border ${
+                                        test.difficulty === "Easy" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                        test.difficulty === "Medium" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-red-50 text-red-700 border-red-200"
                                     }`}>
                                         {test.difficulty}
                                     </span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors leading-tight">
+                                    <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">
                                         {test.name}
                                     </h3>
-                                    <p className="text-slate-400 text-xs font-semibold">{test.topic}</p>
+                                    <p className="text-slate-500 text-xs font-medium">{test.topic}</p>
                                 </div>
 
                                 {test.description && (
-                                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                                         {test.description}
                                     </p>
                                 )}
                             </div>
 
-                            <div className="space-y-4 pt-4 border-t border-slate-850">
-                                <div className="flex justify-between items-center text-xs text-slate-500 font-medium">
-                                    <span className="flex items-center gap-1"><Clock size={12} /> {test.duration} mins</span>
-                                    <span className="flex items-center gap-1"><Sparkles size={12} /> Passing: {test.passing_marks}%</span>
+                            <div className="space-y-4 pt-4 border-t border-slate-100">
+                                <div className="flex justify-between items-center text-xs text-slate-600 font-medium">
+                                    <span className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400" /> {test.duration} mins</span>
+                                    <span className="flex items-center gap-1.5"><Sparkles size={14} className="text-indigo-500" /> Passing: {test.passing_marks}%</span>
                                 </div>
 
-                                <div className="text-[10px] text-slate-500 leading-normal bg-slate-950 p-2.5 rounded-lg border border-slate-850">
-                                    <span className="font-bold text-slate-400 block mb-0.5">Availability</span>
+                                <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                                    <span className="font-bold text-slate-700 block mb-0.5">Availability</span>
                                     <span>{new Date(test.start_date).toLocaleDateString()} to {new Date(test.end_date).toLocaleDateString()}</span>
                                 </div>
 
                                 {test.status === "Completed" ? (
-                                    <Link href={`/student/tests/${test.assignment_id}/result`} className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5 transition-all text-sm group/btn">
-                                        View Evaluation Result <ChevronRight size={16} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                    <Link href={`/student/tests/${test.assignment_id}/result`} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs group/btn shadow-sm">
+                                        View Evaluation Result <ChevronRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
                                     </Link>
                                 ) : test.status === "Expired" ? (
-                                    <button disabled className="w-full bg-slate-950 text-slate-600 border border-slate-850 font-bold py-3 rounded-2xl text-sm cursor-not-allowed">
+                                    <button disabled className="w-full bg-slate-100 text-slate-400 border border-slate-200 font-bold py-2.5 rounded-xl text-xs cursor-not-allowed">
                                         Expired
                                     </button>
                                 ) : (
-                                    <Link href={`/student/tests/${test.assignment_id}`} className={`w-full font-bold py-3 rounded-2xl flex items-center justify-center gap-1.5 transition-all text-sm group/btn ${
+                                    <Link href={`/student/tests/${test.assignment_id}`} className={`w-full font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs group/btn shadow-sm ${
                                         test.status === "In Progress"
-                                            ? "bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10"
-                                            : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20"
+                                            ? "bg-amber-500 text-white hover:bg-amber-600"
+                                            : "bg-indigo-600 text-white hover:bg-indigo-700"
                                     }`}>
                                         {test.status === "In Progress" ? "Resume Test Attempt" : "Start Secured Exam"} 
-                                        <ChevronRight size={16} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                        <ChevronRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
                                     </Link>
                                 )}
                             </div>

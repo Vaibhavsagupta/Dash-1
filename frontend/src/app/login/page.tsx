@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import styles from './login.module.css';
-import { Clock } from 'lucide-react';
+import { Clock, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -19,28 +20,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const res = await signIn("credentials", {
-                email,
-                password,
-                redirect: false,
-            });
-
-            if (res?.error) {
-                setError("Invalid credentials or account not approved");
-                setLoading(false);
-                return;
-            }
-
-            // After successful signIn, next-auth creates the session cookie.
-            // However, the existing dashboard pages STILL rely on localStorage for API calls.
-            // To keep compatibility without refactoring every dashboard, we'll still store the token.
-            // Now we need to GET the token. Since next-auth doesn't return it directly in the signIn response easily,
-            // we'll fetch it from our backend again OR assume it's now fine because of the cookie.
-
-            // Actually, we can just do the manual fetch first to get the token, THEN call signIn.
-            // Or better: hit the backend, get token, then use a custom signIn if we had one.
-
-            // Wait! The simplest way to maintain compatibility is:
+            // 1. Authenticate against FastAPI backend to retrieve token and role
             const authRes = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -48,24 +28,18 @@ export default function LoginPage() {
             });
 
             if (!authRes.ok) {
-                const errData = await authRes.json();
-                throw new Error(errData.detail || 'Invalid credentials');
+                const errData = await authRes.json().catch(() => ({ detail: 'Invalid username or password' }));
+                throw new Error(errData.detail || 'Invalid username or password');
             }
 
             const data = await authRes.json();
             localStorage.setItem('access_token', data.access_token);
             localStorage.setItem('user_role', data.role);
 
-            // Now call next-auth signIn to establish the session for the middleware
-            await signIn("credentials", {
-                email,
-                password,
-                redirect: true,
-                callbackUrl: data.redirect_url
-            });
-
+            // Direct instant navigation to corresponding role dashboard
+            router.push(data.redirect_url);
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message || 'Login failed. Please check your credentials.');
             setLoading(false);
         }
     };
@@ -104,16 +78,28 @@ export default function LoginPage() {
 
                     <div className="form-group">
                         <label htmlFor="password">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            autoComplete="current-password"
-                            suppressHydrationWarning
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                autoComplete="current-password"
+                                suppressHydrationWarning
+                                className="w-full pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                suppressHydrationWarning
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" className="btn-primary" disabled={loading} suppressHydrationWarning>

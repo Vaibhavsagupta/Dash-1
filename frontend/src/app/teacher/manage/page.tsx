@@ -12,6 +12,7 @@ export default function ManageData() {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<any>({});
+    const [selectedBatch, setSelectedBatch] = useState('All');
     const [activeTab, setActiveTab] = useState<'students' | 'parameters'>('students');
 
     useEffect(() => {
@@ -196,67 +197,93 @@ export default function ManageData() {
                 console.error(e);
             }
         };
-        // reader.readAsText(file); // No longer needed for FormData approach
+        reader.readAsText(file);
     };
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.student_id.toLowerCase().includes(search.toLowerCase())
-    );
+    const handleSmartCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('access_token');
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch(`${API_BASE_URL}/ingest/csv/smart-upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (res.ok) {
+                const result = await res.json();
+                alert(`Smart Ingestion Success!\nProcessed: ${result.records_processed}\nCreated: ${result.records_created}\nUpdated: ${result.records_updated}`);
+                fetchStudents();
+            } else {
+                alert('Smart CSV upload failed');
+            }
+        } catch (err) {
+            alert('Error during Smart CSV ingestion');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const batches = ['All', ...Array.from(new Set(students.map(s => s.batch_id || 'N/A')))];
+
+    const filteredStudents = students.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
+            s.student_id.toLowerCase().includes(search.toLowerCase());
+        const matchesBatch = selectedBatch === 'All' || (s.batch_id || 'N/A') === selectedBatch;
+        return matchesSearch && matchesBatch;
+    });
 
     return (
-        <div className="min-h-screen p-8 bg-[#0f172a] text-slate-100">
+        <div className="bg-slate-50 min-h-screen text-slate-900 p-8">
             <nav className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
+                        className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition shadow-sm"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-2xl font-bold">Manage Student Data & Scores</h1>
+                    <div>
+                        <h1 className="text-3xl font-extrabold text-slate-900">Manage Student Data & Scores</h1>
+                        <p className="text-slate-500 mt-0.5 text-xs font-medium">Faculty oversight of student performance and evaluation parameters</p>
+                    </div>
                 </div>
-                <div className="flex gap-3">
-                    <label className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 cursor-pointer text-white px-4 py-2 rounded-lg transition">
-                        <UploadCloud size={18} />
-                        <span className="text-sm">Bulk Upload (CSV)</span>
-                        <input type="file" accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
+                <div className="flex gap-3 flex-wrap">
+                    <label className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 cursor-pointer text-white px-4 py-2 rounded-xl transition shadow-sm text-sm font-bold">
+                        <UploadCloud size={16} />
+                        <span>⚡ Smart CSV Upload (Auto Map)</span>
+                        <input type="file" accept=".csv" className="hidden" onChange={handleSmartCSVUpload} />
                     </label>
 
                     <button
-                        onClick={handleGoogleSync}
-                        className="flex items-center gap-2 bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
-                    >
-                        <UploadCloud size={18} />
-                        <span className="text-sm">Sync HR Sheet</span>
-                    </button>
-
-                    <button
                         onClick={() => setIsAdding(!isAdding)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition shadow-sm text-sm"
                     >
                         {isAdding ? 'Cancel' : 'Add New Student'}
                     </button>
                 </div>
             </nav>
 
-            <div className="flex gap-4 mb-6 border-b border-slate-700/60 pb-3">
+            <div className="flex gap-4 mb-6 border-b border-slate-200 pb-3">
                 <button
                     onClick={() => setActiveTab('students')}
-                    className={`pb-1 text-sm font-semibold border-b-2 transition-all ${
+                    className={`pb-2 text-sm font-bold border-b-2 transition-all ${
                         activeTab === 'students' 
-                            ? 'border-indigo-500 text-indigo-400' 
-                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                            ? 'border-indigo-600 text-indigo-600' 
+                            : 'border-transparent text-slate-500 hover:text-slate-900'
                     }`}
                 >
                     Student Directory
                 </button>
                 <button
                     onClick={() => setActiveTab('parameters')}
-                    className={`pb-1 text-sm font-semibold border-b-2 transition-all ${
+                    className={`pb-2 text-sm font-bold border-b-2 transition-all ${
                         activeTab === 'parameters' 
-                            ? 'border-indigo-500 text-indigo-400' 
-                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                            ? 'border-indigo-600 text-indigo-600' 
+                            : 'border-transparent text-slate-500 hover:text-slate-900'
                     }`}
                 >
                     Marks Parameters
@@ -265,20 +292,38 @@ export default function ManageData() {
 
             {activeTab === 'students' ? (
                 <>
-                    <div className="mb-6 relative">
-                        <Search className="absolute left-3 top-3 text-slate-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search by name or ID..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:outline-none focus:border-indigo-500"
-                        />
+                    <div className="mb-6 flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1 flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3.5 top-3 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name or ID..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-medium shadow-sm text-sm"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition shadow-sm"
+                            >
+                                <Search size={16} />
+                                <span>Search</span>
+                            </button>
+                        </div>
+                        <select
+                            value={selectedBatch}
+                            onChange={(e) => setSelectedBatch(e.target.value)}
+                            className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-bold shadow-sm text-xs cursor-pointer"
+                        >
+                            {batches.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
                     </div>
 
-                    <div className="glass rounded-xl border border-slate-700 overflow-hidden">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-800/80 text-slate-400 text-xs uppercase">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-extrabold border-b border-slate-200">
                                 <tr>
                                     <th className="p-4">ID</th>
                                     <th className="p-4">Name</th>
@@ -288,33 +333,33 @@ export default function ManageData() {
                                     <th className="p-4">QA</th>
                                     <th className="p-4">Proj</th>
                                     <th className="p-4">Mock</th>
-                                    <th className="p-4 text-green-400">Fees</th>
-                                    <th className="p-4 text-green-400">Certs</th>
+                                    <th className="p-4">Fees</th>
+                                    <th className="p-4">Certs</th>
                                     <th className="p-4">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-700">
+                            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
                                 {isAdding && (
-                                    <tr className="bg-indigo-900/20 border-b border-indigo-500/30">
-                                        <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
-                                        <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
+                                    <tr className="bg-indigo-50 border-b border-indigo-200">
+                                        <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
+                                        <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
                                         <td className="p-2"><Input name="attendance" val={newStudent.attendance} set={setNewStudent} /></td>
                                         <td className="p-2"><Input name="dsa_score" val={newStudent.dsa_score} set={setNewStudent} /></td>
                                         <td className="p-2"><Input name="ml_score" val={newStudent.ml_score} set={setNewStudent} /></td>
                                         <td className="p-2"><Input name="qa_score" val={newStudent.qa_score} set={setNewStudent} /></td>
                                         <td className="p-2"><Input name="projects_score" val={newStudent.projects_score} set={setNewStudent} /></td>
                                         <td className="p-2"><Input name="mock_interview_score" val={newStudent.mock_interview_score} set={setNewStudent} /></td>
-                                        <td className="p-4">
-                                            <button onClick={handleAdd} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm">
+                                        <td className="p-4" colSpan={2}>
+                                            <button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
                                                 Save
                                             </button>
                                         </td>
                                     </tr>
                                 )}
                                 {filteredStudents.map(student => (
-                                    <tr key={student.student_id} className="hover:bg-slate-800/30 transition">
-                                        <td className="p-4 font-mono text-sm text-slate-400">{student.student_id}</td>
-                                        <td className="p-4 font-medium">{student.name}</td>
+                                    <tr key={student.student_id} className="hover:bg-slate-50 transition">
+                                        <td className="p-4 font-mono text-xs text-slate-500">{student.student_id}</td>
+                                        <td className="p-4 font-bold text-slate-900">{student.name}</td>
 
                                         {editingId === student.student_id ? (
                                             <>
@@ -324,28 +369,28 @@ export default function ManageData() {
                                                 <td className="p-2"><Input name="qa_score" val={formData.qa_score} set={setFormData} /></td>
                                                 <td className="p-2"><Input name="projects_score" val={formData.projects_score} set={setFormData} /></td>
                                                 <td className="p-2"><Input name="mock_interview_score" val={formData.mock_interview_score} set={setFormData} /></td>
-                                                <td className="p-4">
-                                                    <button onClick={() => handleSave(student.student_id)} className="text-green-400 hover:text-green-300">
+                                                <td className="p-4" colSpan={3}>
+                                                    <button onClick={() => handleSave(student.student_id)} className="text-emerald-600 hover:text-emerald-700">
                                                         <Save size={20} />
                                                     </button>
                                                 </td>
                                             </>
                                         ) : (
                                             <>
-                                                <td className="p-4">{student.attendance}</td>
-                                                <td className="p-4">{student.dsa_score}</td>
-                                                <td className="p-4">{student.ml_score}</td>
-                                                <td className="p-4">{student.qa_score}</td>
-                                                <td className="p-4">{student.projects_score}</td>
-                                                <td className="p-4">{student.mock_interview_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.attendance}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.dsa_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.ml_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.qa_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.projects_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.mock_interview_score}</td>
                                                 <td className="p-4">
-                                                    <span className={`px-2 py-0.5 rounded text-xs ${student.fees_paid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                    <span className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${student.fees_paid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
                                                         {student.fees_paid ? 'Paid' : 'Due'}
                                                     </span>
                                                 </td>
-                                                <td className="p-4">{student.external_certifications || 0}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.external_certifications || 0}</td>
                                                 <td className="p-4">
-                                                    <button onClick={() => handleEdit(student)} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                                    <button onClick={() => handleEdit(student)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-50 transition">
                                                         Edit
                                                     </button>
                                                 </td>
@@ -370,7 +415,7 @@ function Input({ name, val, set }: any) {
             type="number"
             value={val}
             onChange={(e) => set((prev: any) => ({ ...prev, [name]: parseInt(e.target.value) || 0 }))}
-            className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm focus:border-indigo-500 outline-none"
+            className="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm text-slate-900 font-bold focus:border-indigo-500 outline-none shadow-sm"
         />
     )
 }

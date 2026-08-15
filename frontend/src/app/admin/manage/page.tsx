@@ -2,10 +2,14 @@
 import { API_BASE_URL } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Search, UploadCloud, ScanBarcode } from 'lucide-react';
+import { ArrowLeft, Save, Search, UploadCloud } from 'lucide-react';
+import MarksParametersSection from '@/components/MarksParametersSection';
+import SubjectManagementSection from '@/components/SubjectManagementSection';
+import PredefinedQuestionsSection from '@/components/PredefinedQuestionsSection';
 
 export default function ManageData() {
     const router = useRouter();
+    const [activeTab, setActiveTab] = useState<'students' | 'parameters' | 'subjects' | 'ai_queries'>('students');
     const [students, setStudents] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
@@ -238,6 +242,33 @@ export default function ManageData() {
         return matchesSearch && matchesBatch;
     });
 
+    const handleSmartCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('access_token');
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch(`${API_BASE_URL}/ingest/csv/smart-upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (res.ok) {
+                const result = await res.json();
+                alert(`Smart Ingestion Success!\nProcessed: ${result.records_processed}\nCreated: ${result.records_created}\nUpdated: ${result.records_updated}`);
+                fetchStudents();
+            } else {
+                alert('Smart CSV upload failed');
+            }
+        } catch (err) {
+            alert('Error during Smart CSV ingestion');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-slate-50 min-h-screen text-slate-900">
             <header className="flex items-center justify-between mb-8">
@@ -245,16 +276,11 @@ export default function ManageData() {
                     <h1 className="text-3xl font-extrabold text-slate-900">Manage Student Data</h1>
                     <p className="text-slate-500 mt-1 font-medium">Direct oversight of student metrics and scores</p>
                 </div>
-                <div className="flex gap-3">
-                    <label className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer text-white px-4 py-2 rounded-xl transition shadow-sm text-sm font-bold">
-                        <ScanBarcode size={16} />
-                        <span>Sync HR Data</span>
-                        <input type="file" accept=".csv,.txt" className="hidden" onChange={handleHRSync} />
-                    </label>
-                    <label className="flex items-center gap-2 bg-white hover:bg-slate-50 cursor-pointer text-slate-700 px-4 py-2 rounded-xl transition border border-slate-200 shadow-sm text-sm font-bold">
-                        <UploadCloud size={16} className="text-indigo-600" />
-                        <span>Bulk Upload</span>
-                        <input type="file" accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
+                <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 cursor-pointer text-white px-4 py-2 rounded-xl transition shadow-sm text-sm font-bold">
+                        <UploadCloud size={16} />
+                        <span>⚡ Smart CSV Upload (Auto Map)</span>
+                        <input type="file" accept=".csv" className="hidden" onChange={handleSmartCSVUpload} />
                     </label>
                     <button
                         onClick={() => setIsAdding(!isAdding)}
@@ -265,127 +291,172 @@ export default function ManageData() {
                 </div>
             </header>
 
-            <div className="mb-6 flex gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-3 text-slate-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Search by name or ID..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-medium shadow-sm"
-                    />
-                </div>
-                <select
-                    value={selectedBatch}
-                    onChange={(e) => setSelectedBatch(e.target.value)}
-                    className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-bold shadow-sm"
+            <div className="flex gap-4 mb-6 border-b border-slate-200 pb-3">
+                <button
+                    onClick={() => setActiveTab('students')}
+                    className={`pb-2 text-sm font-bold border-b-2 transition-all ${
+                        activeTab === 'students' 
+                            ? 'border-indigo-600 text-indigo-600' 
+                            : 'border-transparent text-slate-500 hover:text-slate-900'
+                    }`}
                 >
-                    {batches.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
+                    Student Directory
+                </button>
+                <button
+                    onClick={() => setActiveTab('parameters')}
+                    className={`pb-2 text-sm font-bold border-b-2 transition-all ${
+                        activeTab === 'parameters' 
+                            ? 'border-indigo-600 text-indigo-600' 
+                            : 'border-transparent text-slate-500 hover:text-slate-900'
+                    }`}
+                >
+                    Marks Parameters
+                </button>
+                <button
+                    onClick={() => setActiveTab('subjects')}
+                    className={`pb-2 text-sm font-bold border-b-2 transition-all ${
+                        activeTab === 'subjects' 
+                            ? 'border-indigo-600 text-indigo-600' 
+                            : 'border-transparent text-slate-500 hover:text-slate-900'
+                    }`}
+                >
+                    Subject Directory
+                </button>
+                <button
+                    onClick={() => setActiveTab('ai_queries')}
+                    className={`pb-2 text-sm font-bold border-b-2 transition-all ${
+                        activeTab === 'ai_queries' 
+                            ? 'border-indigo-600 text-indigo-600' 
+                            : 'border-transparent text-slate-500 hover:text-slate-900'
+                    }`}
+                >
+                    AI Query Directory
+                </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left border-collapse text-sm">
-                    <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-extrabold border-b border-slate-200">
-                        <tr>
-                            <th className="p-4">ID</th>
-                            <th className="p-4">Name</th>
-                            <th className="p-4">Att (%)</th>
-                            <th className="p-4">DSA</th>
-                            <th className="p-4">ML</th>
-                            <th className="p-4">QA</th>
-                            <th className="p-4">Proj</th>
-                            <th className="p-4">Mock</th>
-                            <th className="p-4">Batch</th>
-                            <th className="p-4">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {isAdding && (
-                            <tr className="bg-indigo-50 border-b border-indigo-200">
-                                <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
-                                <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
-                                <td className="p-2"><Input name="attendance" val={newStudent.attendance} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="dsa_score" val={newStudent.dsa_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="ml_score" val={newStudent.ml_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="qa_score" val={newStudent.qa_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="projects_score" val={newStudent.projects_score} set={setNewStudent} /></td>
-                                <td className="p-2"><Input name="mock_interview_score" val={newStudent.mock_interview_score} set={setNewStudent} /></td>
-                                <td className="p-2">
-                                    <input
-                                        type="text"
-                                        value={newStudent.batch_id}
-                                        onChange={(e) => setNewStudent({ ...newStudent, batch_id: e.target.value })}
-                                        className="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium"
-                                        placeholder="Batch"
-                                    />
-                                </td>
-                                <td className="p-4">
-                                    <button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
-                                        Save
-                                    </button>
-                                </td>
-                            </tr>
-                        )}
-                        {filteredStudents.map((student, i) => (
-                            <tr key={`${student.student_id}-${i}`} className="hover:bg-slate-50 transition text-slate-800">
-                                <td className="p-4 font-mono text-xs text-slate-500">{student.student_id}</td>
-                                <td className="p-4 font-bold text-slate-900">{student.name}</td>
+            {activeTab === 'students' && (
+                <>
+                    <div className="mb-6 flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1 flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3.5 top-3 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name or ID..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-medium shadow-sm text-sm"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition shadow-sm"
+                            >
+                                <Search size={16} />
+                                <span>Search</span>
+                            </button>
+                        </div>
+                        <select
+                            value={selectedBatch}
+                            onChange={(e) => setSelectedBatch(e.target.value)}
+                            className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 text-slate-900 font-bold shadow-sm text-xs cursor-pointer"
+                        >
+                            {batches.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                    </div>
 
-                                {editingId === student.student_id ? (
-                                    <>
-                                        <td className="p-2"><Input name="attendance" val={formData.attendance} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="dsa_score" val={formData.dsa_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="ml_score" val={formData.ml_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="qa_score" val={formData.qa_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="projects_score" val={formData.projects_score} set={setFormData} /></td>
-                                        <td className="p-2"><Input name="mock_interview_score" val={formData.mock_interview_score} set={setFormData} /></td>
-                                        <td className="p-2">
-                                            <input
-                                                type="text"
-                                                value={formData.batch_id || ''}
-                                                onChange={(e) => setFormData({ ...formData, batch_id: e.target.value })}
-                                                className="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1 text-sm outline-none text-slate-900 font-medium"
-                                            />
-                                        </td>
+                    <div className="glass rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden mb-8">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-extrabold border-b border-slate-200">
+                                <tr>
+                                    <th className="p-4">ID</th>
+                                    <th className="p-4">Name</th>
+                                    <th className="p-4">Att (%)</th>
+                                    <th className="p-4">DSA</th>
+                                    <th className="p-4">ML</th>
+                                    <th className="p-4">QA</th>
+                                    <th className="p-4">Proj</th>
+                                    <th className="p-4">Mock</th>
+                                    <th className="p-4">Batch</th>
+                                    <th className="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                                {isAdding && (
+                                    <tr className="bg-indigo-50 border-b border-indigo-200">
+                                        <td className="p-2"><input type="text" placeholder="ID" className="w-20 bg-white border border-slate-300 rounded px-2 py-1 text-sm outline-none text-slate-900" value={newStudent.student_id} onChange={e => setNewStudent({ ...newStudent, student_id: e.target.value })} /></td>
+                                        <td className="p-2"><input type="text" placeholder="Name" className="w-32 bg-white border border-slate-300 rounded px-2 py-1 text-sm outline-none text-slate-900" value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} /></td>
+                                        <td className="p-2"><Input name="attendance" val={newStudent.attendance} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="dsa_score" val={newStudent.dsa_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="ml_score" val={newStudent.ml_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="qa_score" val={newStudent.qa_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="projects_score" val={newStudent.projects_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><Input name="mock_interview_score" val={newStudent.mock_interview_score} set={setNewStudent} /></td>
+                                        <td className="p-2"><input type="text" placeholder="Batch" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-sm outline-none text-slate-900" value={newStudent.batch_id || ''} onChange={e => setNewStudent({ ...newStudent, batch_id: e.target.value })} /></td>
                                         <td className="p-4">
-                                            <button onClick={() => handleSave(student.student_id)} className="text-emerald-600 hover:text-emerald-700">
-                                                <Save size={20} />
+                                            <button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold shadow-sm">
+                                                Save
                                             </button>
                                         </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td className="p-4 font-bold text-slate-700">{student.attendance}</td>
-                                        <td className="p-4 font-bold text-slate-700">{student.dsa_score}</td>
-                                        <td className="p-4 font-bold text-slate-700">{student.ml_score}</td>
-                                        <td className="p-4 font-bold text-slate-700">{student.qa_score}</td>
-                                        <td className="p-4 font-bold text-slate-700">{student.projects_score}</td>
-                                        <td className="p-4 font-bold text-slate-700">{student.mock_interview_score}</td>
-                                        <td className="p-4">
-                                            <span className="px-2 py-1 rounded-lg bg-indigo-50 text-xs font-bold text-indigo-700 border border-indigo-100">
-                                                {student.batch_id || 'N/A'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 flex gap-3">
-                                            <button onClick={() => handleEdit(student)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-50 transition">
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => router.push(`/admin/student/${student.student_id}`)}
-                                                className="text-sky-600 hover:text-sky-800 text-xs font-bold border border-sky-200 px-2 py-1 rounded-lg hover:bg-sky-50 transition"
-                                            >
-                                                View
-                                            </button>
-                                        </td>
-                                    </>
+                                    </tr>
                                 )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                {filteredStudents.map(student => (
+                                    <tr key={student.student_id} className="hover:bg-slate-50 transition">
+                                        <td className="p-4 font-mono text-xs text-slate-500">{student.student_id}</td>
+                                        <td className="p-4 font-bold text-slate-900">{student.name}</td>
+
+                                        {editingId === student.student_id ? (
+                                            <>
+                                                <td className="p-2"><Input name="attendance" val={formData.attendance} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="dsa_score" val={formData.dsa_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="ml_score" val={formData.ml_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="qa_score" val={formData.qa_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="projects_score" val={formData.projects_score} set={setFormData} /></td>
+                                                <td className="p-2"><Input name="mock_interview_score" val={formData.mock_interview_score} set={setFormData} /></td>
+                                                <td className="p-2"><input type="text" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-sm outline-none text-slate-900" value={formData.batch_id || ''} onChange={e => setFormData({ ...formData, batch_id: e.target.value })} /></td>
+                                                <td className="p-4">
+                                                    <button onClick={() => handleSave(student.student_id)} className="text-emerald-600 hover:text-emerald-700">
+                                                        <Save size={20} />
+                                                    </button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td className="p-4 font-bold text-slate-700">{student.attendance}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.dsa_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.ml_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.qa_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.projects_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">{student.mock_interview_score}</td>
+                                                <td className="p-4 font-bold text-slate-700">
+                                                    <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-100 border border-slate-200 text-slate-700">
+                                                        {student.batch_id || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 flex gap-3">
+                                                    <button onClick={() => handleEdit(student)} className="text-indigo-600 hover:text-indigo-800 text-xs font-bold border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-50 transition">
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => router.push(`/admin/student/${student.student_id}`)}
+                                                        className="text-sky-600 hover:text-sky-800 text-xs font-bold border border-sky-200 px-2 py-1 rounded-lg hover:bg-sky-50 transition"
+                                                    >
+                                                        View
+                                                    </button>
+                                                </td>
+                                            </>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+
+            {activeTab === 'parameters' && <MarksParametersSection />}
+            {activeTab === 'subjects' && <SubjectManagementSection />}
+            {activeTab === 'ai_queries' && <PredefinedQuestionsSection />}
         </div>
     );
 }

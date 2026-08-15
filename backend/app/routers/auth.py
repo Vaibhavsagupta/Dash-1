@@ -60,12 +60,72 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = auth.get_password_hash(user.password)
+    linked_id = user.linked_id.strip() if user.linked_id else None
+
+    # Handle Student profile creation/linking
+    if user.role == models.UserRole.student:
+        student = None
+        if linked_id:
+            student = db.query(models.Student).filter(models.Student.student_id == linked_id).first()
+        if not student:
+            student = db.query(models.Student).filter(models.Student.email == user.email).first()
+        
+        if not student:
+            s_id = linked_id or f"S_{db.query(models.Student).count() + 101}"
+            student_name = user.email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
+            student = models.Student(
+                student_id=s_id,
+                name=student_name,
+                email=user.email,
+                program="B.Tech",
+                branch="CSE",
+                semester=6,
+                section="A",
+                attendance=75,
+                dsa_score=75,
+                ml_score=75,
+                qa_score=75,
+                projects_score=75,
+                mock_interview_score=75,
+                rag_status="Green"
+            )
+            db.add(student)
+            db.flush()
+        linked_id = student.student_id
+
+    # Handle Teacher profile creation/linking
+    elif user.role == models.UserRole.teacher:
+        teacher = None
+        if linked_id:
+            teacher = db.query(models.Teacher).filter(models.Teacher.teacher_id == linked_id).first()
+        if not teacher:
+            teacher = db.query(models.Teacher).filter(models.Teacher.email == user.email).first()
+        
+        if not teacher:
+            t_id = linked_id or f"T_{db.query(models.Teacher).count() + 101}"
+            teacher_name = user.email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
+            teacher = models.Teacher(
+                teacher_id=t_id,
+                name=teacher_name,
+                email=user.email,
+                department="CSE",
+                subject="Computer Science",
+                avg_improvement=15.0,
+                feedback_score=4.5,
+                content_quality_score=4.2,
+                placement_conversion=20.0
+            )
+            db.add(teacher)
+            db.flush()
+        linked_id = teacher.teacher_id
+
     new_user = models.User(
         email=user.email,
         password_hash=hashed_password,
         role=user.role,
-        linked_id=user.linked_id,
-        approved=False # Explicitly set to False for Phase 2
+        linked_id=linked_id,
+        approved=True,
+        is_verified=True
     )
     print(f"Creating new user in DB: {user.email}")
     db.add(new_user)

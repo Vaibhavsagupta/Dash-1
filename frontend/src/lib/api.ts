@@ -5,16 +5,16 @@ const getApiBaseUrl = () => {
         return url.endsWith('/') ? url.slice(0, -1) : url;
     }
 
-    // 2. Client-side Safe Default (For local dev only)
+    // 2. Client-side Safe Default (For local dev - use 127.0.0.1 IPv4 to prevent IPv6 localhost fetch errors on Windows)
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:7000';
+            return 'http://127.0.0.1:7000';
         }
     }
 
-    // 3. Fallback (Should typically be overridden by env in prod)
-    return 'http://localhost:7000';
+    // 3. Fallback
+    return 'http://127.0.0.1:7000';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

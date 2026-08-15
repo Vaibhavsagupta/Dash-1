@@ -2,12 +2,13 @@
 import { API_BASE_URL } from '@/lib/api';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, Eye, EyeOff } from 'lucide-react';
 import styles from '../login/login.module.css'; // Reusing login styles for consistency
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [role, setRole] = useState('student');
     const [linkedId, setLinkedId] = useState('');
     const [error, setError] = useState('');
@@ -68,18 +69,18 @@ export default function SignupPage() {
                             <CheckCircle2 size={64} className="text-emerald-600 relative z-10" />
                         </div>
                         <h2 className="text-2xl font-bold text-slate-900 mb-2">Registration Successful!</h2>
-                        <div className="flex items-center gap-2 text-amber-800 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 mb-6">
-                            <Clock size={18} />
-                            <span className="font-semibold text-sm">Account Pending Approval</span>
+                        <div className="flex items-center gap-2 text-emerald-800 bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200 mb-6">
+                            <CheckCircle2 size={18} className="text-emerald-600" />
+                            <span className="font-semibold text-sm">Account Active & Ready</span>
                         </div>
                         <p className="text-slate-600 mb-8 max-w-xs">
-                            Your account has been created successfully. An administrator will review your request shortly.
+                            Your account has been created and activated. You can now log in immediately.
                         </p>
                         <button
                             onClick={() => router.push('/login')}
                             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-all"
                         >
-                            Return to Login
+                            Proceed to Login
                         </button>
                     </div>
                 ) : (
@@ -96,21 +97,34 @@ export default function SignupPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="name@university.edu"
                                     required
+                                    suppressHydrationWarning
                                     className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg px-4 py-3 outline-none focus:border-indigo-600 transition-all"
                                 />
                             </div>
 
                             <div className="form-group mb-4">
                                 <label htmlFor="password" className="block text-xs font-semibold uppercase text-slate-600 mb-1">Password</label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg px-4 py-3 outline-none focus:border-indigo-600 transition-all"
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                        suppressHydrationWarning
+                                        className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg px-4 py-3 pr-10 outline-none focus:border-indigo-600 transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        suppressHydrationWarning
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex gap-4 mb-4">

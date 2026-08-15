@@ -11,17 +11,6 @@ Ensure you have the following installed:
 
 ---
 
-## ⚡ Quick Start: One-Click Launch (Recommended)
-
-To run both frontend and backend automatically:
-1. Double-click the **`run_dashboard.bat`** file in the root of the project.
-2. This script automatically:
-   - Sets up the database seeder if needed.
-   - Starts the backend server on port `7000`.
-   - Starts the frontend server on port `3001` (moved from port `5173` to prevent port conflicts).
-   - Opens `http://127.0.0.1:3001` in your browser.
-
----
 
 ## 🛠️ Step 1: Backend Setup (FastAPI & PostgreSQL)
 
@@ -44,12 +33,8 @@ The backend handles the database, authentication, and analytics logic. It is now
     ```powershell
     pip install -r requirements.txt
     ```
-6.  **Initialize the Database**:
-    *This will create tables and seed your cloud database with real student data.*
-    ```powershell
-    python seed.py
-    ```
-7.  **Run the server**:
+6.  **Run the server**:
+    *Database tables and default user accounts auto-initialize automatically on server startup.*
     ```powershell
     uvicorn app.main:app --reload --port 7000
     ```
@@ -102,15 +87,13 @@ If you see a "Failed to fetch" error on the login or signup page:
 Use these credentials to log in to different roles.
 
 ### **Admin** (Full Access)
-*   **Email**: `admin@example.com`
-*   **Password**: `admin`
+*   **Email**: `admin@sage.com`
+*   **Password**: `password`
 
 ### **Teacher** (Faculty View)
-*   **Email**: `teacher@example.com`
+*   **Email**: `teacher@sage.com`
 *   **Password**: `password`
-*   *Alternative*: `t01@school.com` / `T01`
 
 ### **Student** (Student View)
-*   **Email**: Use any email from `Student data/student batch info.csv.xlsx` (e.g., `Abhaypratapsingh010107@gmail.com`)
-*   **Password**: `password123`
-*   *Note*: All previous sample students (s001-s030) have been removed.
+*   **Email**: `vaibhav@sage.com`
+*   **Password**: `password`

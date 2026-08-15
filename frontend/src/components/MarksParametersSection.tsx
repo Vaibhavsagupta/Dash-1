@@ -201,7 +201,7 @@ export default function MarksParametersSection() {
                 student_id: m.student_id,
                 score: m.score
             }));
-            const res = await fetch(`${API_BASE_URL}/marks-parameters/marks/${selectedParam.id}`, {
+            const res = await fetch(`${API_BASE_URL}/marks-parameters/marks/${selectedParam.id}/bulk`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -306,43 +306,126 @@ export default function MarksParametersSection() {
 
             {/* Create / Edit Form Modal */}
             {showForm && (
-                <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm space-y-4">
-                    <h3 className="text-md font-bold text-slate-900">{isEditing ? 'Edit Parameter' : 'Create New Parameter'}</h3>
-                    <form onSubmit={handleSaveParameter} className="space-y-4 text-xs font-medium">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-slate-600 font-bold mb-1">Parameter Name</label>
-                                <input type="text" required value={paramName} onChange={e => setParamName(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50" />
-                            </div>
-                            <div>
-                                <label className="block text-slate-600 font-bold mb-1">Subject</label>
-                                <input type="text" required value={subject} onChange={e => setSubject(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50" />
-                            </div>
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-xl p-6 space-y-4 relative my-8">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 className="text-lg font-extrabold text-slate-900">{isEditing ? 'Edit Parameter' : 'Create New Parameter'}</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowForm(false)}
+                                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-slate-600 font-bold mb-1">Max Marks</label>
-                                <input type="number" required min="1" value={maxMarks} onChange={e => setMaxMarks(Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50" />
+                        <form onSubmit={handleSaveParameter} className="space-y-4 text-xs font-medium">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-slate-600 font-bold mb-1">Parameter Name *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="e.g. Mid-term Exam, Lab Test"
+                                        value={paramName}
+                                        onChange={e => setParamName(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-slate-600 font-bold mb-1">Subject *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="e.g. Machine Learning, DSA"
+                                        value={subject}
+                                        onChange={e => setSubject(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50"
+                                    />
+                                </div>
                             </div>
+
                             <div>
-                                <label className="block text-slate-600 font-bold mb-1">Weightage (%)</label>
-                                <input type="number" value={weightage} onChange={e => setWeightage(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50" placeholder="Optional" />
+                                <label className="block text-slate-600 font-bold mb-1">Description</label>
+                                <textarea
+                                    rows={2}
+                                    placeholder="Brief overview or guidelines for this parameter..."
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50 resize-none"
+                                />
                             </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-slate-600 font-bold mb-1">Max Marks *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="1"
+                                        value={maxMarks}
+                                        onChange={e => setMaxMarks(Number(e.target.value))}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-slate-600 font-bold mb-1">Weightage (%)</label>
+                                    <input
+                                        type="number"
+                                        value={weightage}
+                                        onChange={e => setWeightage(e.target.value === '' ? '' : Number(e.target.value))}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50"
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-slate-600 font-bold mb-1">Semester</label>
+                                    <select
+                                        value={semester}
+                                        onChange={e => setSemester(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50 font-bold"
+                                    >
+                                        <option value="Semester 1">Semester 1</option>
+                                        <option value="Semester 2">Semester 2</option>
+                                        <option value="Semester 3">Semester 3</option>
+                                        <option value="Semester 4">Semester 4</option>
+                                        <option value="Semester 5">Semester 5</option>
+                                        <option value="Semester 6">Semester 6</option>
+                                        <option value="Semester 7">Semester 7</option>
+                                        <option value="Semester 8">Semester 8</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-slate-600 font-bold mb-1">Status</label>
-                                <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50">
+                                <select
+                                    value={status}
+                                    onChange={e => setStatus(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/50 font-bold"
+                                >
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <div className="flex gap-2 justify-end pt-2">
-                            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition">Cancel</button>
-                            <button type="submit" className="px-5 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">Save Parameter</button>
-                        </div>
-                    </form>
+                            <div className="flex gap-3 justify-end pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForm(false)}
+                                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition text-xs"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition shadow-md shadow-indigo-600/20 text-xs"
+                                >
+                                    {isEditing ? 'Update Parameter' : 'Create Parameter'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 

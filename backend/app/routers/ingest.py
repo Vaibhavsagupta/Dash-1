@@ -392,10 +392,10 @@ async def bulk_upload(files: List[UploadFile] = File(...), db: Session = Depends
 
     # Ensure system accounts
     if not db.query(User).filter(User.role == UserRole.admin).first():
-        db.add(User(email="admin@example.com", password_hash=get_password_hash("admin"), role=UserRole.admin, approved=True))
+        db.add(User(email="admin@sage.com", password_hash=get_password_hash("password"), role=UserRole.admin, approved=True))
     if not db.query(Teacher).filter(Teacher.teacher_id == "T01").first():
         db.add(Teacher(teacher_id="T01", name="Prof. Teacher", subject="CS", avg_improvement=15.0, feedback_score=4.5, content_quality_score=4.2, placement_conversion=20.0))
-        db.add(User(email="teacher@example.com", password_hash=get_password_hash("password"), role=UserRole.teacher, linked_id="T01", approved=True))
+        db.add(User(email="teacher@sage.com", password_hash=get_password_hash("password"), role=UserRole.teacher, linked_id="T01", approved=True))
 
     try:
         db.flush() # Flush to detect issues before final commit
@@ -425,7 +425,106 @@ async def create_monthly_table(month_suffix: str, db: Session = Depends(get_db),
 
 @router.post("/csv")
 async def ingest_csv(file: UploadFile = File(...), db: Session = Depends(get_db), current_admin: User = Depends(get_current_active_admin)):
-    # ... (existing code, can keep or remove if bulk-upload covers everything)
     content = await file.read()
-    # (Simplified for brevity)
     return {"message": "Sync complete"}
+
+@router.post("/csv/smart-upload")
+async def smart_csv_upload(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    content = await file.read()
+    df = read_df(content, file.filename)
+    if df.empty:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    COLUMN_MAPPINGS = {
+        'student_id': ['student_id', 'enrollment_no', 'roll_no', 'id', 'enrollment', 'registration_no'],
+        'name': ['name', 'student_name', 'full_name', 'student'],
+        'email': ['email', 'email_address', 'student_email', 'mail'],
+        'attendance': ['attendance', 'att', 'attendance_pct', 'attendance_percentage', 'att_%'],
+        'dsa_score': ['dsa', 'dsa_score', 'data_structures', 'dsa_marks'],
+        'ml_score': ['ml', 'ml_score', 'machine_learning', 'ml_marks'],
+        'qa_score': ['qa', 'qa_score', 'quantitative_aptitude', 'aptitude', 'qa_marks'],
+        'projects_score': ['projects', 'projects_score', 'project', 'project_marks'],
+        'mock_interview_score': ['mock', 'mock_interview', 'mock_score', 'interview_score'],
+        'cgpa': ['cgpa', 'gpa', 'cgpa_score'],
+        'program': ['program', 'degree', 'course_name'],
+        'branch': ['branch', 'department', 'dept', 'stream'],
+        'semester': ['semester', 'sem'],
+        'section': ['section', 'sec'],
+        'batch_id': ['batch', 'batch_id', 'cohort']
+    }
+
+    mapped_columns = {}
+    for col in df.columns:
+        clean_col = str(col).strip().lower().replace(' ', '_')
+        for target_field, synonyms in COLUMN_MAPPINGS.items():
+            if clean_col in synonyms or any(s in clean_col for s in synonyms):
+                mapped_columns[target_field] = col
+                break
+
+    records_processed = 0
+    records_updated = 0
+    records_created = 0
+
+    for _, row in df.iterrows():
+        s_id = str(row.get(mapped_columns.get('student_id', ''), '')).strip()
+        s_name = str(row.get(mapped_columns.get('name', ''), '')).strip()
+
+        if not s_id or s_id == 'nan' or s_id.lower() == 'none':
+            if not s_name or s_name == 'nan':
+                continue
+            s_id = f"S_{random.randint(1000, 9999)}"
+
+        student = db.query(Student).filter(
+            (Student.enrollment_no == s_id) | (Student.student_id == s_id)
+        ).first()
+
+        if not student and s_name:
+            student = db.query(Student).filter(Student.name == s_name).first()
+
+        if not student:
+            s_email = str(row.get(mapped_columns.get('email', ''), f"{s_id.lower()}@sage.com")).strip()
+            student = Student(
+                enrollment_no=s_id,
+                name=s_name or f"Student {s_id}",
+                email=s_email,
+                program=str(row.get(mapped_columns.get('program', ''), 'B.Tech')).strip(),
+                branch=str(row.get(mapped_columns.get('branch', ''), 'CSE')).strip(),
+                semester=safe_int(row.get(mapped_columns.get('semester', ''), 1), 1),
+                section=str(row.get(mapped_columns.get('section', ''), 'A')).strip(),
+                attendance=safe_int(row.get(mapped_columns.get('attendance', ''), 85), 85),
+                dsa_score=safe_int(row.get(mapped_columns.get('dsa_score', ''), 80), 80),
+                ml_score=safe_int(row.get(mapped_columns.get('ml_score', ''), 78), 78),
+                qa_score=safe_int(row.get(mapped_columns.get('qa_score', ''), 82), 82),
+                projects_score=safe_int(row.get(mapped_columns.get('projects_score', ''), 85), 85),
+                mock_interview_score=safe_int(row.get(mapped_columns.get('mock_interview_score', ''), 80), 80),
+                cgpa=float(row.get(mapped_columns.get('cgpa', ''), 8.0) or 8.0),
+                batch_id=str(row.get(mapped_columns.get('batch_id', ''), 'Batch 1')).strip()
+            )
+            db.add(student)
+            records_created += 1
+        else:
+            if 'name' in mapped_columns and s_name: student.name = s_name
+            if 'attendance' in mapped_columns: student.attendance = safe_int(row[mapped_columns['attendance']], student.attendance)
+            if 'dsa_score' in mapped_columns: student.dsa_score = safe_int(row[mapped_columns['dsa_score']], student.dsa_score)
+            if 'ml_score' in mapped_columns: student.ml_score = safe_int(row[mapped_columns['ml_score']], student.ml_score)
+            if 'qa_score' in mapped_columns: student.qa_score = safe_int(row[mapped_columns['qa_score']], student.qa_score)
+            if 'projects_score' in mapped_columns: student.projects_score = safe_int(row[mapped_columns['projects_score']], student.projects_score)
+            if 'mock_interview_score' in mapped_columns: student.mock_interview_score = safe_int(row[mapped_columns['mock_interview_score']], student.mock_interview_score)
+            records_updated += 1
+
+        records_processed += 1
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "filename": file.filename,
+        "mapped_columns": mapped_columns,
+        "records_processed": records_processed,
+        "records_created": records_created,
+        "records_updated": records_updated
+    }

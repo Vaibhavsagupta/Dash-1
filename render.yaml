@@ -1,4 +1,5 @@
 services:
+  # Python FastAPI Backend Service
   - type: web
     name: dash-1-backend
     runtime: python
@@ -7,15 +8,38 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        sync: false   # Set this manually in Render dashboard
+        fromDatabase:
+          name: dash-1-db
+          property: connectionString
       - key: SECRET_KEY
-        sync: false
+        generateValue: true
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "1440"
       - key: FRONTEND_URL
-        sync: false   # Set to your Vercel URL after deploy
-      - key: GOOGLE_CLIENT_ID
-        sync: false
+        fromService:
+          type: web
+          name: dash-1-frontend
+          property: url
     healthCheckPath: /health
+
+  # Next.js Frontend Web Service
+  - type: web
+    name: dash-1-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: dash-1-backend
+          property: url
+
+databases:
+  # PostgreSQL Database Instance
+  - name: dash-1-db
+    databaseName: database_db
+    user: database_user

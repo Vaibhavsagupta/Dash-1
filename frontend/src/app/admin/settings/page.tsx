@@ -51,10 +51,37 @@ export default function SettingsPage() {
     const [rankingSaveStatus, setRankingSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [rankingError, setRankingError] = useState('');
 
+    // AI Risk Engine Weights config
+    const [riskWeights, setRiskWeights] = useState<any>({
+        academic: { label: "Academic Marks", weight: 25.0, icon: "🎓" },
+        attendance: { label: "Attendance Score", weight: 20.0, icon: "📅" },
+        engagement: { label: "Platform Engagement", weight: 15.0, icon: "💻" },
+        assessment_trend: { label: "30-Day Assessment Trend", weight: 15.0, icon: "📈" },
+        assignment: { label: "Assignment & Test Submission", weight: 20.0, icon: "📝" },
+        backlog: { label: "Active Backlogs", weight: 5.0, icon: "⚠️" }
+    });
+    const [riskSaving, setRiskSaving] = useState(false);
+    const [riskSaveStatus, setRiskSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [riskError, setRiskError] = useState('');
+
     useEffect(() => {
         fetchSettings();
         fetchRankingConfig();
+        fetchRiskWeights();
     }, []);
+
+    const fetchRiskWeights = async () => {
+        try {
+            const token = localStorage.getItem('access_token');
+            const res = await fetch(`${API_BASE_URL}/settings/risk-weights`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setRiskWeights(data);
+            }
+        } catch (err) { console.error(err); }
+    };
 
     const fetchSettings = async () => {
         try {
@@ -190,12 +217,80 @@ export default function SettingsPage() {
         } catch (err) { console.error("Purge failed", err); }
     };
 
+    const totalRiskWeight = Object.values(riskWeights).reduce(
+        (sum: number, p: any) => sum + (p.weight || 0), 0
+    );
+    const isRiskValid = Math.abs(totalRiskWeight - 100) <= 0.5;
+
+    const handleRiskWeightChange = (key: string, val: number) => {
+        setRiskWeights((prev: any) => ({
+            ...prev,
+            [key]: { ...prev[key], weight: val }
+        }));
+        setRiskSaveStatus('idle');
+        setRiskError('');
+    };
+
+    const handleSaveRiskWeights = async () => {
+        if (!isRiskValid) {
+            setRiskError(`Total weight of AI risk parameters must equal 100%. Currently: ${totalRiskWeight.toFixed(1)}%`);
+            return;
+        }
+        setRiskSaving(true);
+        setRiskError('');
+        try {
+            const token = localStorage.getItem('access_token');
+            const res = await fetch(`${API_BASE_URL}/settings/risk-weights`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ config: riskWeights })
+            });
+            if (res.ok) {
+                setRiskSaveStatus('success');
+                setTimeout(() => setRiskSaveStatus('idle'), 3000);
+            } else {
+                const err = await res.json();
+                setRiskError(err.detail || 'Save failed');
+                setRiskSaveStatus('error');
+            }
+        } catch {
+            setRiskError('Network error. Please try again.');
+            setRiskSaveStatus('error');
+        } finally {
+            setRiskSaving(false);
+        }
+    };
+
+    const handleAddCustomFactor = (key: string, label: string, weight: number, icon: string) => {
+        setRiskWeights((prev: any) => ({
+            ...prev,
+            [key]: { label, weight, icon }
+        }));
+        setRiskSaveStatus('idle');
+        setRiskError('');
+    };
+
     return (
         <div className="bg-slate-50 min-h-screen text-slate-900">
             <header className="mb-8">
                 <h1 className="text-3xl font-extrabold text-slate-900 mb-1">Platform Settings</h1>
-                <p className="text-slate-500 font-medium">Configure global parameters and administrative controls.</p>
+                <p className="text-slate-500 font-medium font-sans">Configure AI Risk Engine weights, ranking parameters &amp; administrative controls.</p>
             </header>
+
+            {/* ── AI Risk Engine Ratio Weights Panel ── */}
+            <div className="mb-8">
+                <AIRiskWeightsPanel
+                    riskWeights={riskWeights}
+                    totalRiskWeight={totalRiskWeight}
+                    isRiskValid={isRiskValid}
+                    saving={riskSaving}
+                    saveStatus={riskSaveStatus}
+                    error={riskError}
+                    onWeightChange={handleRiskWeightChange}
+                    onSave={handleSaveRiskWeights}
+                    onAddCustomFactor={handleAddCustomFactor}
+                />
+            </div>
 
             {/* ── Ranking Configuration (full width, top) ── */}
             <div className="mb-8">
@@ -534,6 +629,206 @@ function SettingItem({ label, description, enabled, onToggle }: { label: string;
             >
                 <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-200 shadow-sm ${enabled ? 'left-7' : 'left-1'}`} />
             </button>
+        </div>
+    );
+}
+
+// ─── AI Risk Engine Ratio Weights Panel ──────────────────────────────────────
+
+interface AIRiskWeightsPanelProps {
+    riskWeights: any;
+    totalRiskWeight: number;
+    isRiskValid: boolean;
+    saving: boolean;
+    saveStatus: 'idle' | 'success' | 'error';
+    error: string;
+    onWeightChange: (key: string, val: number) => void;
+    onSave: () => void;
+    onAddCustomFactor?: (key: string, label: string, weight: number, icon: string) => void;
+}
+
+function AIRiskWeightsPanel({
+    riskWeights, totalRiskWeight, isRiskValid, saving, saveStatus, error,
+    onWeightChange, onSave, onAddCustomFactor
+}: AIRiskWeightsPanelProps) {
+    const remaining = 100 - totalRiskWeight;
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [customLabel, setCustomLabel] = useState('');
+    const [customWeight, setCustomWeight] = useState(10);
+    const [customIcon, setCustomIcon] = useState('⭐');
+
+    const handleAdd = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!customLabel.trim()) return;
+        const key = customLabel.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        if (onAddCustomFactor) {
+            onAddCustomFactor(key, customLabel.trim(), customWeight, customIcon);
+        }
+        setCustomLabel('');
+        setShowAddForm(false);
+    };
+
+    return (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-6 py-5">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                            🤖
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">AI Risk Engine Weight Ratios</h2>
+                            <p className="text-emerald-100 text-sm">Configure how much each factor impacts student RAG risk classification</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setShowAddForm(!showAddForm)}
+                            className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all border border-white/30 flex items-center gap-1"
+                        >
+                            + Add Custom AI Factor
+                        </button>
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-sm transition-all ${
+                            isRiskValid ? 'bg-emerald-500/30 text-emerald-100 border border-emerald-400/40'
+                                        : 'bg-rose-500/30 text-rose-100 border border-rose-400/40'
+                        }`}>
+                            {isRiskValid ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                            Total Ratio: {totalRiskWeight.toFixed(1)}% / 100%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-6">
+                <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6">
+                    <Info size={16} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-emerald-800">
+                        <strong>AI Engine Ratio Customization:</strong> Adjust weight ratios or add custom factors below. The AI Engine automatically processes and factors all dynamic parameters into student Risk Analysis. Total sum must equal 100%.
+                    </p>
+                </div>
+
+                {/* Add Custom Factor Form */}
+                {showAddForm && (
+                    <form onSubmit={handleAdd} className="mb-6 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 flex flex-wrap gap-4 items-end animate-fade-in">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Factor Name</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Mid Sem Marks, Soft Skills"
+                                value={customLabel}
+                                onChange={(e) => setCustomLabel(e.target.value)}
+                                className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold outline-none text-slate-900 focus:border-emerald-600"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Weight %</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={50}
+                                value={customWeight}
+                                onChange={(e) => setCustomWeight(parseFloat(e.target.value) || 0)}
+                                className="w-24 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold outline-none text-slate-900 focus:border-emerald-600"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Icon</label>
+                            <select
+                                value={customIcon}
+                                onChange={(e) => setCustomIcon(e.target.value)}
+                                className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold outline-none text-slate-900 focus:border-emerald-600 cursor-pointer"
+                            >
+                                <option value="⭐">⭐ Star</option>
+                                <option value="🎯">🎯 Target</option>
+                                <option value="📊">📊 Chart</option>
+                                <option value="💡">💡 Idea</option>
+                                <option value="🏆">🏆 Trophy</option>
+                                <option value="🧠">🧠 Brain</option>
+                            </select>
+                        </div>
+                        <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm shadow-sm transition">
+                            Add Factor
+                        </button>
+                    </form>
+                )}
+
+                {/* Progress bar */}
+                <div className="mb-6">
+                    <div className="flex justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>Risk Weights Allocation</span>
+                        <span className={remaining < 0 ? 'text-rose-500 font-bold' : remaining === 0 ? 'text-emerald-600 font-bold' : 'text-slate-500'}>
+                            {remaining > 0 ? `${remaining.toFixed(1)}% remaining` : remaining < 0 ? `${Math.abs(remaining).toFixed(1)}% over limit!` : '✓ Balanced (100%)'}
+                        </span>
+                    </div>
+                    <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                                width: `${Math.min(totalRiskWeight, 100)}%`,
+                                background: isRiskValid
+                                    ? 'linear-gradient(90deg, #10b981, #06b6d4, #6366f1)'
+                                    : 'linear-gradient(90deg, #ef4444, #f97316)',
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Sliders Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {Object.entries(riskWeights).map(([key, item]: [string, any]) => (
+                        <div key={key} className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                                    <span>{item.icon || '⭐'}</span> {item.label}
+                                </span>
+                                <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    {item.weight}%
+                                </span>
+                            </div>
+                            <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                step={1}
+                                value={item.weight}
+                                onChange={(e) => onWeightChange(key, parseFloat(e.target.value) || 0)}
+                                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-emerald-600 bg-slate-200"
+                            />
+                        </div>
+                    ))}
+                </div>
+
+                {error && (
+                    <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3 mb-4 text-sm font-medium">
+                        <AlertTriangle size={16} />
+                        {error}
+                    </div>
+                )}
+
+                {saveStatus === 'success' && (
+                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 mb-4 text-sm font-medium">
+                        <CheckCircle size={16} />
+                        AI Risk Engine weight ratios saved successfully! AI risk scores will immediately reflect these custom ratios.
+                    </div>
+                )}
+
+                <div className="flex justify-end pt-4 border-t border-slate-100">
+                    <button
+                        onClick={onSave}
+                        disabled={saving || !isRiskValid}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
+                            isRiskValid && !saving
+                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
+                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                    >
+                        {saving ? 'Saving AI Ratios...' : 'Save AI Risk Ratios'}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

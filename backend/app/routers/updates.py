@@ -12,7 +12,7 @@ router = APIRouter(
 def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj), db: Session = Depends(database.get_db)):
     if current_user.role == models.UserRole.admin:
         # Phase 1 Requirement: Only specific admins can fetch data
-        allowed_admins = ["admin@college.com", "admin@samatrix.com", "admin@example.com", "vaibhav@gmail.com"]
+        allowed_admins = ["admin@sage.com"]
         if current_user.email not in allowed_admins:
             # Check admins table for approval
             admin_entry = db.query(models.Admin).filter(models.Admin.email == current_user.email).first()
@@ -89,8 +89,9 @@ def list_students(
     if user.role == models.UserRole.teacher:
         teacher_id = user.linked_id
         assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
-        batch_list = [b[0] for b in assigned_batches]
-        query = query.filter(models.Student.batch_id.in_(batch_list))
+        batch_list = [b[0] for b in assigned_batches if b[0]]
+        if batch_list:
+            query = query.filter(models.Student.batch_id.in_(batch_list))
     return query.all()
 
 @router.post("/student/add")

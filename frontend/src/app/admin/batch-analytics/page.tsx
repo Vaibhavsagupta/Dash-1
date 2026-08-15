@@ -13,6 +13,7 @@ import {
     Eye, Filter, Maximize2, Search, User, Calendar, ArrowLeft
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import TeacherVisualAnalytics from '@/components/TeacherVisualAnalytics';
 
 ChartJS.register(...registerables);
 
@@ -280,6 +281,11 @@ export default function BatchAnalyticsPage() {
                     </h1>
                 </div>
             </header>
+
+            {/* BATCH ANALYTICS & SCATTER GRAPH SUITE */}
+            <div className="mb-12">
+                <TeacherVisualAnalytics />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <MetricCard title="Progression" value={`+${growthPercent}%`} sub="Skill Evolution" icon={<TrendingUp size={24} />} color="text-indigo-600" />

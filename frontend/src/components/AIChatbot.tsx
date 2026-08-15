@@ -16,6 +16,16 @@ export default function AIChatbot() {
     const [loading, setLoading] = useState(false);
     const [isOffline, setIsOffline] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [suggestions, setSuggestions] = useState<string[]>([
+        "Who is currently at risk?",
+        "Average class metrics details?",
+        "Profile of student S01",
+        "List all teacher feedback scores",
+        "Show attendance deficit students (<75%)",
+        "Top performing students in Machine Learning",
+        "Show placement readiness conversion rates",
+        "List all active marks parameters"
+    ]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +39,17 @@ export default function AIChatbot() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, loading]);
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/settings/predefined-questions`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    setSuggestions(data.map((q: any) => q.question_text));
+                }
+            })
+            .catch(err => console.error("Error fetching predefined chatbot questions:", err));
+    }, []);
 
     // Don't show chatbot for students or unauthenticated users
     if (!userRole || !['admin', 'teacher'].includes(userRole)) {
@@ -188,13 +209,6 @@ export default function AIChatbot() {
         return rendered;
     };
 
-    const suggestions = [
-        "Who is currently at risk?",
-        "Average class metrics details?",
-        "Profile of student S01",
-        "List all teacher feedback scores"
-    ];
-
     return (
         <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
             <AnimatePresence>
@@ -261,17 +275,20 @@ export default function AIChatbot() {
                                         </p>
                                     </div>
 
-                                    {/* Suggestion Chips */}
-                                    <div className="grid grid-cols-2 gap-2 w-full pt-2">
-                                        {suggestions.map((s, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => handleSend(s)}
-                                                className="p-2.5 bg-slate-800/50 hover:bg-indigo-600/30 border border-slate-700/50 hover:border-indigo-500/30 rounded-xl text-[10px] text-slate-300 font-bold text-left transition-all hover:scale-[1.02]"
-                                            >
-                                                {s}
-                                            </button>
-                                        ))}
+                                    {/* Predefined Question Chips */}
+                                    <div className="w-full space-y-2 pt-2">
+                                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 text-left">Quick Predefined Queries:</p>
+                                        <div className="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                                            {suggestions.map((s, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => handleSend(s)}
+                                                    className="p-2.5 bg-slate-800/60 hover:bg-indigo-600/30 border border-slate-700/60 hover:border-indigo-500/40 rounded-xl text-[10px] text-slate-200 font-bold text-left transition-all hover:scale-[1.02] flex items-center justify-between group"
+                                                >
+                                                    <span className="line-clamp-2">{s}</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

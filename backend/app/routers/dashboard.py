@@ -134,7 +134,7 @@ def get_training_agenda(
 ):
     # Fetch all lectures from schedule
     lectures = db.query(models.Lecture, models.Teacher.name.label("trainer_name")) \
-        .join(models.Teacher, models.Lecture.teacher_id == models.Teacher.teacher_id, isouter=True) \
+        .join(models.Teacher, models.Lecture.teacher_id == models.Teacher.faculty_id, isouter=True) \
         .order_by(models.Lecture.date.asc(), models.Lecture.start_time.asc()) \
         .all()
     

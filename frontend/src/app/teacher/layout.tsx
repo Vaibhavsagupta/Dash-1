@@ -80,6 +80,7 @@ export default function TeacherLayout({
 
                     <div className="p-4 border-t border-slate-200">
                         <button
+                            suppressHydrationWarning
                             onClick={handleLogout}
                             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-600 hover:bg-red-50 transition-all"
                         >

@@ -1,7 +1,35 @@
 "use client";
 import React, { useState } from 'react';
 import { Bar, Line, Radar, PolarArea } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    RadialLinearScale,
+    BarElement,
+    LineElement,
+    PointElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+} from 'chart.js';
 import { BarChart3, LineChart, PieChart, Activity } from 'lucide-react';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    RadialLinearScale,
+    BarElement,
+    LineElement,
+    PointElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler
+);
 
 interface DynamicChartProps {
     data: any;

@@ -1,6 +1,7 @@
 "use client";
 import { API_BASE_URL } from '@/lib/api';
 import FacultyComparisonSection from '@/components/FacultyComparisonSection';
+import TeacherVisualAnalytics from '@/components/TeacherVisualAnalytics';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -38,7 +39,16 @@ export default function AdminDashboard() {
     const [data, setData] = useState<any>(null);
     const [agenda, setAgenda] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedBatch, setSelectedBatch] = useState('All');
+    
+    // University Filters state
+    const [program, setProgram] = useState('All');
+    const [branch, setBranch] = useState('All');
+    const [semester, setSemester] = useState(0);
+    const [section, setSection] = useState('All');
+
+    const [adminRiskSummary, setAdminRiskSummary] = useState<any>(null);
+    const [dataHealth, setDataHealth] = useState<any>(null);
+    const [liveAlerts, setLiveAlerts] = useState<any[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -51,13 +61,25 @@ export default function AdminDashboard() {
 
         const fetchData = async () => {
             try {
-                // Fetch stats and agenda in parallel
-                const [statsRes, agendaRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/analytics/dashboard/admin?batch_filter=${selectedBatch}`, {
+                // Fetch stats, agenda, institution risk summary, data health, and live alerts in parallel
+                const [statsRes, agendaRes, riskRes, healthRes, alertRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/analytics/dashboard/admin?program=${program}&branch=${branch}&semester=${semester}&section=${section}`, {
                         headers: { 'Authorization': `Bearer ${token}` },
                         cache: 'no-store'
                     }),
                     fetch(`${API_BASE_URL}/dashboard/training-agenda`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        cache: 'no-store'
+                    }),
+                    fetch(`${API_BASE_URL}/analytics/risk/institution-summary`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        cache: 'no-store'
+                    }),
+                    fetch(`${API_BASE_URL}/analytics/system/data-health`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        cache: 'no-store'
+                    }),
+                    fetch(`${API_BASE_URL}/analytics/admin/live-alerts`, {
                         headers: { 'Authorization': `Bearer ${token}` },
                         cache: 'no-store'
                     })
@@ -69,6 +91,15 @@ export default function AdminDashboard() {
                 if (agendaRes.ok) {
                     setAgenda(await agendaRes.json());
                 }
+                if (riskRes.ok) {
+                    setAdminRiskSummary(await riskRes.json());
+                }
+                if (healthRes.ok) {
+                    setDataHealth(await healthRes.json());
+                }
+                if (alertRes.ok) {
+                    setLiveAlerts(await alertRes.json());
+                }
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
             } finally {
@@ -77,7 +108,7 @@ export default function AdminDashboard() {
         };
 
         fetchData();
-    }, [router, selectedBatch]);
+    }, [router, program, branch, semester, section]);
 
     if (loading || !data) {
         return (
@@ -87,31 +118,42 @@ export default function AdminDashboard() {
         );
     }
 
-    // Derived Metrics
+    // Derived Metrics from backend
     const totalStudents = data.total_students;
-    const avgPrs = data.top_students.reduce((acc: any, curr: any) => acc + curr.prs, 0) / data.top_students.length;
-    const riskCount = Math.floor(totalStudents * 0.15); // mock 15% at risk
+    const avgCgpa = data.average_cgpa;
+    const backlogRate = data.backlog_rate;
+    const riskCount = data.risk_count;
 
-    // Placement Funnel Data
-    const funnelData = {
-        labels: ['Total Students', 'Eligible (>70% PRS)', 'Interviewed', 'Placed'],
+    // Academic Grade Distribution Data
+    const gradeLabels = ['O', 'A+', 'A', 'B+', 'B', 'P', 'F'];
+    const gradeData = gradeLabels.map(label => data.grade_distribution[label] || 0);
+
+    const gradeChartData = {
+        labels: gradeLabels,
         datasets: [
             {
-                label: '# of Students',
-                data: [totalStudents, Math.floor(totalStudents * 0.8), Math.floor(totalStudents * 0.6), Math.floor(totalStudents * 0.4)],
+                label: 'Number of Students',
+                data: gradeData,
                 backgroundColor: [
-                    'rgba(79, 70, 229, 0.7)',
-                    'rgba(147, 51, 234, 0.7)',
-                    'rgba(219, 39, 119, 0.7)',
-                    'rgba(16, 185, 129, 0.7)',
+                    'rgba(79, 70, 229, 0.75)',
+                    'rgba(99, 102, 241, 0.75)',
+                    'rgba(129, 140, 248, 0.75)',
+                    'rgba(165, 180, 252, 0.75)',
+                    'rgba(199, 210, 254, 0.75)',
+                    'rgba(224, 231, 255, 0.75)',
+                    'rgba(239, 68, 68, 0.75)',
                 ],
                 borderColor: [
                     '#4f46e5',
-                    '#9333ea',
-                    '#db2777',
-                    '#10b981',
+                    '#6366f1',
+                    '#818cf8',
+                    '#a5b4fc',
+                    '#c7d2fe',
+                    '#e0e7ff',
+                    '#ef4444',
                 ],
                 borderWidth: 1,
+                borderRadius: 6,
             },
         ],
     };
@@ -134,25 +176,80 @@ export default function AdminDashboard() {
 
     return (
         <div className="text-slate-900">
-            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <header className="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6">
                 <div>
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                         Admin Control Center
                     </h1>
-                    <p className="text-slate-600 mt-2 font-medium">Real-time batch readiness and faculty analytics</p>
+                    <p className="text-slate-600 mt-2 font-medium">Real-time University Academic Monitoring Dashboard</p>
                 </div>
-                <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                    {['All', 'Batch 1', 'Batch 2', 'Batch 3'].map((b) => (
-                        <button
-                            key={b}
-                            onClick={() => setSelectedBatch(b)}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${selectedBatch === b ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                
+                {/* Filters Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm w-full xl:w-auto">
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Program</label>
+                        <select 
+                            value={program} 
+                            onChange={(e) => setProgram(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold p-2 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         >
-                            {b}
-                        </button>
-                    ))}
+                            <option value="All">All Programs</option>
+                            <option value="B.Tech">B.Tech</option>
+                            <option value="MCA">MCA</option>
+                            <option value="BCA">BCA</option>
+                            <option value="MBA">MBA</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Branch</label>
+                        <select 
+                            value={branch} 
+                            onChange={(e) => setBranch(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold p-2 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        >
+                            <option value="All">All Branches</option>
+                            <option value="CSE">CSE</option>
+                            <option value="IT">IT</option>
+                            <option value="ECE">ECE</option>
+                            <option value="ME">ME</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Semester</label>
+                        <select 
+                            value={semester} 
+                            onChange={(e) => setSemester(Number(e.target.value))}
+                            className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold p-2 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        >
+                            <option value={0}>All Semesters</option>
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                                <option key={s} value={s}>Sem {s}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Section</label>
+                        <select 
+                            value={section} 
+                            onChange={(e) => setSection(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold p-2 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        >
+                            <option value="All">All Sections</option>
+                            <option value="A">Section A</option>
+                            <option value="B">Section B</option>
+                            <option value="C">Section C</option>
+                        </select>
+                    </div>
                 </div>
             </header>
+
+            {/* BATCH ANALYTICS & VISUAL GRAPH SUITE */}
+            <div className="mb-10">
+                <TeacherVisualAnalytics />
+            </div>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -160,38 +257,38 @@ export default function AdminDashboard() {
                     title="Total Students"
                     value={totalStudents}
                     icon={<Users size={24} className="text-indigo-600" />}
-                    trend="+12% vs last batch"
+                    trend="Registered"
                 />
                 <KPICard
-                    title="Avg Batch PRS"
-                    value={`${avgPrs.toFixed(1)}%`}
+                    title="Average CGPA"
+                    value={avgCgpa.toFixed(2)}
                     icon={<GraduationCap size={24} className="text-purple-600" />}
-                    trend="Strong Readiness"
+                    trend="Cumulative Scale"
                 />
                 <KPICard
-                    title="Placement Rate"
-                    value="40%"
+                    title="Backlog Rate"
+                    value={`${backlogRate}%`}
                     icon={<TrendingUp size={24} className="text-emerald-600" />}
-                    trend="On Track"
+                    trend="Active Papers"
                 />
                 <KPICard
-                    title="At Risk"
+                    title="At Academic Risk"
                     value={riskCount}
                     icon={<AlertTriangle size={24} className="text-amber-600" />}
-                    trend="Needs Attention"
+                    trend="Requires Attention"
                     isRisk
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Placement Funnel */}
+                {/* Academic Grade Distribution */}
                 <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
                     <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 text-slate-900">
-                        <TrendingUp size={20} className="text-indigo-600" /> Placement Funnel
+                        <TrendingUp size={20} className="text-indigo-600" /> Academic Grade Distribution
                     </h2>
                     <div className="h-64 flex items-center justify-center">
                         <Bar
-                            data={funnelData}
+                            data={gradeChartData}
                             options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
@@ -208,7 +305,7 @@ export default function AdminDashboard() {
                 {/* Top Students */}
                 <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 text-slate-900">
-                        <GraduationCap size={20} className="text-purple-600" /> Top Performers
+                        <GraduationCap size={20} className="text-purple-600" /> Top Performers (CGPA)
                     </h2>
                     <div className="space-y-4">
                         {data.top_students.map((student: any, i: number) => (
@@ -222,12 +319,145 @@ export default function AdminDashboard() {
                                     </span>
                                     <span className="font-medium text-slate-800">{student.name}</span>
                                 </div>
-                                <span className="font-bold text-indigo-600">{student.prs}%</span>
+                                <span className="font-bold text-indigo-600">{student.cgpa.toFixed(2)} CGPA</span>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+
+            {/* Institutional AI Risk Breakdown (Part 3) */}
+            {adminRiskSummary && (
+                <div className="mt-8 p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <h2 className="text-xl font-bold mb-4 text-red-600 flex items-center gap-2">
+                        <AlertTriangle size={20} /> University Institutional Risk Analytics
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center mb-6">
+                        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
+                            <span className="text-3xl font-extrabold text-emerald-600">{adminRiskSummary.VERY_LOW}</span>
+                            <span className="block text-[11px] text-emerald-800 font-bold uppercase mt-1">Very Low Risk</span>
+                        </div>
+                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                            <span className="text-3xl font-extrabold text-blue-600">{adminRiskSummary.LOW}</span>
+                            <span className="block text-[11px] text-blue-800 font-bold uppercase mt-1">Low Risk</span>
+                        </div>
+                        <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
+                            <span className="text-3xl font-extrabold text-purple-600">{adminRiskSummary.MODERATE}</span>
+                            <span className="block text-[11px] text-purple-800 font-bold uppercase mt-1">Moderate Risk</span>
+                        </div>
+                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                            <span className="text-3xl font-extrabold text-amber-600">{adminRiskSummary.HIGH}</span>
+                            <span className="block text-[11px] text-amber-800 font-bold uppercase mt-1">High Risk</span>
+                        </div>
+                        <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
+                            <span className="text-3xl font-extrabold text-red-600">{adminRiskSummary.CRITICAL}</span>
+                            <span className="block text-[11px] text-red-800 font-bold uppercase mt-1">Critical Risk</span>
+                        </div>
+                    </div>
+
+                    {adminRiskSummary.department_distribution && Object.keys(adminRiskSummary.department_distribution).length > 0 && (
+                        <div className="border-t border-slate-100 pt-4">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Department Risk Distribution</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {Object.entries(adminRiskSummary.department_distribution).map(([dept, dist]: [string, any], idx: number) => (
+                                    <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <div className="font-bold text-slate-900 text-sm mb-2">{dept}</div>
+                                        <div className="space-y-1 text-xs font-medium text-slate-600">
+                                            <div className="flex justify-between"><span>Critical:</span><span className="font-bold text-red-600">{dist.CRITICAL}</span></div>
+                                            <div className="flex justify-between"><span>High:</span><span className="font-bold text-amber-600">{dist.HIGH}</span></div>
+                                            <div className="flex justify-between"><span>Moderate:</span><span className="font-bold text-purple-600">{dist.MODERATE}</span></div>
+                                            <div className="flex justify-between"><span>Low / Safe:</span><span className="font-bold text-emerald-600">{dist.LOW + dist.VERY_LOW}</span></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Production Integration & Data Health Monitor (Part 5) */}
+            {dataHealth && (
+                <div className="mt-8 p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <h2 className="text-xl font-bold mb-4 text-indigo-600 flex items-center gap-2">
+                        <UploadCloud size={20} /> Real-Time Production Data Integration & Sync Health
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6">
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span className="text-xs font-bold text-slate-400 uppercase block">ERP Sync</span>
+                            <span className="text-sm font-extrabold text-emerald-600 mt-1 inline-block">✓ HEALTHY</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span className="text-xs font-bold text-slate-400 uppercase block">LMS Webhook</span>
+                            <span className="text-sm font-extrabold text-emerald-600 mt-1 inline-block">✓ HEALTHY</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span className="text-xs font-bold text-slate-400 uppercase block">Exam Sync</span>
+                            <span className="text-sm font-extrabold text-emerald-600 mt-1 inline-block">✓ HEALTHY</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span className="text-xs font-bold text-slate-400 uppercase block">Dead Letter Queue</span>
+                            <span className={`text-sm font-extrabold mt-1 inline-block ${dataHealth.dead_letter_count > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                {dataHealth.dead_letter_count} Failed
+                            </span>
+                        </div>
+                    </div>
+
+                        <div className="border-t border-slate-100 pt-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Risk Escalations &amp; Data Alerts</h3>
+                                <button
+                                    onClick={async () => {
+                                        setLoading(true);
+                                        try {
+                                            const token = localStorage.getItem('access_token');
+                                            const res = await fetch(`${API_BASE_URL}/analytics/admin/alerts/dispatch-critical-notifications`, {
+                                                method: 'POST',
+                                                headers: { 'Authorization': `Bearer ${token}` }
+                                            });
+                                            if (res.ok) {
+                                                const data = await res.json();
+                                                alert(`Dispatched ${data.dispatched_count} alerts for ${data.total_scanned} scanned students!`);
+                                            } else {
+                                                alert('Failed to dispatch notifications');
+                                            }
+                                        } catch (err) {
+                                            alert('Error dispatching notifications');
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
+                                    className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1 cursor-pointer"
+                                >
+                                    📢 Dispatch Risk Alerts
+                                </button>
+                            </div>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {liveAlerts.slice(0, 4).map((al: any, idx: number) => (
+                                    <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center text-xs">
+                                        <div>
+                                            <span className="font-bold text-slate-800">{al.student_id}: </span>
+                                            <span className="text-slate-600">{al.message}</span>
+                                        </div>
+                                        <button 
+                                            onClick={async () => {
+                                                const token = localStorage.getItem('access_token');
+                                                await fetch(`${API_BASE_URL}/analytics/admin/alerts/${al.id}/acknowledge`, {
+                                                    method: 'POST',
+                                                    headers: { 'Authorization': `Bearer ${token}` }
+                                                });
+                                                alert("Alert acknowledged");
+                                            }}
+                                            className="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded font-bold text-[10px]"
+                                        >
+                                            Acknowledge
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                </div>
+            )}
 
             {/* Subject-Wise Faculty Benchmarking */}
             <div className="mt-8">

@@ -417,60 +417,60 @@ export default function StudentTestAttemptPage() {
     // Render instruction page if not started
     if (!isStarted) {
         return (
-            <div className="max-w-4xl mx-auto px-6 py-10 text-slate-100 space-y-8">
-                <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl space-y-6 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 to-cyan-500" />
+            <div className="max-w-4xl mx-auto px-6 py-10 text-slate-900 space-y-8">
+                <div className="bg-white border border-slate-200/80 p-8 rounded-3xl space-y-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 to-cyan-600" />
                     
                     <div className="space-y-2">
-                        <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full uppercase">
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-md uppercase tracking-wider">
                             {testInfo?.subject}
                         </span>
-                        <h1 className="text-3xl font-extrabold text-white">{testInfo?.name}</h1>
-                        <p className="text-slate-400 text-xs font-semibold">{testInfo?.topic}</p>
+                        <h1 className="text-3xl font-extrabold text-slate-900 mt-1">{testInfo?.name}</h1>
+                        <p className="text-slate-500 text-xs font-semibold">{testInfo?.topic}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-slate-800">
-                        <div className="bg-slate-950 p-4 rounded-xl text-center border border-slate-850">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-slate-200">
+                        <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-200">
                             <span className="text-[10px] text-slate-500 uppercase block font-semibold">Duration</span>
-                            <span className="text-lg font-bold text-white flex items-center justify-center gap-1.5 mt-1">
-                                <Clock size={16} className="text-indigo-400" /> {testInfo?.duration} mins
+                            <span className="text-lg font-bold text-slate-900 flex items-center justify-center gap-1.5 mt-1">
+                                <Clock size={16} className="text-indigo-600" /> {testInfo?.duration} mins
                             </span>
                         </div>
-                        <div className="bg-slate-950 p-4 rounded-xl text-center border border-slate-850">
+                        <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-200">
                             <span className="text-[10px] text-slate-500 uppercase block font-semibold">Difficulty</span>
-                            <span className="text-lg font-bold text-white mt-1 block capitalize">{testInfo?.difficulty}</span>
+                            <span className="text-lg font-bold text-slate-900 mt-1 block capitalize">{testInfo?.difficulty}</span>
                         </div>
-                        <div className="bg-slate-950 p-4 rounded-xl text-center border border-slate-850">
+                        <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-200">
                             <span className="text-[10px] text-slate-500 uppercase block font-semibold">Pass Marks</span>
-                            <span className="text-lg font-bold text-white mt-1 block">{testInfo?.passing_marks}%</span>
+                            <span className="text-lg font-bold text-slate-900 mt-1 block">{testInfo?.passing_marks}%</span>
                         </div>
-                        <div className="bg-slate-950 p-4 rounded-xl text-center border border-slate-850">
+                        <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-200">
                             <span className="text-[10px] text-slate-500 uppercase block font-semibold">Questions</span>
-                            <span className="text-lg font-bold text-white mt-1 block">Adaptive Set</span>
+                            <span className="text-lg font-bold text-slate-900 mt-1 block">Adaptive Set</span>
                         </div>
                     </div>
 
-                    <div className="space-y-4 bg-slate-950 p-6 rounded-2xl border border-slate-850">
-                        <h3 className="text-sm font-bold text-white flex items-center gap-2 text-indigo-400">
-                            <Shield size={18} /> Secure Assessment Instructions
+                    <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Shield size={16} className="text-indigo-600" /> Exam Rules & Security Terms
                         </h3>
-                        <ul className="text-xs text-slate-400 space-y-2.5 list-disc pl-5 leading-relaxed">
-                            <li><strong>Fullscreen Mode Required:</strong> Starting this exam will lock your screen into fullscreen mode. Exiting fullscreen will be logged as a security alert.</li>
-                            <li><strong>Focus Monitoring:</strong> Navigating away from this tab or minimizing the window will trigger security warnings. Accumulating 5 alerts will result in automatic submission.</li>
-                            <li><strong>Auto-Save:</strong> All selection answers are automatically saved to our server. If you disconnect, they are cached locally until you reconnect.</li>
-                            <li><strong>Interaction Disabled:</strong> Copying, pasting, and opening mouse context menus are locked.</li>
+                        <ul className="text-xs text-slate-600 space-y-2 list-disc pl-5 leading-relaxed">
+                            <li>Keep browser tab active. Switching tabs will log security warnings.</li>
+                            <li>Full screen mode will be requested. Exiting full screen multiple times will flag your attempt.</li>
+                            <li>Your answers are automatically saved every 5 seconds.</li>
+                            <li>Ensure a stable internet connection before launching the assessment.</li>
                         </ul>
                     </div>
 
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl text-xs flex items-center gap-3">
-                            <AlertTriangle size={18} />
-                            <span>{error}</span>
+                    {testInfo?.description && (
+                        <div className="text-xs text-slate-600 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                            <span className="font-bold text-indigo-900 block mb-1">Assessment Description</span>
+                            <p className="leading-relaxed">{testInfo.description}</p>
                         </div>
                     )}
 
                     <div className="flex justify-end pt-4">
-                        <button onClick={handleStartTest} className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-slate-950 font-bold px-8 py-3.5 rounded-2xl transition-all shadow-xl shadow-indigo-500/15">
+                        <button onClick={handleStartTest} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md">
                             {testInfo?.status === "In Progress" ? "Resume Secure Assessment" : "I Agree, Start Secured Exam"} <Play size={16} />
                         </button>
                     </div>

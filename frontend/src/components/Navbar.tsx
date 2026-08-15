@@ -149,6 +149,7 @@ export default function Navbar() {
                 {/* Actions */}
                 <div className="flex items-center gap-4">
                     <button
+                        suppressHydrationWarning
                         onClick={handleLogout}
                         className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-red-50 hover:text-red-600 transition-all border border-slate-200 hover:border-red-200 group"
                     >
@@ -158,6 +159,7 @@ export default function Navbar() {
 
                     {/* Mobile Toggle */}
                     <button
+                        suppressHydrationWarning
                         className="md:hidden p-2 text-slate-700 hover:text-indigo-600"
                         onClick={() => setIsOpen(!isOpen)}
                     >
@@ -202,6 +204,7 @@ export default function Navbar() {
                                 </Link>
                             ))}
                             <button
+                                suppressHydrationWarning
                                 onClick={handleLogout}
                                 className="flex items-center gap-3 p-4 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 border border-red-200 mt-2"
                             >

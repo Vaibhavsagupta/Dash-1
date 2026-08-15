@@ -75,6 +75,37 @@ input:focus {
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
+/* Modern Select & Option Styling */
+select {
+  background-color: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.625rem 2.25rem 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+select:hover {
+  border-color: #cbd5e1;
+}
+
+select:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+  padding: 0.75rem;
+  font-weight: 500;
+}
+
 /* Buttons */
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--accent));
