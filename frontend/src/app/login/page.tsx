@@ -27,6 +27,11 @@ export default function LoginPage() {
                 body: new URLSearchParams({ username: email, password }),
             });
 
+            const contentType = authRes.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Backend service is waking up or starting. Please wait 30 seconds and try again.');
+            }
+
             if (!authRes.ok) {
                 const errData = await authRes.json().catch(() => ({ detail: 'Invalid username or password' }));
                 throw new Error(errData.detail || 'Invalid username or password');
