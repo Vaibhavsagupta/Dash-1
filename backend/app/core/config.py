@@ -8,10 +8,7 @@ class Settings:
     PROJECT_NAME: str = "Dashboard API"
     
     # Database Configuration - PostgreSQL Required
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
-    
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL environment variable is required. Please set it in your .env file.")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./dashboard.db")
     
     # Fix for Heroku/Render/Other platforms that use 'postgres://' instead of 'postgresql://'
     if DATABASE_URL.startswith("postgres://"):
