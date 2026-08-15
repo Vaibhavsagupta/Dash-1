@@ -3,6 +3,7 @@ services:
   - type: web
     name: dash-1-backend
     runtime: python
+    plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -23,6 +24,7 @@ services:
   - type: web
     name: dash-1-frontend
     runtime: node
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
@@ -31,10 +33,11 @@ services:
         fromService:
           type: web
           name: dash-1-backend
-          property: url
+          property: host
 
 databases:
   # PostgreSQL Database Instance
   - name: dash-1-db
+    plan: free
     databaseName: database_db
     user: database_user
