@@ -22,36 +22,64 @@ export default function LoginPage() {
             const formData = new URLSearchParams({ username: email, password });
             let authRes: Response | null = null;
             let data: any = null;
+            let lastErrorMsg = '';
 
             // Attempt 1: Next.js API Route Proxy
             try {
+                console.log('[Login Debug] Attempting login via /api/login...');
                 authRes = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData,
                 });
-                if (authRes.ok) {
-                    data = await authRes.json();
+                const resText = await authRes.text();
+                try {
+                    data = JSON.parse(resText);
+                } catch {
+                    lastErrorMsg = resText || `HTTP ${authRes.status}`;
                 }
-            } catch (err) {
-                console.warn('[Login] API proxy route failed, attempting direct backend call...');
+                if (authRes.ok && data?.access_token) {
+                    console.log('[Login Debug] Proxy login successful!');
+                } else {
+                    lastErrorMsg = data?.detail || lastErrorMsg || `Server returned ${authRes.status}`;
+                    data = null;
+                }
+            } catch (err: any) {
+                console.warn('[Login Debug] Proxy fetch error:', err.message);
+                lastErrorMsg = err.message;
             }
 
-            // Attempt 2: Direct call to Render Backend (if Proxy failed or returned error)
-            if (!data) {
+            // Attempt 2: Direct call to Render Backend if proxy did not yield token
+            if (!data || !data.access_token) {
                 const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'https://dash-1-backend.onrender.com').trim().replace(/\/$/, '');
                 const directUrl = backendBase.startsWith('http') ? `${backendBase}/auth/login` : `https://${backendBase}/auth/login`;
+                console.log(`[Login Debug] Attempting direct backend fetch to: ${directUrl}`);
 
-                authRes = await fetch(directUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData,
-                });
-                data = await authRes.json().catch(() => ({ detail: 'Backend server starting up or unreachable. Please retry in 10 seconds.' }));
+                try {
+                    authRes = await fetch(directUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData,
+                    });
+                    const resText = await authRes.text();
+                    try {
+                        data = JSON.parse(resText);
+                    } catch {
+                        lastErrorMsg = resText || `Backend returned HTTP ${authRes.status}`;
+                    }
+                    if (!authRes.ok) {
+                        lastErrorMsg = data?.detail || lastErrorMsg || `Backend HTTP ${authRes.status}`;
+                        data = null;
+                    }
+                } catch (err: any) {
+                    console.error('[Login Debug] Direct backend fetch error:', err.message);
+                    lastErrorMsg = `Cannot connect to Backend (${backendBase}): ${err.message}`;
+                    data = null;
+                }
             }
 
-            if (!authRes || !authRes.ok) {
-                throw new Error(data?.detail || 'Invalid username or password');
+            if (!data || !data.access_token) {
+                throw new Error(lastErrorMsg || 'Login failed. Please check credentials or backend status.');
             }
 
             localStorage.setItem('access_token', data.access_token);
@@ -60,6 +88,7 @@ export default function LoginPage() {
             // Direct instant navigation to corresponding role dashboard
             router.push(data.redirect_url);
         } catch (err: any) {
+            console.error('[Login Error]', err);
             setError(err.message || 'Login failed. Please check your credentials.');
         } finally {
             setLoading(false);
@@ -75,11 +104,9 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                    <div className={`${styles.error} flex items-center gap-2`}>
-                        {error === 'User account not approved' && <Clock size={16} className="text-amber-500" />}
-                        <span>{error === 'User account not approved'
-                            ? "Your account is still pending admin approval. Please check back later."
-                            : error}</span>
+                    <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 border border-red-300 rounded-lg flex items-center gap-2 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
+                        <Clock size={16} className="text-red-500 shrink-0" />
+                        <span className="font-medium break-words">{error}</span>
                     </div>
                 )}
 
