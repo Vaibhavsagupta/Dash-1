@@ -41,6 +41,9 @@ ChartJS.register(
     Legend
 );
 
+import Student360ProfileModal from './Student360ProfileModal';
+import InterventionManagementModal from './InterventionManagementModal';
+
 export default function TeacherVisualAnalytics() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -49,6 +52,11 @@ export default function TeacherVisualAnalytics() {
     // Filter states for Student Rankings & Batch Selection
     const [branchFilter, setBranchFilter] = useState<string>('All');
     const [semesterFilter, setSemesterFilter] = useState<string>('All');
+
+    // Priority 2: Student 360° Profile & Intervention Modal States
+    const [selected360StudentId, setSelected360StudentId] = useState<string | null>(null);
+    const [is360Open, setIs360Open] = useState(false);
+    const [isInterventionOpen, setIsInterventionOpen] = useState(false);
 
     const fetchBatchAnalytics = async () => {
         setLoading(true);
@@ -264,8 +272,15 @@ export default function TeacherVisualAnalytics() {
                     </p>
                 </div>
 
-                {/* Filters */}
+                {/* Filters & Intervention Hub */}
                 <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={() => setIsInterventionOpen(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow transition flex items-center gap-1.5"
+                    >
+                        <ShieldAlert size={15} /> Intervention System →
+                    </button>
+
                     <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1.5 rounded-xl border border-white/30 text-xs text-white">
                         <Filter size={14} className="text-indigo-200" />
                         <span className="font-bold">Branch:</span>
@@ -1288,6 +1303,7 @@ export default function TeacherVisualAnalytics() {
                                     <th className="px-4 py-3 text-right">Avg Score</th>
                                     <th className="px-4 py-3 text-right">Attendance</th>
                                     <th className="px-4 py-3 text-center">RAG Status</th>
+                                    <th className="px-4 py-3 text-center">360° Profile</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -1306,6 +1322,17 @@ export default function TeacherVisualAnalytics() {
                                             }`}>
                                                 {st.rag_status}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <button
+                                                onClick={() => {
+                                                    setSelected360StudentId(st.student_id);
+                                                    setIs360Open(true);
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold border border-indigo-200 transition"
+                                            >
+                                                View 360° Profile →
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -1342,6 +1369,21 @@ export default function TeacherVisualAnalytics() {
                 </div>
 
             </div>
+
+            {/* PRIORITY 2 MODALS */}
+            {selected360StudentId && (
+                <Student360ProfileModal
+                    studentId={selected360StudentId}
+                    isOpen={is360Open}
+                    onClose={() => setIs360Open(false)}
+                    onInterventionCreated={() => fetchBatchAnalytics()}
+                />
+            )}
+
+            <InterventionManagementModal
+                isOpen={isInterventionOpen}
+                onClose={() => setIsInterventionOpen(false)}
+            />
 
         </div>
     );
