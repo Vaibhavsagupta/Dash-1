@@ -43,6 +43,9 @@ ChartJS.register(
 
 import Student360ProfileModal from './Student360ProfileModal';
 import InterventionManagementModal from './InterventionManagementModal';
+import BatchComparisonModal from './BatchComparisonModal';
+import AlertsDrawerModal from './AlertsDrawerModal';
+import { Bell } from 'lucide-react';
 
 export default function TeacherVisualAnalytics() {
     const [data, setData] = useState<any>(null);
@@ -53,10 +56,13 @@ export default function TeacherVisualAnalytics() {
     const [branchFilter, setBranchFilter] = useState<string>('All');
     const [semesterFilter, setSemesterFilter] = useState<string>('All');
 
-    // Priority 2: Student 360° Profile & Intervention Modal States
+    // Modal States
     const [selected360StudentId, setSelected360StudentId] = useState<string | null>(null);
     const [is360Open, setIs360Open] = useState(false);
     const [isInterventionOpen, setIsInterventionOpen] = useState(false);
+    const [isComparisonOpen, setIsComparisonOpen] = useState(false);
+    const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+    const [unreadAlertsCount, setUnreadAlertsCount] = useState(3);
 
     const fetchBatchAnalytics = async () => {
         setLoading(true);
@@ -272,8 +278,28 @@ export default function TeacherVisualAnalytics() {
                     </p>
                 </div>
 
-                {/* Filters & Intervention Hub */}
+                {/* Header Controls: Alerts, Interventions, Compare, Filters */}
                 <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={() => setIsAlertsOpen(true)}
+                        className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white relative transition border border-white/30"
+                        title="AI Risk Alerts & Warnings"
+                    >
+                        <Bell size={16} />
+                        {unreadAlertsCount > 0 && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center animate-bounce">
+                                {unreadAlertsCount}
+                            </span>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => setIsComparisonOpen(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs border border-white/30 transition flex items-center gap-1.5"
+                    >
+                        Compare Batches
+                    </button>
+
                     <button
                         onClick={() => setIsInterventionOpen(true)}
                         className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow transition flex items-center gap-1.5"
@@ -1383,6 +1409,20 @@ export default function TeacherVisualAnalytics() {
             <InterventionManagementModal
                 isOpen={isInterventionOpen}
                 onClose={() => setIsInterventionOpen(false)}
+            />
+
+            <BatchComparisonModal
+                isOpen={isComparisonOpen}
+                onClose={() => setIsComparisonOpen(false)}
+            />
+
+            <AlertsDrawerModal
+                isOpen={isAlertsOpen}
+                onClose={() => setIsAlertsOpen(false)}
+                onSelectStudent360={(stId) => {
+                    setSelected360StudentId(stId);
+                    setIs360Open(true);
+                }}
             />
 
         </div>
