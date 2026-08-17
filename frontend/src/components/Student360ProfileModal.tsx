@@ -98,7 +98,7 @@ export default function Student360ProfileModal({ studentId, isOpen, onClose, onI
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-200">
                 {/* Modal Header */}
                 <div className="bg-slate-900 text-white p-6 flex items-start justify-between relative overflow-hidden">
