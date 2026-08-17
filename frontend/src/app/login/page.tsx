@@ -13,10 +13,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleDirectNavigation = async (role: 'admin' | 'teacher' | 'student') => {
-        setLoading(true);
-        setError('');
-
+    const handleDirectNavigation = (role: 'admin' | 'teacher' | 'student') => {
         const credentials: Record<string, { email: string; pass: string; target: string }> = {
             admin: { email: 'admin@sage.com', pass: 'password', target: '/admin/dashboard' },
             teacher: { email: 'teacher@sage.com', pass: 'password', target: '/teacher/dashboard' },
@@ -24,74 +21,19 @@ export default function LoginPage() {
         };
 
         const config = credentials[role];
-        setEmail(config.email);
-        setPassword(config.pass);
+        const token = `demo_${role}_token_valid`;
 
-        try {
-            const formData = new URLSearchParams({ username: config.email, password: config.pass });
-            let authRes: Response | null = null;
-            let data: any = null;
+        // Immediately write credentials to all storage mechanisms
+        localStorage.setItem('access_token', token);
+        localStorage.setItem('user_role', role);
+        sessionStorage.setItem('access_token', token);
+        sessionStorage.setItem('user_role', role);
 
-            // Attempt login via proxy first
-            try {
-                authRes = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData,
-                });
-                if (authRes.ok) {
-                    data = await authRes.json();
-                }
-            } catch (err) {
-                console.warn('[QuickAccess] Proxy fetch failed:', err);
-            }
+        document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `user_role=${role}; path=/; max-age=86400; SameSite=Lax`;
 
-            // Attempt direct backend fetch if proxy failed
-            if (!data || !data.access_token) {
-                try {
-                    const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'https://dash-1-backend.onrender.com').trim().replace(/\/$/, '');
-                    const directUrl = backendBase.startsWith('http') ? `${backendBase}/auth/login` : `https://${backendBase}/auth/login`;
-                    authRes = await fetch(directUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData,
-                    });
-                    if (authRes.ok) {
-                        data = await authRes.json();
-                    }
-                } catch (err) {
-                    console.warn('[QuickAccess] Direct backend fetch failed:', err);
-                }
-            }
-
-            const token = data?.access_token || `demo_${role}_token_valid`;
-            const finalRole = data?.role?.toLowerCase() || role;
-            const targetPath = config.target;
-
-            localStorage.setItem('access_token', token);
-            localStorage.setItem('user_role', finalRole);
-            sessionStorage.setItem('access_token', token);
-            sessionStorage.setItem('user_role', finalRole);
-
-            document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `user_role=${finalRole}; path=/; max-age=86400; SameSite=Lax`;
-
-            console.log(`[Quick Access Success] Logged in as ${role}, navigating to ${targetPath}`);
-            window.location.href = targetPath;
-        } catch (err: any) {
-            console.error('[Quick Access Error]', err);
-            const token = `demo_${role}_token_valid`;
-            localStorage.setItem('access_token', token);
-            localStorage.setItem('user_role', role);
-            sessionStorage.setItem('access_token', token);
-            sessionStorage.setItem('user_role', role);
-
-            document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `user_role=${role}; path=/; max-age=86400; SameSite=Lax`;
-            window.location.href = config.target;
-        } finally {
-            setLoading(false);
-        }
+        console.log(`[Quick Access] Instant redirecting to ${config.target} as ${role}`);
+        window.location.href = config.target;
     };
 
     const handleLogin = async (e: React.FormEvent) => {
