@@ -46,6 +46,7 @@ import InterventionManagementModal from './InterventionManagementModal';
 import BatchComparisonModal from './BatchComparisonModal';
 import AlertsDrawerModal from './AlertsDrawerModal';
 import RiskFeatureDetailModal from './RiskFeatureDetailModal';
+import AIModelDetailModal from './AIModelDetailModal';
 import { Bell } from 'lucide-react';
 const DEFAULT_BATCH_ANALYTICS_DATA = {
     batch_kpis: {
@@ -117,6 +118,7 @@ export default function TeacherVisualAnalytics() {
         score?: string;
         type: 'overall_risk' | 'trend' | 'marks' | 'attendance';
     } | null>(null);
+    const [selectedAIModel, setSelectedAIModel] = useState<string | null>(null);
 
     const fetchBatchAnalytics = async () => {
         setLoading(true);
@@ -520,7 +522,9 @@ export default function TeacherVisualAnalytics() {
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
                         <span>Regression Model Active</span>
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <button onClick={() => setSelectedAIModel('score')} className="text-indigo-600 hover:text-indigo-800 font-extrabold flex items-center gap-1 cursor-pointer ml-2">
+                            Click for Details →
+                        </button>
                     </div>
                 </div>
 
@@ -586,7 +590,9 @@ export default function TeacherVisualAnalytics() {
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
                         <span>Time-Series Engine Active</span>
-                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                        <button onClick={() => setSelectedAIModel('trajectory')} className="text-purple-600 hover:text-purple-800 font-extrabold flex items-center gap-1 cursor-pointer ml-2">
+                            Click for Details →
+                        </button>
                     </div>
                 </div>
 
@@ -1520,6 +1526,15 @@ export default function TeacherVisualAnalytics() {
                 isOpen={!!selectedRiskFeature}
                 onClose={() => setSelectedRiskFeature(null)}
                 feature={selectedRiskFeature}
+                onOpenIntervention={() => {
+                    setIsInterventionOpen(true);
+                }}
+            />
+
+            <AIModelDetailModal
+                isOpen={!!selectedAIModel}
+                onClose={() => setSelectedAIModel(null)}
+                modelId={selectedAIModel}
                 onOpenIntervention={() => {
                     setIsInterventionOpen(true);
                 }}
