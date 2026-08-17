@@ -25,7 +25,7 @@ export default function LoginPage() {
                 body: new URLSearchParams({ username: email, password }),
             });
 
-            const data = await authRes.json().catch(() => ({ detail: 'Server error. Please try again.' }));
+            const data = await authRes.json().catch(() => ({ detail: 'Server unreachable. Please check backend status.' }));
 
             if (!authRes.ok) {
                 throw new Error(data.detail || 'Invalid username or password');
@@ -38,6 +38,7 @@ export default function LoginPage() {
             router.push(data.redirect_url);
         } catch (err: any) {
             setError(err.message || 'Login failed. Please check your credentials.');
+        } finally {
             setLoading(false);
         }
     };

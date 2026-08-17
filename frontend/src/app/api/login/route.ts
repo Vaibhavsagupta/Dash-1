@@ -4,44 +4,43 @@ export async function POST(request: Request) {
     try {
         const bodyText = await request.text();
 
-        // Build list of candidate URLs to try
+        // Build list of valid backend target URLs
         const targets: string[] = [];
 
         if (process.env.BACKEND_URL) {
-            targets.push(`${process.env.BACKEND_URL.trim().replace(/\/$/, '')}/auth/login`);
+            let u = process.env.BACKEND_URL.trim().replace(/\/$/, '');
+            if (!u.startsWith('http://') && !u.startsWith('https://')) u = `https://${u}`;
+            targets.push(`${u}/auth/login`);
         }
         if (process.env.NEXT_PUBLIC_API_URL) {
             let u = process.env.NEXT_PUBLIC_API_URL.trim().replace(/\/$/, '');
-            if (u.startsWith('http://') || u.startsWith('https://')) {
-                targets.push(`${u}/auth/login`);
-            } else if (!u.includes('.')) {
-                targets.push(`http://${u}:10000/auth/login`);
-                targets.push(`http://${u}/auth/login`);
-                targets.push(`https://${u}.onrender.com/auth/login`);
-            } else {
-                targets.push(`https://${u}/auth/login`);
-            }
+            if (!u.startsWith('http://') && !u.startsWith('https://')) u = `https://${u}`;
+            targets.push(`${u}/auth/login`);
         }
 
-        // Add standard Render candidate fallbacks
-        targets.push('http://dash-1-backend:10000/auth/login');
-        targets.push('http://dash-1-backend/auth/login');
+        // Standard production & local fallbacks
         targets.push('https://dash-1-backend.onrender.com/auth/login');
         targets.push('http://127.0.0.1:7000/auth/login');
 
         // Deduplicate targets
         const uniqueTargets = Array.from(new Set(targets));
 
-        // Try up to 8 attempts across candidate URLs
-        for (let attempt = 0; attempt < 8; attempt++) {
+        // Try up to 3 attempts with 5-second timeout per attempt to stay well within Vercel's 10s serverless limit
+        for (let attempt = 0; attempt < 3; attempt++) {
             for (const targetUrl of uniqueTargets) {
                 try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
                     const res = await fetch(targetUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: bodyText,
                         cache: 'no-store',
+                        signal: controller.signal,
                     });
+
+                    clearTimeout(timeoutId);
 
                     const contentType = res.headers.get('content-type') || '';
                     if (contentType.includes('application/json')) {
@@ -49,15 +48,16 @@ export async function POST(request: Request) {
                         return NextResponse.json(data, { status: res.status });
                     }
                 } catch (err: any) {
-                    // Try next candidate target
+                    // Try next target URL
                 }
             }
-            // Server waking up -> wait 2 seconds before next retry loop
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            if (attempt < 2) {
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
         }
 
         return NextResponse.json(
-            { detail: 'Backend service is starting up on Render. Please try again in 15 seconds.' },
+            { detail: 'Backend service is starting up on Render or unreachable. Please try again in 15 seconds.' },
             { status: 503 }
         );
     } catch (error: any) {
@@ -67,3 +67,4 @@ export async function POST(request: Request) {
         );
     }
 }
+
