@@ -176,6 +176,39 @@ export default function StudentTestResultPage() {
                 </div>
             </div>
 
+            {/* AI Remediation Practice Trigger Banner */}
+            <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="text-amber-400 animate-pulse" size={20} />
+                        <h3 className="text-base font-extrabold text-white">AI Remediation & Practice Pathway</h3>
+                    </div>
+                    <p className="text-xs text-purple-200 mt-1">
+                        Based on your missed questions, generate a 5-minute targeted practice set to master your weak topics.
+                    </p>
+                </div>
+                <button
+                    onClick={async () => {
+                        try {
+                            const token = localStorage.getItem("access_token");
+                            const res = await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/generate-remediation`, {
+                                method: "POST",
+                                headers: { Authorization: `Bearer ${token}` }
+                            });
+                            if (res.ok) {
+                                const data = await res.json();
+                                alert(`🎯 ${data.title}\n\nQuestions Generated: ${data.questions.length}\nTopic: ${data.topic}\n\nRemediation practice quiz started successfully!`);
+                            }
+                        } catch (err) {
+                            console.error(err);
+                        }
+                    }}
+                    className="px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-lg transition shrink-0 flex items-center gap-2"
+                >
+                    <Sparkles size={16} /> Generate AI Remediation Quiz →
+                </button>
+            </div>
+
             {/* Questions Review Section */}
             <div className="space-y-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">

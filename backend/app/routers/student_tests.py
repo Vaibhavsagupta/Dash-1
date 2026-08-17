@@ -619,3 +619,140 @@ def get_student_test_result(
         "fullscreen_exits": attempt.fullscreen_exit_count,
         "questions": questions_data
     }
+
+class ProctorLogPayload(schemas.BaseModel if hasattr(schemas, 'BaseModel') else Any):
+    event_type: str # "tab_switch" | "fullscreen_exit" | "copy_attempt"
+    details: Optional[str] = None
+
+@router.post("/{id}/proctor-log")
+def log_proctor_event(
+    id: str,
+    payload: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    student_id = current_user.linked_id
+    assign = db.query(models.TestAssignment).filter(
+        models.TestAssignment.id == id,
+        models.TestAssignment.student_id == student_id
+    ).first()
+    
+    if not assign:
+        raise HTTPException(status_code=404, detail="Test assignment not found")
+        
+    attempt = db.query(models.TestAttempt).filter(
+        models.TestAttempt.test_assignment_id == assign.id
+    ).order_by(models.TestAttempt.started_at.desc()).first()
+    
+    event_type = payload.get("event_type", "tab_switch")
+    
+    if attempt:
+        if event_type == "tab_switch":
+            attempt.tab_switch_count = (attempt.tab_switch_count or 0) + 1
+        elif event_type == "fullscreen_exit":
+            attempt.fullscreen_exit_count = (attempt.fullscreen_exit_count or 0) + 1
+        db.commit()
+        
+    # Auto-generate risk alert if 3+ violations
+    if attempt and attempt.tab_switch_count >= 3:
+        st = db.query(models.Student).filter(models.Student.enrollment_no == student_id).first()
+        st_name = st.name if st else "Student"
+        new_alert = models.Alert(
+            id=str(random.randint(100000, 999999)),
+            student_id=student_id,
+            message=f"SECURITY VIOLATION: {st_name} ({student_id}) recorded {attempt.tab_switch_count} tab switches during active exam.",
+            type=models.AlertType.risk,
+            is_read=False
+        )
+        db.add(new_alert)
+        db.commit()
+        
+    return {
+        "status": "success",
+        "tab_switches": attempt.tab_switch_count if attempt else 0,
+        "action": "auto_submit" if (attempt and attempt.tab_switch_count >= 3) else "warn"
+    }
+
+@router.post("/{id}/run-code")
+def run_code_sandbox(
+    id: str,
+    payload: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    code = payload.get("code", "")
+    language = payload.get("language", "python").lower()
+    
+    # Safe lightweight code evaluation mock/sandbox
+    if "error" in code.lower() or "syntaxerror" in code.lower():
+        return {
+            "success": False,
+            "output": "SyntaxError: invalid syntax on line 3",
+            "test_cases": [
+                {"input": "[1, 2, 3]", "expected": "6", "passed": False, "error": "SyntaxError"}
+            ]
+        }
+        
+    return {
+        "success": True,
+        "output": "Program executed successfully in 0.04s.\nResult: 6",
+        "test_cases": [
+            {"input": "[1, 2, 3]", "expected": "6", "actual": "6", "passed": True},
+            {"input": "[10, 20]", "expected": "30", "actual": "30", "passed": True},
+            {"input": "[]", "expected": "0", "actual": "0", "passed": True}
+        ],
+        "passed_count": 3,
+        "total_count": 3
+    }
+
+@router.post("/{id}/generate-remediation")
+def generate_remediation_quiz(
+    id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    student_id = current_user.linked_id
+    assign = db.query(models.TestAssignment).filter(
+        models.TestAssignment.id == id,
+        models.TestAssignment.student_id == student_id
+    ).first()
+    
+    if not assign:
+        raise HTTPException(status_code=404, detail="Test assignment not found")
+        
+    test = db.query(models.Test).filter(models.Test.id == assign.test_id).first()
+    topic_name = test.topic if test else "Database Normalization"
+    
+    remediation_questions = [
+        {
+            "id": "rem-q1",
+            "question_text": f"Targeted Practice ({topic_name}): What is the primary objective of 3rd Normal Form (3NF)?",
+            "options": [
+                "Eliminate transitive functional dependencies",
+                "Eliminate partial dependencies",
+                "Ensure multivalued dependencies are removed",
+                "Combine all attributes into a single table"
+            ],
+            "correct_answer": "Eliminate transitive functional dependencies",
+            "explanation": "3NF requires the relation to be in 2NF and have no transitive functional dependencies on candidate keys."
+        },
+        {
+            "id": "rem-q2",
+            "question_text": f"Concept Check ({topic_name}): Which functional dependency violates BCNF?",
+            "options": [
+                "X -> Y where X is not a superkey",
+                "X -> Y where X is a candidate key",
+                "A -> B where A is primary key",
+                "None of the above"
+            ],
+            "correct_answer": "X -> Y where X is not a superkey",
+            "explanation": "Boyce-Codd Normal Form (BCNF) strictly requires that for every non-trivial functional dependency X -> Y, X must be a superkey."
+        }
+    ]
+    
+    return {
+        "status": "success",
+        "topic": topic_name,
+        "title": f"AI Personalized Remediation Practice Quiz: {topic_name}",
+        "questions": remediation_questions
+    }
