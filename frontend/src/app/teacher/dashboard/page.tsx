@@ -57,7 +57,7 @@ export default function TeacherDashboard() {
         const token = localStorage.getItem('access_token');
         const role = localStorage.getItem('user_role');
 
-        if (!token || role !== 'teacher') {
+        if (!token || (role || '').toLowerCase() !== 'teacher') {
             router.push('/login');
             return;
         }

@@ -69,7 +69,7 @@ export default function StudentDashboard() {
         const token = localStorage.getItem('access_token');
         const role = localStorage.getItem('user_role');
 
-        if (!token || role !== 'student') {
+        if (!token || (role || '').toLowerCase() !== 'student') {
             router.push('/login');
             return;
         }

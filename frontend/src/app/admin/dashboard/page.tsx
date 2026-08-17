@@ -54,7 +54,8 @@ export default function AdminDashboard() {
         const token = localStorage.getItem('access_token');
         const role = localStorage.getItem('user_role');
 
-        if (!token || role !== 'admin') {
+        if (!token || (role || '').toLowerCase() !== 'admin') {
+            console.warn('[AdminDashboard] Unauthorized, redirecting to /login');
             router.push('/login');
             return;
         }
