@@ -123,30 +123,31 @@ export default function RiskFeatureDetailModal({
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
+            <div className="fixed inset-0 z-[99999] flex items-start justify-center pt-20 sm:pt-24 pb-8 px-4 sm:px-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                    initial={{ opacity: 0, scale: 0.96, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                    className="relative w-full max-w-3xl bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden text-slate-900 my-8"
+                    exit={{ opacity: 0, scale: 0.96, y: 10 }}
+                    className="relative w-full max-w-3xl bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden text-slate-900 flex flex-col max-h-[80vh] my-auto"
                 >
                     {/* Header Banner */}
-                    <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-900 p-6 sm:p-8 text-white relative">
+                    <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 p-6 sm:p-8 text-white relative shrink-0">
                         <button
                             onClick={onClose}
-                            className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                            className="absolute top-5 right-5 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition z-20 shadow-md"
+                            aria-label="Close detail modal"
                         >
                             <X size={18} />
                         </button>
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400 text-slate-950 flex items-center gap-1.5 shadow">
+                        <div className="flex items-center flex-wrap gap-2.5 mb-3 pr-10">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-400 text-slate-950 flex items-center gap-1.5 shadow">
                                 <ShieldAlert size={12} /> {details.category}
                             </span>
                             <span className="text-xs font-bold text-indigo-200 bg-white/10 px-3 py-1 rounded-full border border-white/10">
                                 Impact: {feature.impact}
                             </span>
                         </div>
-                        <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight pr-8">
                             {feature.title}
                         </h2>
                         <p className="text-xs text-indigo-100 mt-2 leading-relaxed max-w-2xl font-medium">
@@ -155,7 +156,7 @@ export default function RiskFeatureDetailModal({
                     </div>
 
                     {/* Content Body */}
-                    <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+                    <div className="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto">
                         
                         {/* Summary & Impact Box */}
                         <div className="bg-indigo-50/60 border border-indigo-100 p-5 rounded-2xl flex items-start gap-4">
@@ -245,7 +246,7 @@ export default function RiskFeatureDetailModal({
                     </div>
 
                     {/* Footer */}
-                    <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-wrap gap-4">
+                    <div className="p-5 sm:p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-wrap gap-4 shrink-0">
                         <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
                             <Clock size={14} /> Real-Time AI Attribution Engine Updated
                         </div>
