@@ -7,6 +7,7 @@ import {
     Clock, AlertTriangle, Shield, CheckSquare, ChevronLeft, ChevronRight, 
     Play, Lock, Loader2, WifiOff, RefreshCw, Bookmark
 } from "lucide-react";
+import SecureAntiLensQuestion from "@/components/SecureAntiLensQuestion";
 
 interface Question {
     id: string;
@@ -638,9 +639,9 @@ export default function StudentTestAttemptPage() {
                                             <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1"><CheckSquare size={10} /> Saved</span>
                                         )}
                                     </div>
-                                    <h3 className="text-lg font-bold text-white leading-relaxed">
-                                        {currentQuestion.question_text}
-                                    </h3>
+                                    <div className="mt-2">
+                                        <SecureAntiLensQuestion text={currentQuestion.question_text} />
+                                    </div>
                                 </div>
 
                                 {/* Answers layout based on question type */}
