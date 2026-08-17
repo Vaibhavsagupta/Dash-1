@@ -63,31 +63,65 @@ const DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA = {
         predicted_end_sem: 91.5
     },
     overall_performance_trend: [
-        { period: "Test 1", score: 72.0 },
-        { period: "Test 2", score: 78.0 },
-        { period: "Mid-Term", score: 85.0 },
-        { period: "Test 3", score: 92.0 }
+        { period: "Test 1", score: 72.0, class_avg: 68.0 },
+        { period: "Test 2", score: 78.0, class_avg: 70.0 },
+        { period: "Mid-Term", score: 85.0, class_avg: 72.0 },
+        { period: "Test 3", score: 92.0, class_avg: 74.0 }
     ],
     subject_performance: [
-        { subject_name: "Data Structures & Algorithms", score: 95.0, class_avg: 78.0 },
-        { subject_name: "Machine Learning Foundations", score: 88.0, class_avg: 74.0 },
-        { subject_name: "Database Management Systems", score: 85.0, class_avg: 71.0 },
-        { subject_name: "Operating Systems", score: 92.0, class_avg: 62.0 }
+        { subject: "DSA", score: 95.0, class_avg: 78.0 },
+        { subject: "ML", score: 88.0, class_avg: 74.0 },
+        { subject: "DBMS", score: 85.0, class_avg: 71.0 },
+        { subject: "OS", score: 92.0, class_avg: 62.0 }
     ],
     test_score_progress: [
         { test_name: "Internal 1", score: 92.0 },
-        { test_name: "Practical Quiz", score: 88.0 }
+        { test_name: "Practical Quiz", score: 88.0 },
+        { test_name: "Mid-Term", score: 85.0 }
     ],
     attempt_wise_performance: [
         { attempt: "Attempt 1", score: 85.0 },
         { attempt: "Attempt 2", score: 92.0 }
     ],
-    risk_factors: [
-        { factor: "Attendance", impact: "Low Risk (94%)" }
-    ],
-    topic_accuracy: [
-        { topic: "Arrays & Trees", accuracy: 95.0 },
+    topic_wise_accuracy: [
+        { topic: "Trees & Graphs", accuracy: 95.0 },
         { topic: "Neural Networks", accuracy: 88.0 }
+    ],
+    difficulty_wise_accuracy: [
+        { difficulty: "Easy", accuracy: 94.0 },
+        { difficulty: "Medium", accuracy: 88.0 },
+        { difficulty: "Hard", accuracy: 78.0 }
+    ],
+    question_type_performance: [
+        { type: "MCQ", accuracy: 92.0 },
+        { type: "Coding", accuracy: 88.0 }
+    ],
+    question_breakdown: {
+        correct: 42,
+        incorrect: 6,
+        skipped: 2
+    },
+    mistake_category_analysis: [
+        { category: "Syntax Error", count: 2 },
+        { category: "Logical Oversight", count: 4 }
+    ],
+    ai_risk_score_trend: [
+        { period: "Week 1", risk_score: 15 },
+        { period: "Week 2", risk_score: 12 }
+    ],
+    actual_vs_predicted_performance: [
+        { test: "Test 1", actual: 72.0, predicted: 70.0 },
+        { test: "Test 2", actual: 78.0, predicted: 76.0 },
+        { test: "Mid-Term", actual: 85.0, predicted: 83.0 },
+        { test: "Test 3", actual: 92.0, predicted: 90.0 }
+    ],
+    subject_performance_trend: [
+        { test: "T1", Python: 85, Math: 78, AI: 80, DBMS: 88, OS: 90 },
+        { test: "T2", Python: 90, Math: 82, AI: 85, DBMS: 90, OS: 92 }
+    ],
+    ai_recommendations: [
+        "Maintain high performance in Data Structures & Algorithms.",
+        "Focus on Dynamic Programming hard practice sets to reach 95%+ precision."
     ]
 };
 
@@ -157,30 +191,31 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     const activeData = data || DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA;
 
     const {
-        student,
-        kpi_cards,
-        overall_performance_trend,
-        subject_performance,
-        test_score_progress,
-        attempt_wise_performance,
-        topic_wise_accuracy,
-        difficulty_wise_accuracy,
-        question_type_performance,
-        question_breakdown,
-        mistake_category_analysis,
-        ai_risk_score_trend,
-        actual_vs_predicted_performance,
-        subject_performance_trend,
-        ai_recommendations
-    } = activeData;
+        student = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.student,
+        kpi_cards = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.kpi_cards,
+        overall_performance_trend = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.overall_performance_trend,
+        subject_performance = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.subject_performance,
+        test_score_progress = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.test_score_progress,
+        attempt_wise_performance = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.attempt_wise_performance,
+        topic_wise_accuracy = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.topic_wise_accuracy,
+        difficulty_wise_accuracy = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.difficulty_wise_accuracy,
+        question_type_performance = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.question_type_performance,
+        question_breakdown = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.question_breakdown,
+        mistake_category_analysis = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.mistake_category_analysis,
+        ai_risk_score_trend = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.ai_risk_score_trend,
+        actual_vs_predicted_performance = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.actual_vs_predicted_performance,
+        subject_performance_trend = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.subject_performance_trend,
+        ai_recommendations = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.ai_recommendations
+    } = activeData || {};
 
     // 1. Chart Data: Overall Performance Trend
+    const safeTrend = Array.isArray(overall_performance_trend) ? overall_performance_trend : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.overall_performance_trend;
     const trendChartData = {
-        labels: overall_performance_trend.map((d: any) => d.period),
+        labels: safeTrend.map((d: any) => d.period),
         datasets: [
             {
                 label: 'Student Score (%)',
-                data: overall_performance_trend.map((d: any) => d.score),
+                data: safeTrend.map((d: any) => d.score),
                 borderColor: '#4f46e5',
                 backgroundColor: 'rgba(79, 70, 229, 0.12)',
                 fill: true,
@@ -190,7 +225,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
             },
             {
                 label: 'Class Avg (%)',
-                data: overall_performance_trend.map((d: any) => d.class_avg),
+                data: safeTrend.map((d: any) => d.class_avg),
                 borderColor: '#94a3b8',
                 borderDash: [5, 5],
                 backgroundColor: 'transparent',
@@ -201,18 +236,19 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 2. Chart Data: Subject-wise Performance
+    const safeSubject = Array.isArray(subject_performance) ? subject_performance : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.subject_performance;
     const subjectChartData = {
-        labels: subject_performance.map((s: any) => s.subject),
+        labels: safeSubject.map((s: any) => s.subject || s.subject_name),
         datasets: [
             {
                 label: 'Student Score (%)',
-                data: subject_performance.map((s: any) => s.score),
+                data: safeSubject.map((s: any) => s.score),
                 backgroundColor: '#4f46e5',
                 borderRadius: 8,
             },
             {
                 label: 'Class Avg (%)',
-                data: subject_performance.map((s: any) => s.class_avg),
+                data: safeSubject.map((s: any) => s.class_avg),
                 backgroundColor: '#cbd5e1',
                 borderRadius: 8,
             }
@@ -220,12 +256,13 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 3. Chart Data: Test Score Progress
+    const safeTestProgress = Array.isArray(test_score_progress) ? test_score_progress : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.test_score_progress;
     const testProgressChartData = {
-        labels: test_score_progress.map((t: any) => t.test_name),
+        labels: safeTestProgress.map((t: any) => t.test_name),
         datasets: [
             {
                 label: 'Score (%)',
-                data: test_score_progress.map((t: any) => t.score),
+                data: safeTestProgress.map((t: any) => t.score),
                 borderColor: '#10b981',
                 backgroundColor: 'rgba(16, 185, 129, 0.12)',
                 fill: true,
@@ -237,12 +274,13 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 4. Chart Data: Difficulty-wise Accuracy
+    const safeDiff = Array.isArray(difficulty_wise_accuracy) ? difficulty_wise_accuracy : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.difficulty_wise_accuracy;
     const diffChartData = {
-        labels: difficulty_wise_accuracy.map((d: any) => d.difficulty),
+        labels: safeDiff.map((d: any) => d.difficulty),
         datasets: [
             {
                 label: 'Accuracy (%)',
-                data: difficulty_wise_accuracy.map((d: any) => d.accuracy),
+                data: safeDiff.map((d: any) => d.accuracy),
                 backgroundColor: [
                     '#10b981', // Easy - Green
                     '#f59e0b', // Medium - Amber
@@ -254,11 +292,12 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 5. Chart Data: Correct vs Incorrect vs Skipped (Donut)
+    const safeBreakdown = question_breakdown || DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.question_breakdown;
     const donutData = {
         labels: ['Correct', 'Incorrect', 'Skipped'],
         datasets: [
             {
-                data: [question_breakdown.correct, question_breakdown.incorrect, question_breakdown.skipped],
+                data: [safeBreakdown.correct ?? 42, safeBreakdown.incorrect ?? 6, safeBreakdown.skipped ?? 2],
                 backgroundColor: [
                     '#10b981', // Emerald
                     '#ef4444', // Red
@@ -271,12 +310,13 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 6. Chart Data: Actual vs AI Predicted Performance
+    const safeActualVsPred = Array.isArray(actual_vs_predicted_performance) ? actual_vs_predicted_performance : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.actual_vs_predicted_performance;
     const actualVsPredData = {
-        labels: actual_vs_predicted_performance.map((p: any) => p.test),
+        labels: safeActualVsPred.map((p: any) => p.test),
         datasets: [
             {
                 label: 'Actual Score (%)',
-                data: actual_vs_predicted_performance.map((p: any) => p.actual),
+                data: safeActualVsPred.map((p: any) => p.actual),
                 borderColor: '#2563eb',
                 backgroundColor: 'rgba(37, 99, 235, 0.12)',
                 tension: 0.3,
@@ -284,7 +324,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
             },
             {
                 label: 'AI Predicted Score (%)',
-                data: actual_vs_predicted_performance.map((p: any) => p.predicted),
+                data: safeActualVsPred.map((p: any) => p.predicted),
                 borderColor: '#9333ea',
                 borderDash: [6, 4],
                 backgroundColor: 'transparent',
@@ -295,12 +335,13 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 7. Chart Data: AI Risk Score Trend
+    const safeRiskTrend = Array.isArray(ai_risk_score_trend) ? ai_risk_score_trend : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.ai_risk_score_trend;
     const riskTrendData = {
-        labels: ai_risk_score_trend.map((r: any) => r.period),
+        labels: safeRiskTrend.map((r: any) => r.period),
         datasets: [
             {
                 label: 'Risk Index (0-100)',
-                data: ai_risk_score_trend.map((r: any) => r.risk_score),
+                data: safeRiskTrend.map((r: any) => r.risk_score),
                 borderColor: '#f43f5e',
                 backgroundColor: 'rgba(244, 63, 94, 0.1)',
                 fill: true,
@@ -311,14 +352,15 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
     };
 
     // 8. Chart Data: Optional Subject Trend Multi-line
+    const safeSubjectTrend = Array.isArray(subject_performance_trend) ? subject_performance_trend : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.subject_performance_trend;
     const subjectTrendData = {
-        labels: subject_performance_trend.map((st: any) => st.test),
+        labels: safeSubjectTrend.map((st: any) => st.test),
         datasets: [
-            { label: 'Python', data: subject_performance_trend.map((st: any) => st.Python), borderColor: '#10b981', tension: 0.3 },
-            { label: 'Math', data: subject_performance_trend.map((st: any) => st.Math), borderColor: '#2563eb', tension: 0.3 },
-            { label: 'AI', data: subject_performance_trend.map((st: any) => st.AI), borderColor: '#9333ea', tension: 0.3 },
-            { label: 'DBMS', data: subject_performance_trend.map((st: any) => st.DBMS), borderColor: '#d97706', tension: 0.3 },
-            { label: 'OS', data: subject_performance_trend.map((st: any) => st.OS), borderColor: '#dc2626', tension: 0.3 }
+            { label: 'Python', data: safeSubjectTrend.map((st: any) => st.Python), borderColor: '#10b981', tension: 0.3 },
+            { label: 'Math', data: safeSubjectTrend.map((st: any) => st.Math), borderColor: '#2563eb', tension: 0.3 },
+            { label: 'AI', data: safeSubjectTrend.map((st: any) => st.AI), borderColor: '#9333ea', tension: 0.3 },
+            { label: 'DBMS', data: safeSubjectTrend.map((st: any) => st.DBMS), borderColor: '#d97706', tension: 0.3 },
+            { label: 'OS', data: safeSubjectTrend.map((st: any) => st.OS), borderColor: '#dc2626', tension: 0.3 }
         ]
     };
 
