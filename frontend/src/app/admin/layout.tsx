@@ -16,7 +16,8 @@ export default function AdminLayout({
         const token = localStorage.getItem('access_token');
         const role = localStorage.getItem('user_role');
 
-        if (!token || role !== 'admin') {
+        if (!token || (role || '').toLowerCase() !== 'admin') {
+            console.warn('[AdminLayout] Unauthorized access attempt, redirecting to /login...');
             router.push('/login');
         } else {
             setIsAuthorized(true);

@@ -15,13 +15,10 @@ const getApiBaseUrl = () => {
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://127.0.0.1:7000';
         }
-        if (hostname.includes('.onrender.com')) {
-            return 'https://dash-1-backend.onrender.com';
-        }
     }
 
-    // 3. Fallback
-    return 'http://127.0.0.1:7000';
+    // 3. Fallback for any production/Vercel environment
+    return 'https://dash-1-backend.onrender.com';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

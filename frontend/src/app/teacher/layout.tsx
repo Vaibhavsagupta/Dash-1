@@ -24,9 +24,9 @@ export default function TeacherLayout({
     // Removed isSidebarOpen state as we rely on Navbar for mobile nav
 
     useEffect(() => {
-        // Quick auth check (detailed check in pages)
+        const token = localStorage.getItem("access_token");
         const role = localStorage.getItem("user_role");
-        if (role && role !== "teacher") {
+        if (!token || (role || '').toLowerCase() !== "teacher") {
             router.push("/login");
         }
     }, [router]);

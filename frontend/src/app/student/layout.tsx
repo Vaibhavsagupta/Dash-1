@@ -11,8 +11,9 @@ export default function StudentLayout({
     const router = useRouter();
 
     useEffect(() => {
+        const token = localStorage.getItem("access_token");
         const role = localStorage.getItem("user_role");
-        if (role && role !== "student") {
+        if (!token || (role || '').toLowerCase() !== "student") {
             router.push("/login");
         }
     }, [router]);
