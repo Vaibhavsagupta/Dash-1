@@ -11,7 +11,10 @@ export async function proxy(req: any) {
         req.nextUrl.pathname.startsWith("/signup") ||
         req.nextUrl.pathname.startsWith("/verify-otp")
 
-    if (!token && !isAuthPage) {
+    const accessTokenCookie = req.cookies?.get?.("access_token")?.value;
+    const userRoleCookie = req.cookies?.get?.("user_role")?.value;
+
+    if (!token && !accessTokenCookie && !userRoleCookie && !isAuthPage) {
         return NextResponse.redirect(new URL("/login", req.url))
     }
 
