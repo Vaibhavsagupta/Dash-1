@@ -85,8 +85,11 @@ export default function LoginPage() {
             localStorage.setItem('access_token', data.access_token);
             localStorage.setItem('user_role', data.role);
 
-            // Direct instant navigation to corresponding role dashboard
-            router.push(data.redirect_url);
+            console.log(`[Login Success] Redirecting to: ${data.redirect_url}`);
+
+            // Hard window navigation to ensure full page reload and dashboard mount
+            window.location.href = data.redirect_url || '/admin/dashboard';
+            return;
         } catch (err: any) {
             console.error('[Login Error]', err);
             setError(err.message || 'Login failed. Please check your credentials.');
