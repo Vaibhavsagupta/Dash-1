@@ -19,16 +19,39 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const authRes = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ username: email, password }),
-            });
+            const formData = new URLSearchParams({ username: email, password });
+            let authRes: Response | null = null;
+            let data: any = null;
 
-            const data = await authRes.json().catch(() => ({ detail: 'Server unreachable. Please check backend status.' }));
+            // Attempt 1: Next.js API Route Proxy
+            try {
+                authRes = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData,
+                });
+                if (authRes.ok) {
+                    data = await authRes.json();
+                }
+            } catch (err) {
+                console.warn('[Login] API proxy route failed, attempting direct backend call...');
+            }
 
-            if (!authRes.ok) {
-                throw new Error(data.detail || 'Invalid username or password');
+            // Attempt 2: Direct call to Render Backend (if Proxy failed or returned error)
+            if (!data) {
+                const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'https://dash-1-backend.onrender.com').trim().replace(/\/$/, '');
+                const directUrl = backendBase.startsWith('http') ? `${backendBase}/auth/login` : `https://${backendBase}/auth/login`;
+
+                authRes = await fetch(directUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData,
+                });
+                data = await authRes.json().catch(() => ({ detail: 'Backend server starting up or unreachable. Please retry in 10 seconds.' }));
+            }
+
+            if (!authRes || !authRes.ok) {
+                throw new Error(data?.detail || 'Invalid username or password');
             }
 
             localStorage.setItem('access_token', data.access_token);
