@@ -109,18 +109,6 @@ export default function AdminDashboard() {
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
             } finally {
-                // Ensure data is non-null for instant rendering even during backend cold-starts
-                setData((prev: any) => prev || {
-                    total_students: 1240,
-                    avg_cgpa: 7.8,
-                    avg_attendance: 84.5,
-                    backlog_rate: 4.2,
-                    risk_distribution: { Green: 980, Yellow: 180, Red: 80 },
-                    recent_activities: [
-                        { id: 1, text: "Database auto-initialized", time: "Just now" },
-                        { id: 2, text: "Admin portal session started", time: "1 min ago" }
-                    ]
-                });
                 setLoading(false);
             }
         };

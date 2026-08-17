@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import styles from './login.module.css';
-import { Clock, Eye, EyeOff } from 'lucide-react';
+import { Clock, Eye, EyeOff, ShieldCheck, GraduationCap, User, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -12,6 +12,34 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+
+    const handleDirectNavigation = (role: 'admin' | 'teacher' | 'student') => {
+        const mockTokens: Record<string, string> = {
+            admin: 'mock_admin_token_test_mode',
+            teacher: 'mock_teacher_token_test_mode',
+            student: 'mock_student_token_test_mode',
+        };
+        const targetPaths: Record<string, string> = {
+            admin: '/admin/dashboard',
+            teacher: '/teacher/dashboard',
+            student: '/student/dashboard',
+        };
+
+        const token = mockTokens[role];
+        const targetPath = targetPaths[role];
+
+        // Store credentials in localStorage, sessionStorage, and cookies for 100% fail-safe auth bypass during testing
+        localStorage.setItem('access_token', token);
+        localStorage.setItem('user_role', role);
+        sessionStorage.setItem('access_token', token);
+        sessionStorage.setItem('user_role', role);
+
+        document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `user_role=${role}; path=/; max-age=86400; SameSite=Lax`;
+
+        console.log(`[Quick Test Access] Navigating directly to ${targetPath} as ${role}`);
+        window.location.href = targetPath;
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,19 +138,6 @@ export default function LoginPage() {
         }
     };
 
-    const handleQuickAccess = (targetRole: 'admin' | 'teacher' | 'student') => {
-        const dummyToken = `demo_${targetRole}_token_12345`;
-        localStorage.setItem('access_token', dummyToken);
-        localStorage.setItem('user_role', targetRole);
-        sessionStorage.setItem('access_token', dummyToken);
-        sessionStorage.setItem('user_role', targetRole);
-        document.cookie = `access_token=${dummyToken}; path=/; max-age=86400; SameSite=Lax`;
-        document.cookie = `user_role=${targetRole}; path=/; max-age=86400; SameSite=Lax`;
-
-        const targetPath = targetRole === 'admin' ? '/admin/dashboard' : targetRole === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
-        window.location.href = targetPath;
-    };
-
     return (
         <div className={styles.container}>
             <div className={`glass ${styles.card} animate-fade-in`}>
@@ -184,51 +199,84 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                {/* Quick Testing & Demo Portal Access */}
-                <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700/50">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 text-center">
-                        ⚡ Quick Demo Access (1-Click Portals)
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAccess('admin')}
-                            className="px-2 py-2.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/80 dark:text-indigo-300 rounded-lg border border-indigo-200 dark:border-indigo-800 transition-all text-center flex items-center justify-center gap-1 shadow-sm"
-                        >
-                            👑 Admin
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAccess('teacher')}
-                            className="px-2 py-2.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-all text-center flex items-center justify-center gap-1 shadow-sm"
-                        >
-                            👨‍🏫 Teacher
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAccess('student')}
-                            className="px-2 py-2.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/80 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-purple-800 transition-all text-center flex items-center justify-center gap-1 shadow-sm"
-                        >
-                            🎓 Student
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex items-center my-5">
-                    <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
-                    <span className="mx-4 text-slate-400 text-xs">OR</span>
-                    <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
+                <div className="flex items-center my-6">
+                    <div className="flex-grow border-t border-white/10"></div>
+                    <span className="mx-4 text-slate-500 text-sm">OR</span>
+                    <div className="flex-grow border-t border-white/10"></div>
                 </div>
 
                 <button
                     onClick={() => signIn("google")}
                     type="button"
-                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 rounded-lg transition-all shadow-md border border-slate-200"
+                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 rounded-lg transition-all shadow-lg"
                     suppressHydrationWarning
                 >
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
                     Sign in with Google
                 </button>
+
+                {/* Quick Testing Links Section */}
+                <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                            <Sparkles size={14} className="text-indigo-500" />
+                            Quick Test Access (Direct Dashboards)
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                        <button
+                            type="button"
+                            onClick={() => handleDirectNavigation('admin')}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 transition-all text-left group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <ShieldCheck size={18} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">👑 Admin Dashboard</div>
+                                    <div className="text-xs text-slate-500">Directly open Admin Control Panel</div>
+                                </div>
+                            </div>
+                            <ArrowRight size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleDirectNavigation('teacher')}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-purple-50/50 hover:bg-purple-50 border border-purple-100 hover:border-purple-300 transition-all text-left group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-purple-100 text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                    <GraduationCap size={18} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-semibold text-slate-800 group-hover:text-purple-700">👨‍🏫 Teacher Dashboard</div>
+                                    <div className="text-xs text-slate-500">Directly open Teacher & Assessment Portal</div>
+                                </div>
+                            </div>
+                            <ArrowRight size={16} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleDirectNavigation('student')}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100 hover:border-emerald-300 transition-all text-left group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                    <User size={18} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700">🎓 Student Dashboard</div>
+                                    <div className="text-xs text-slate-500">Directly open Student Analytics Hub</div>
+                                </div>
+                            </div>
+                            <ArrowRight size={16} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                        </button>
+                    </div>
+                </div>
 
                 <div className={styles.footer}>
                     <span>Don't have an account? </span>
