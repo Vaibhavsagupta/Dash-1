@@ -8,6 +8,7 @@ import {
     Play, Lock, Loader2, WifiOff, RefreshCw, Bookmark
 } from "lucide-react";
 import SecureAntiLensQuestion from "@/components/SecureAntiLensQuestion";
+import ComputerVisionProctoring from "@/components/ComputerVisionProctoring";
 
 interface Question {
     id: string;
@@ -553,8 +554,19 @@ export default function StudentTestAttemptPage() {
 
             {/* Main secure environment layout */}
             <div className="flex-1 flex overflow-hidden">
-                {/* Left pane: Question grid navigator */}
-                <aside className="hidden lg:flex w-72 bg-slate-950 border-r border-slate-900 flex-col overflow-y-auto z-10 p-6 flex-shrink-0 space-y-6">
+                {/* Left pane: Question grid navigator & Computer Vision Proctor */}
+                <aside className="hidden lg:flex w-72 bg-slate-950 border-r border-slate-900 flex-col overflow-y-auto z-10 p-5 flex-shrink-0 space-y-5">
+                    {/* Live Computer Vision AI Proctoring Stream */}
+                    <ComputerVisionProctoring 
+                        onPhoneDetected={(reason) => {
+                            alert(`🚨 CRITICAL SECURITY BREACH!\n\n${reason}\n\nYour exam is being automatically submitted and locked.`);
+                            handleAutoSubmit("phone_detected");
+                        }}
+                        onGazeViolation={(count) => {
+                            console.log("Gaze violation count:", count);
+                        }}
+                    />
+
                     <div className="space-y-1">
                         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Exam Progress</h4>
                         <p className="text-xs text-slate-400 font-medium">Click a number to skip to that question.</p>
