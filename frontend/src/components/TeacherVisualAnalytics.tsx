@@ -347,7 +347,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-indigo-100 text-indigo-700 border border-indigo-200">
                                 AI RISK ENGINE
                             </span>
-                            <span className="text-xs font-bold text-slate-400">XGBoost v1.6 + SHAP Explainability Engine</span>
+                            <span className="text-xs font-bold text-slate-400">Automated Risk & Feature Impact Analysis</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <Sparkles size={18} className="text-indigo-600" /> Student Risk Prediction & Feature Attribution
@@ -421,7 +421,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700 border border-emerald-200">
                                 SCORE FORECASTING
                             </span>
-                            <span className="text-xs font-bold text-slate-400">XGBoost / LightGBM Regressor Engine</span>
+                            <span className="text-xs font-bold text-slate-400">End-Semester Score Prediction</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <Target size={18} className="text-emerald-600" /> Academic End-Sem Score Forecasting
@@ -487,7 +487,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-700 border border-purple-200">
                                 PERFORMANCE TRAJECTORY
                             </span>
-                            <span className="text-xs font-bold text-slate-400">LSTM / GRU Sequential Recurrent Engine</span>
+                            <span className="text-xs font-bold text-slate-400">Sequential Performance Trajectory</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <TrendingUp size={18} className="text-purple-600" /> Sequential Performance Trajectory Forecasting
@@ -553,7 +553,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-100 text-blue-700 border border-blue-200">
                                 COHORT CLUSTERING
                             </span>
-                            <span className="text-xs font-bold text-slate-400">K-Means (k=4) + 2D PCA Dimensionality Reduction</span>
+                            <span className="text-xs font-bold text-slate-400">Cohort Academic Performance Mapping</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <BarChart3 size={18} className="text-blue-600" /> Student Cohort Clustering & PCA Projection
@@ -615,7 +615,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300">
                                 ANOMALY DETECTION
                             </span>
-                            <span className="text-xs font-bold text-slate-400">Isolation Forest Outlier Detection Engine</span>
+                            <span className="text-xs font-bold text-slate-400">Score & Attendance Anomaly Detection</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <AlertTriangle size={18} className="text-amber-600" /> Behavioral Anomaly & Assessment Outlier Detector
@@ -672,7 +672,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-100 text-rose-800 border border-rose-300">
                                 DISENGAGEMENT RISK
                             </span>
-                            <span className="text-xs font-bold text-slate-400">LightGBM Classifier + Survival Risk Engine</span>
+                            <span className="text-xs font-bold text-slate-400">Academic Disengagement Tracking</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <AlertTriangle size={18} className="text-rose-600" /> Student Dropout & Academic Disengagement Risk
@@ -734,7 +734,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
                                 KNOWLEDGE TRACING
                             </span>
-                            <span className="text-xs font-bold text-slate-400">Deep Knowledge Tracing (DKT) + Bayesian BKT</span>
+                            <span className="text-xs font-bold text-slate-400">Syllabus Concept Mastery Tracing</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <BookOpen size={18} className="text-emerald-600" /> Topic Weakness & Latent Concept Mastery Tracing
@@ -818,7 +818,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800 border border-purple-300">
                                 PERSONALIZED REMEDIATION
                             </span>
-                            <span className="text-xs font-bold text-slate-400">Content-Based Remediation Engine</span>
+                            <span className="text-xs font-bold text-slate-400">Personalized Student Study Pathway</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <Sparkles size={18} className="text-purple-600" /> Prescribed Personalized Learning & Remediation Track
@@ -877,7 +877,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300">
                                 QUESTION BANK CALIBRATION
                             </span>
-                            <span className="text-xs font-bold text-slate-400">Item Response Theory (2PL IRT Model)</span>
+                            <span className="text-xs font-bold text-slate-400">Exam Question Quality Calibration</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <Target size={18} className="text-amber-600" /> Question Bank Difficulty ($\beta$) & Discrimination ($a$) Calibration
@@ -934,7 +934,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
                                 LATENT ABILITY EVALUATION
                             </span>
-                            <span className="text-xs font-bold text-slate-400">Rasch 2PL Latent Trait Model</span>
+                            <span className="text-xs font-bold text-slate-400">Student Latent Ability Evaluation</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <Award size={18} className="text-emerald-600" /> Latent Student Ability ($\theta$) & Cohort Percentile Ranking
@@ -991,7 +991,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-100 text-rose-800 border border-rose-300">
                                 ADAPTIVE EXAM POLICY
                             </span>
-                            <span className="text-xs font-bold text-slate-400">IRT + Reinforcement Learning Item Selection</span>
+                            <span className="text-xs font-bold text-slate-400">Adaptive Test Question Policy</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <Sparkles size={18} className="text-rose-600" /> Real-Time Adaptive Exam Generation & Item Selection Policy
@@ -1048,7 +1048,7 @@ export default function TeacherVisualAnalytics() {
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800 border border-purple-300">
                                 NLP REMARKS EXTRACTOR
                             </span>
-                            <span className="text-xs font-bold text-slate-400">LLM / DistilBERT Sentiment & Entity Extractor</span>
+                            <span className="text-xs font-bold text-slate-400">Faculty Remarks Sentiment Analysis</span>
                         </div>
                         <h3 className="text-lg font-extrabold text-slate-900 mt-1 flex items-center gap-2">
                             <BookOpen size={18} className="text-purple-600" /> NLP Unstructured Faculty Feedback Entity Extraction
@@ -1155,32 +1155,32 @@ export default function TeacherVisualAnalytics() {
                             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-3">Multi-Model Synthesized Weight Attribution Matrix</span>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">XGBoost Risk Engine</span>
+                                    <span className="text-slate-400 text-[10px] block">Academic Risk Model</span>
                                     <span className="font-extrabold text-amber-300">Risk Factor: 82%</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">End-Sem Score Regressor</span>
+                                    <span className="text-slate-400 text-[10px] block">Score Forecast Model</span>
                                     <span className="font-extrabold text-indigo-300">Pred Score: 58.4%</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">LSTM Trend Slope</span>
+                                    <span className="text-slate-400 text-[10px] block">Performance Trend Model</span>
                                     <span className="font-extrabold text-rose-300">Trend: Declining (-14%)</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">DKT Concept Tracing</span>
+                                    <span className="text-slate-400 text-[10px] block">Concept Tracing Model</span>
                                     <span className="font-extrabold text-amber-300">2 Weak Topics</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">IRT Latent Ability</span>
+                                    <span className="text-slate-400 text-[10px] block">Latent Ability Model</span>
                                     <span className="font-extrabold text-emerald-300">Theta: +1.48 (92.5%)</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Adaptive Test RL</span>
+                                    <span className="text-slate-400 text-[10px] block">Adaptive Test Model</span>
                                     <span className="font-extrabold text-purple-300">Policy: Hard Tier</span>
                                 </div>
                             </div>

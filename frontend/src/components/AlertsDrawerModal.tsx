@@ -20,7 +20,7 @@ const DEFAULT_ALERTS = [
         id: "alert-1",
         student_id: "STU1001",
         student_name: "Rahul Kumar",
-        message: "CRITICAL AI ALERT: Attendance dropped to 62%. XGBoost Risk Engine predicts High Academic Risk.",
+        message: "CRITICAL ALERT: Attendance dropped to 62%. Student is at high risk of academic decline.",
         type: "risk",
         is_read: false,
         created_at: "2026-08-17 10:30"
@@ -29,7 +29,7 @@ const DEFAULT_ALERTS = [
         id: "alert-2",
         student_id: "STU1002",
         student_name: "Priya Sharma",
-        message: "BEHAVIORAL ANOMALY: Isolation Forest detected score drop from 82% to 35% in DBMS Mid-Sem test.",
+        message: "PERFORMANCE DROP ALERT: Sudden score drop from 82% to 35% detected in DBMS Mid-Sem exam.",
         type: "risk",
         is_read: false,
         created_at: "2026-08-17 09:15"
@@ -38,7 +38,7 @@ const DEFAULT_ALERTS = [
         id: "alert-3",
         student_id: "STU1003",
         student_name: "Aman Verma",
-        message: "DISENGAGEMENT RISK: LightGBM model flagged 3 consecutive unsubmitted assignments in Data Structures.",
+        message: "DISENGAGEMENT WARNING: 3 consecutive assignments remain unsubmitted in Data Structures.",
         type: "risk",
         is_read: false,
         created_at: "2026-08-16 16:45"
@@ -69,7 +69,16 @@ export default function AlertsDrawerModal({ isOpen, onClose, onSelectStudent360 
             if (res.ok) {
                 const data = await res.json();
                 if (data.alerts && data.alerts.length > 0) {
-                    setAlerts(data.alerts);
+                    // Sanitize any residual technical terms for non-technical users
+                    const cleanAlerts = data.alerts.map((a: any) => ({
+                        ...a,
+                        message: a.message
+                            .replace(/XGBoost Risk (Engine|Model) predicts /gi, "")
+                            .replace(/Isolation Forest detected /gi, "")
+                            .replace(/LightGBM model flagged /gi, "")
+                            .replace(/CRITICAL AI ALERT/gi, "CRITICAL ALERT")
+                    }));
+                    setAlerts(cleanAlerts);
                     setUnreadCount(data.unread_count || 0);
                 } else {
                     setAlerts(DEFAULT_ALERTS);
@@ -110,7 +119,7 @@ export default function AlertsDrawerModal({ isOpen, onClose, onSelectStudent360 
     return (
         <div className="fixed inset-0 z-[99999] bg-slate-900/70 backdrop-blur-md flex justify-end overflow-hidden">
             <div className="bg-white max-w-md w-full h-full shadow-2xl border-l border-slate-200 flex flex-col animate-in slide-in-from-right duration-250 relative z-[100000]">
-                {/* Header with High Visibility Z-Index and Top Padding */}
+                {/* Header */}
                 <div className="bg-slate-900 text-white p-6 pt-10 sm:pt-8 flex justify-between items-start border-b border-slate-800 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-rose-600 rounded-2xl shadow border border-rose-400/30">
@@ -118,14 +127,14 @@ export default function AlertsDrawerModal({ isOpen, onClose, onSelectStudent360 
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-base font-extrabold text-white">AI Risk Alerts & Warnings</h2>
+                                <h2 className="text-base font-extrabold text-white">Student Risk Alerts & Warnings</h2>
                                 {unreadCount > 0 && (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
                                         {unreadCount} UNREAD
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5">Real-time XGBoost risk & anomaly warnings</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Automated academic performance & attendance warnings</p>
                         </div>
                     </div>
                     <button 
@@ -141,7 +150,7 @@ export default function AlertsDrawerModal({ isOpen, onClose, onSelectStudent360 
                 <div className="p-6 flex-1 overflow-y-auto space-y-4 bg-slate-50">
                     {loading ? (
                         <div className="p-12 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">
-                            Scanning Real-Time AI Risk Alerts...
+                            Checking Student Risk Alerts...
                         </div>
                     ) : alerts.length > 0 ? (
                         alerts.map(a => (
@@ -191,7 +200,7 @@ export default function AlertsDrawerModal({ isOpen, onClose, onSelectStudent360 
                         ))
                     ) : (
                         <div className="p-12 text-center text-xs text-slate-400 font-medium border border-dashed border-slate-200 rounded-2xl bg-white">
-                            No active AI alerts at this time.
+                            No active student alerts at this time.
                         </div>
                     )}
                 </div>

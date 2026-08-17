@@ -681,7 +681,7 @@ def list_ai_alerts(db: Session = Depends(database.get_db), current_user: models.
                     "id": "alert-2",
                     "student_id": "STU1002",
                     "student_name": "Priya Sharma",
-                    "message": "BEHAVIORAL ANOMALY: Isolation Forest detected score drop from 82% to 35% in DBMS test.",
+                    "message": "PERFORMANCE DROP ALERT: Sudden score drop from 82% to 35% detected in DBMS Mid-Sem test.",
                     "type": "risk",
                     "is_read": False,
                     "created_at": "2026-08-17 09:15"
@@ -694,7 +694,7 @@ def list_ai_alerts(db: Session = Depends(database.get_db), current_user: models.
             }
 
         for i, st in enumerate(students):
-            msg = f"CRITICAL AI ALERT: Student {st.name} ({st.enrollment_no}) attendance at {st.attendance_percentage or 68}%. XGBoost predicts High Academic Risk." if i % 2 == 0 else f"BEHAVIORAL ANOMALY: Isolation Forest detected score variation for {st.name} ({st.enrollment_no})."
+            msg = f"CRITICAL ALERT: Student {st.name} ({st.enrollment_no}) attendance dropped to {st.attendance_percentage or 68}%. High academic risk detected." if i % 2 == 0 else f"UNUSUAL PERFORMANCE ALERT: Sudden score variation detected for {st.name} ({st.enrollment_no})."
             new_alert = models.Alert(
                 id=str(uuid.uuid4()),
                 student_id=st.enrollment_no,
