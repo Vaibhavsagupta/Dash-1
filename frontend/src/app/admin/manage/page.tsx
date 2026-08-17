@@ -35,13 +35,8 @@ export default function ManageData() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setStudents(data);
-            } else if (res.status === 401) {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('user_role');
-                window.location.href = '/login';
             } else {
-                console.error('Failed to fetch students:', res.statusText);
+                console.warn('Failed to fetch students:', res.statusText);
             }
         } catch (err) {
             console.error(err);

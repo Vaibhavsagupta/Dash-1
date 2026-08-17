@@ -46,13 +46,9 @@ export default function AdminSidebar() {
                 if (res.ok) {
                     const data = await res.json();
                     setPendingCount(data.length);
-                } else if (res.status === 401) {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('user_role');
-                    window.location.href = '/login';
                 }
             } catch (err) {
-                console.error("Failed to fetch pending count", err);
+                console.warn("Failed to fetch pending count", err);
             }
         };
 
