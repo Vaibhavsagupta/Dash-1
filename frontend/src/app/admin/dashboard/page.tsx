@@ -51,8 +51,13 @@ export default function AdminDashboard() {
     const [liveAlerts, setLiveAlerts] = useState<any[]>([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
-        const role = localStorage.getItem('user_role');
+        const getCookie = (name: string) => {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        };
+
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || getCookie('access_token');
+        const role = localStorage.getItem('user_role') || sessionStorage.getItem('user_role') || getCookie('user_role');
 
         if (!token || (role || '').toLowerCase() !== 'admin') {
             console.warn('[AdminDashboard] Unauthorized, redirecting to /login');

@@ -82,13 +82,25 @@ export default function LoginPage() {
                 throw new Error(lastErrorMsg || 'Login failed. Please check credentials or backend status.');
             }
 
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('user_role', data.role);
+            const role = (data.role || 'admin').toLowerCase();
+            const token = data.access_token;
+            const targetPath = data.redirect_url || (role === 'admin' ? '/admin/dashboard' : role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
 
-            console.log(`[Login Success] Redirecting to: ${data.redirect_url}`);
+            // Store in localStorage, sessionStorage, and cookies for 100% fail-safe auth persistence
+            localStorage.setItem('access_token', token);
+            localStorage.setItem('user_role', role);
+            sessionStorage.setItem('access_token', token);
+            sessionStorage.setItem('user_role', role);
 
-            // Hard window navigation to ensure full page reload and dashboard mount
-            window.location.href = data.redirect_url || '/admin/dashboard';
+            document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `user_role=${role}; path=/; max-age=86400; SameSite=Lax`;
+
+            console.log(`[Login Success] Token saved. Redirecting to: ${targetPath}`);
+
+            // Brief 150ms delay to ensure browser commits storage to disk before navigation
+            setTimeout(() => {
+                window.location.href = targetPath;
+            }, 150);
             return;
         } catch (err: any) {
             console.error('[Login Error]', err);
