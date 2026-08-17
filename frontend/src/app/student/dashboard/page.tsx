@@ -229,45 +229,56 @@ export default function StudentDashboard() {
         };
         fetchTrendAndAlerts();
 
-        // WebSocket Setup
-        const wsBaseUrl = API_BASE_URL.replace(/^http/, 'ws');
-        const wsAcademic = new WebSocket(`${wsBaseUrl}/analytics/ws/academic/${data.student.student_id}`);
-        const wsEngagement = new WebSocket(`${wsBaseUrl}/analytics/ws/engagement/${data.student.student_id}`);
-        const wsRisk = new WebSocket(`${wsBaseUrl}/analytics/ws/risk/${data.student.student_id}`);
+        let wsAcademic: WebSocket | null = null;
+        let wsEngagement: WebSocket | null = null;
+        let wsRisk: WebSocket | null = null;
 
-        wsAcademic.onmessage = (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                setLiveMetrics(payload);
-                if (payload.alerts) setAcademicAlerts(payload.alerts);
-            } catch (err) {
-                console.error("Failed to parse academic WS message:", err);
-            }
-        };
+        try {
+            const wsBaseUrl = API_BASE_URL.replace(/^http/, 'ws');
+            wsAcademic = new WebSocket(`${wsBaseUrl}/analytics/ws/academic/${data.student.student_id}`);
+            wsEngagement = new WebSocket(`${wsBaseUrl}/analytics/ws/engagement/${data.student.student_id}`);
+            wsRisk = new WebSocket(`${wsBaseUrl}/analytics/ws/risk/${data.student.student_id}`);
 
-        wsEngagement.onmessage = (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                setEngagementData(payload);
-                if (payload.timeline) setEngagementTimeline(payload.timeline);
-            } catch (err) {
-                console.error("Failed to parse engagement WS message:", err);
-            }
-        };
+            wsAcademic.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    setLiveMetrics(payload);
+                    if (payload.alerts) setAcademicAlerts(payload.alerts);
+                } catch (err) {
+                    console.error("Failed to parse academic WS message:", err);
+                }
+            };
 
-        wsRisk.onmessage = (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                setAiRiskData(payload);
-            } catch (err) {
-                console.error("Failed to parse risk WS message:", err);
-            }
-        };
+            wsEngagement.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    setEngagementData(payload);
+                    if (payload.timeline) setEngagementTimeline(payload.timeline);
+                } catch (err) {
+                    console.error("Failed to parse engagement WS message:", err);
+                }
+            };
+
+            wsRisk.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    setAiRiskData(payload);
+                } catch (err) {
+                    console.error("Failed to parse risk WS message:", err);
+                }
+            };
+        } catch (wsErr) {
+            console.warn("WebSocket connection unavailable, operating in static fallback mode.", wsErr);
+        }
 
         return () => {
-            wsAcademic.close();
-            wsEngagement.close();
-            wsRisk.close();
+            try {
+                wsAcademic?.close();
+                wsEngagement?.close();
+                wsRisk?.close();
+            } catch (closeErr) {
+                // ignore
+            }
         };
     }, [data]);
 
@@ -419,7 +430,7 @@ export default function StudentDashboard() {
                             </span>
                         </div>
                         <div className="text-xs text-slate-600 mt-3 font-semibold flex items-center gap-1">
-                            Trend: <span className="text-indigo-600 font-bold">{currentTrend.replace('_', ' ')}</span>
+                            Trend: <span className="text-indigo-600 font-bold">{currentTrend ? String(currentTrend).replace('_', ' ') : 'STABLE'}</span>
                         </div>
                         
                         <div className="border-t border-slate-100 mt-5 pt-4 grid grid-cols-2 gap-4">
@@ -459,7 +470,7 @@ export default function StudentDashboard() {
                             </span>
                         </div>
                         <div className="text-xs text-slate-600 mt-3 font-semibold flex items-center justify-between">
-                            <span>Trend: <span className="text-purple-600 font-bold">{engagementData ? engagementData.trend.replace('_', ' ') : 'STABLE'}</span></span>
+                            <span>Trend: <span className="text-purple-600 font-bold">{engagementData && engagementData.trend ? String(engagementData.trend).replace('_', ' ') : 'STABLE'}</span></span>
                             {engagementData && engagementData.inactivity_hours > 0 && (
                                 <span className="text-amber-600 text-[11px] font-bold">Inactivity: {engagementData.inactivity_hours}h</span>
                             )}
@@ -511,7 +522,7 @@ export default function StudentDashboard() {
                                 aiRiskData?.risk_level === 'MODERATE' ? 'bg-amber-100 text-amber-800' :
                                 'bg-emerald-100 text-emerald-800'
                             }`}>
-                                {aiRiskData ? aiRiskData.risk_level.replace('_', ' ') : "VERY LOW"}
+                                {aiRiskData ? (aiRiskData.risk_level ? String(aiRiskData.risk_level).replace('_', ' ') : (aiRiskData.risk_category ? String(aiRiskData.risk_category).replace('_', ' ') : "LOW RISK")) : "VERY LOW"}
                             </span>
                         </div>
 
