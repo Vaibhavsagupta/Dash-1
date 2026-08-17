@@ -45,6 +45,7 @@ import Student360ProfileModal from './Student360ProfileModal';
 import InterventionManagementModal from './InterventionManagementModal';
 import BatchComparisonModal from './BatchComparisonModal';
 import AlertsDrawerModal from './AlertsDrawerModal';
+import RiskFeatureDetailModal from './RiskFeatureDetailModal';
 import { Bell } from 'lucide-react';
 const DEFAULT_BATCH_ANALYTICS_DATA = {
     batch_kpis: {
@@ -109,6 +110,13 @@ export default function TeacherVisualAnalytics() {
     const [isComparisonOpen, setIsComparisonOpen] = useState(false);
     const [isAlertsOpen, setIsAlertsOpen] = useState(false);
     const [unreadAlertsCount, setUnreadAlertsCount] = useState(3);
+    const [selectedRiskFeature, setSelectedRiskFeature] = useState<{
+        title: string;
+        impact: string;
+        description: string;
+        score?: string;
+        type: 'overall_risk' | 'trend' | 'marks' | 'attendance';
+    } | null>(null);
 
     const fetchBatchAnalytics = async () => {
         setLoading(true);
@@ -409,8 +417,19 @@ export default function TeacherVisualAnalytics() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Risk Probability Gauge */}
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Predictive Institutional Risk</span>
+                    <div 
+                        onClick={() => setSelectedRiskFeature({
+                            title: 'Predictive Institutional Risk (74.7%)',
+                            impact: '74.7% High Risk',
+                            description: 'Overall academic risk evaluation across batch parameters.',
+                            type: 'overall_risk'
+                        })}
+                        className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group"
+                    >
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Predictive Institutional Risk</span>
+                            <span className="text-[10px] font-bold text-indigo-600 group-hover:underline">Click for Details →</span>
+                        </div>
                         <div className="my-3">
                             <div className="flex justify-between items-baseline mb-1">
                                 <span className="text-3xl font-black text-rose-600">74.7%</span>
@@ -425,32 +444,56 @@ export default function TeacherVisualAnalytics() {
 
                     {/* SHAP Feature Contribution Breakdown */}
                     <div className="md:col-span-2 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">SHAP Feature Attribution Breakdown (Top Risk Drivers)</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">SHAP Feature Attribution Breakdown (Top Risk Drivers - Click Any to Explore)</span>
                         <div className="space-y-2.5">
-                            <div>
+                            <div 
+                                onClick={() => setSelectedRiskFeature({
+                                    title: 'Declining 30-Day Performance Trend (-12.5%)',
+                                    impact: '+18.8% Risk Impact',
+                                    description: 'Student score velocity drop over the last 30 days.',
+                                    type: 'trend'
+                                })}
+                                className="p-2.5 rounded-xl hover:bg-slate-100/80 cursor-pointer border border-transparent hover:border-slate-200 transition-all group"
+                            >
                                 <div className="flex justify-between text-xs font-bold mb-1">
-                                    <span className="text-slate-800">Declining 30-Day Performance Trend (-12.5%)</span>
-                                    <span className="text-rose-600">+18.8% Risk Impact</span>
+                                    <span className="text-slate-800 group-hover:text-indigo-600 transition-colors">Declining 30-Day Performance Trend (-12.5%)</span>
+                                    <span className="text-rose-600 font-extrabold">+18.8% Risk Impact →</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                                     <div className="bg-rose-500 h-full rounded-full" style={{ width: '85%' }} />
                                 </div>
                             </div>
 
-                            <div>
+                            <div 
+                                onClick={() => setSelectedRiskFeature({
+                                    title: 'Internal Marks Below Threshold (45.0%)',
+                                    impact: '+9.0% Risk Impact',
+                                    description: 'Internal assessment scores falling below academic target.',
+                                    type: 'marks'
+                                })}
+                                className="p-2.5 rounded-xl hover:bg-slate-100/80 cursor-pointer border border-transparent hover:border-slate-200 transition-all group"
+                            >
                                 <div className="flex justify-between text-xs font-bold mb-1">
-                                    <span className="text-slate-800">Internal Marks Below Threshold (45.0%)</span>
-                                    <span className="text-rose-600">+9.0% Risk Impact</span>
+                                    <span className="text-slate-800 group-hover:text-indigo-600 transition-colors">Internal Marks Below Threshold (45.0%)</span>
+                                    <span className="text-rose-600 font-extrabold">+9.0% Risk Impact →</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                                     <div className="bg-amber-500 h-full rounded-full" style={{ width: '55%' }} />
                                 </div>
                             </div>
 
-                            <div>
+                            <div 
+                                onClick={() => setSelectedRiskFeature({
+                                    title: 'Low Attendance Percentage (55.0%)',
+                                    impact: '+8.8% Risk Impact',
+                                    description: 'Student attendance falling below minimum mandatory threshold.',
+                                    type: 'attendance'
+                                })}
+                                className="p-2.5 rounded-xl hover:bg-slate-100/80 cursor-pointer border border-transparent hover:border-slate-200 transition-all group"
+                            >
                                 <div className="flex justify-between text-xs font-bold mb-1">
-                                    <span className="text-slate-800">Low Attendance Percentage (55.0%)</span>
-                                    <span className="text-rose-600">+8.8% Risk Impact</span>
+                                    <span className="text-slate-800 group-hover:text-indigo-600 transition-colors">Low Attendance Percentage (55.0%)</span>
+                                    <span className="text-rose-600 font-extrabold">+8.8% Risk Impact →</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                                     <div className="bg-amber-500 h-full rounded-full" style={{ width: '50%' }} />
@@ -1470,6 +1513,15 @@ export default function TeacherVisualAnalytics() {
                 onSelectStudent360={(stId) => {
                     setSelected360StudentId(stId);
                     setIs360Open(true);
+                }}
+            />
+
+            <RiskFeatureDetailModal
+                isOpen={!!selectedRiskFeature}
+                onClose={() => setSelectedRiskFeature(null)}
+                feature={selectedRiskFeature}
+                onOpenIntervention={() => {
+                    setIsInterventionOpen(true);
                 }}
             />
 
