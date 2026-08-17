@@ -55,6 +55,12 @@ const DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA = {
         class_rank: 1
     },
     kpi_cards: {
+        average_score: 88.5,
+        attendance_pct: 94.0,
+        tests_attempted: 12,
+        pass_pct: 95.8,
+        improvement_pct: 5.4,
+        ai_performance_score: 92.0,
         current_cgpa: 8.92,
         academic_prs_score: 92.0,
         class_rank: 1,
@@ -207,6 +213,15 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
         subject_performance_trend = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.subject_performance_trend,
         ai_recommendations = DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.ai_recommendations
     } = activeData || {};
+
+    const safeKpi = {
+        average_score: kpi_cards?.average_score ?? kpi_cards?.current_cgpa ?? 88.5,
+        attendance_pct: kpi_cards?.attendance_pct ?? kpi_cards?.attendance_percentage ?? 94.0,
+        tests_attempted: kpi_cards?.tests_attempted ?? 12,
+        pass_pct: kpi_cards?.pass_pct ?? 95.8,
+        improvement_pct: kpi_cards?.improvement_pct ?? 5.4,
+        ai_performance_score: kpi_cards?.ai_performance_score ?? kpi_cards?.academic_prs_score ?? kpi_cards?.predicted_end_sem ?? 92.0
+    };
 
     // 1. Chart Data: Overall Performance Trend
     const safeTrend = Array.isArray(overall_performance_trend) ? overall_performance_trend : DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA.overall_performance_trend;
@@ -427,7 +442,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
                 <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Avg Score</span>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-black text-slate-900">{kpi_cards.average_score}%</span>
+                        <span className="text-2xl font-black text-slate-900">{safeKpi.average_score}%</span>
                         <Award size={18} className="text-indigo-600" />
                     </div>
                 </div>
@@ -435,7 +450,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
                 <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Attendance</span>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-black text-emerald-600">{kpi_cards.attendance_pct}%</span>
+                        <span className="text-2xl font-black text-emerald-600">{safeKpi.attendance_pct}%</span>
                         <CheckCircle2 size={18} className="text-emerald-600" />
                     </div>
                 </div>
@@ -443,7 +458,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
                 <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tests Attempted</span>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-black text-slate-900">{kpi_cards.tests_attempted}</span>
+                        <span className="text-2xl font-black text-slate-900">{safeKpi.tests_attempted}</span>
                         <BookOpen size={18} className="text-blue-600" />
                     </div>
                 </div>
@@ -451,7 +466,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
                 <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Pass Rate</span>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-black text-indigo-600">{kpi_cards.pass_pct}%</span>
+                        <span className="text-2xl font-black text-indigo-600">{safeKpi.pass_pct}%</span>
                         <Target size={18} className="text-indigo-600" />
                     </div>
                 </div>
@@ -459,8 +474,8 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
                 <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Improvement</span>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className={`text-2xl font-black ${kpi_cards.improvement_pct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {kpi_cards.improvement_pct >= 0 ? `+${kpi_cards.improvement_pct}` : kpi_cards.improvement_pct}%
+                        <span className={`text-2xl font-black ${safeKpi.improvement_pct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {safeKpi.improvement_pct >= 0 ? `+${safeKpi.improvement_pct}` : safeKpi.improvement_pct}%
                         </span>
                         <TrendingUp size={18} className="text-emerald-600" />
                     </div>
@@ -469,7 +484,7 @@ export default function StudentVisualAnalytics({ studentId }: StudentVisualAnaly
                 <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white p-4 rounded-2xl border border-purple-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                     <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">AI Score</span>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-black text-purple-900">{kpi_cards.ai_performance_score}<span className="text-xs text-purple-600 font-medium">/100</span></span>
+                        <span className="text-2xl font-black text-purple-900">{safeKpi.ai_performance_score}<span className="text-xs text-purple-600 font-medium">/100</span></span>
                         <Brain size={18} className="text-purple-600 animate-pulse" />
                     </div>
                 </div>
