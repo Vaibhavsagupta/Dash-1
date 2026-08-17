@@ -219,10 +219,10 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="text-slate-900">
+        <div className="text-slate-900 pt-6">
             <header className="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6">
                 <div>
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                    <h1 className="text-4xl font-extrabold pb-1 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                         Admin Control Center
                     </h1>
                     <p className="text-slate-600 mt-2 font-medium">Real-time University Academic Monitoring Dashboard</p>

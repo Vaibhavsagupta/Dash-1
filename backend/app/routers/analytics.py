@@ -1054,8 +1054,12 @@ def get_admin_dashboard_data(
         query = query.filter(models.Student.program == program)
     if branch and branch != "All":
         query = query.filter(models.Student.branch == branch)
-    if semester and semester != 0:
-        query = query.filter(models.Student.semester == semester)
+    if semester and semester != 0 and semester != "All":
+        try:
+            sem_val = int(semester)
+            query = query.filter(models.Student.semester == sem_val)
+        except (ValueError, TypeError):
+            pass
     if section and section != "All":
         query = query.filter(models.Student.section == section)
         
@@ -2448,10 +2452,14 @@ def get_teacher_class_engagement(
     current_user: models.User = Depends(auth.get_current_user_obj)
 ):
     query = db.query(models.Student)
-    if department:
+    if department and department != "All":
         query = query.filter(models.Student.branch == department)
-    if semester:
-        query = query.filter(models.Student.semester == semester)
+    if semester and semester != "All":
+        try:
+            sem_val = int(semester)
+            query = query.filter(models.Student.semester == sem_val)
+        except (ValueError, TypeError):
+            pass
         
     students = query.all()
     
@@ -2577,10 +2585,14 @@ def get_teacher_risk_center(
         raise HTTPException(status_code=403, detail="Access denied")
         
     query = db.query(models.Student)
-    if branch:
+    if branch and branch != "All":
         query = query.filter(models.Student.branch == branch)
-    if semester:
-        query = query.filter(models.Student.semester == semester)
+    if semester and semester != "All":
+        try:
+            sem_val = int(semester)
+            query = query.filter(models.Student.semester == sem_val)
+        except (ValueError, TypeError):
+            pass
         
     students = query.all()
     results = []
@@ -3300,10 +3312,14 @@ def get_batch_visual_dashboard(
         raise HTTPException(status_code=403, detail="Access denied")
 
     query = db.query(models.Student)
-    if branch:
+    if branch and branch != "All":
         query = query.filter(models.Student.branch == branch)
-    if semester:
-        query = query.filter(models.Student.semester == semester)
+    if semester and semester != "All":
+        try:
+            sem_val = int(semester)
+            query = query.filter(models.Student.semester == sem_val)
+        except (ValueError, TypeError):
+            pass
         
     students = query.all()
     total_students = len(students)
