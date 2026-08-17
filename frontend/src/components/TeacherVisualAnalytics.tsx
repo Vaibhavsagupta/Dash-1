@@ -345,7 +345,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-indigo-100 text-indigo-700 border border-indigo-200">
-                                ⭐ Model 1 of 13
+                                AI RISK ENGINE
                             </span>
                             <span className="text-xs font-bold text-slate-400">XGBoost v1.6 + SHAP Explainability Engine</span>
                         </div>
@@ -419,7 +419,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700 border border-emerald-200">
-                                ⭐ Model 2 of 13
+                                SCORE FORECASTING
                             </span>
                             <span className="text-xs font-bold text-slate-400">XGBoost / LightGBM Regressor Engine</span>
                         </div>
@@ -485,7 +485,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-700 border border-purple-200">
-                                ⭐ Model 3 of 13
+                                PERFORMANCE TRAJECTORY
                             </span>
                             <span className="text-xs font-bold text-slate-400">LSTM / GRU Sequential Recurrent Engine</span>
                         </div>
@@ -551,7 +551,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-100 text-blue-700 border border-blue-200">
-                                ⭐ Model 4 of 13
+                                COHORT CLUSTERING
                             </span>
                             <span className="text-xs font-bold text-slate-400">K-Means (k=4) + 2D PCA Dimensionality Reduction</span>
                         </div>
@@ -613,7 +613,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300">
-                                ⭐ Model 5 of 13
+                                ANOMALY DETECTION
                             </span>
                             <span className="text-xs font-bold text-slate-400">Isolation Forest Outlier Detection Engine</span>
                         </div>
@@ -670,7 +670,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-100 text-rose-800 border border-rose-300">
-                                ⭐ Model 6 of 13
+                                DISENGAGEMENT RISK
                             </span>
                             <span className="text-xs font-bold text-slate-400">LightGBM Classifier + Survival Risk Engine</span>
                         </div>
@@ -732,7 +732,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                ⭐ Model 7 of 13
+                                KNOWLEDGE TRACING
                             </span>
                             <span className="text-xs font-bold text-slate-400">Deep Knowledge Tracing (DKT) + Bayesian BKT</span>
                         </div>
@@ -816,7 +816,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800 border border-purple-300">
-                                ⭐ Model 8 of 13
+                                PERSONALIZED REMEDIATION
                             </span>
                             <span className="text-xs font-bold text-slate-400">Content-Based Remediation Engine</span>
                         </div>
@@ -875,7 +875,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300">
-                                ⭐ Model 9 of 13
+                                QUESTION BANK CALIBRATION
                             </span>
                             <span className="text-xs font-bold text-slate-400">Item Response Theory (2PL IRT Model)</span>
                         </div>
@@ -932,7 +932,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                ⭐ Model 10 of 13
+                                LATENT ABILITY EVALUATION
                             </span>
                             <span className="text-xs font-bold text-slate-400">Rasch 2PL Latent Trait Model</span>
                         </div>
@@ -989,7 +989,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-100 text-rose-800 border border-rose-300">
-                                ⭐ Model 11 of 13
+                                ADAPTIVE EXAM POLICY
                             </span>
                             <span className="text-xs font-bold text-slate-400">IRT + Reinforcement Learning Item Selection</span>
                         </div>
@@ -1046,7 +1046,7 @@ export default function TeacherVisualAnalytics() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800 border border-purple-300">
-                                ⭐ Model 12 of 13
+                                NLP REMARKS EXTRACTOR
                             </span>
                             <span className="text-xs font-bold text-slate-400">LLM / DistilBERT Sentiment & Entity Extractor</span>
                         </div>
@@ -1113,23 +1113,23 @@ export default function TeacherVisualAnalytics() {
                 </div>
             </div>
 
-            {/* MODEL 13: UNIFIED EARLY WARNING & MASTER MULTI-MODEL INTELLIGENCE SYSTEM */}
+            {/* MASTER EARLY WARNING & MULTI-MODEL INTELLIGENCE SYSTEM */}
             <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl border border-indigo-500/30 shadow-xl relative overflow-hidden text-white">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-slate-950 shadow">
-                                ⭐ Model 13 of 13 — MASTER ENSEMBLE SYSTEM
+                                MASTER EARLY WARNING ENSEMBLE
                             </span>
-                            <span className="text-xs font-bold text-slate-300">All 13 AI Models Synthesized</span>
+                            <span className="text-xs font-bold text-slate-300">Unified Academic Intelligence</span>
                         </div>
                         <h3 className="text-xl font-black text-white mt-1 flex items-center gap-2">
-                            <ShieldAlert size={20} className="text-amber-400 animate-pulse" /> SAGE AI Early Warning & Multi-Model Intelligence Hub
+                            <ShieldAlert size={20} className="text-amber-400 animate-pulse" /> SAGE AI Early Warning & Intelligence Hub
                         </h3>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-emerald-500/30">
                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                        <span>100% (13/13 Models Active)</span>
+                        <span>Intelligence Engines Active</span>
                     </div>
                 </div>
 
@@ -1152,35 +1152,35 @@ export default function TeacherVisualAnalytics() {
                     {/* Multi-Model Ensemble Matrix */}
                     <div className="md:col-span-2 p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between backdrop-blur">
                         <div>
-                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-3">13-Model Synthesized Weight Attribution Matrix</span>
+                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-3">Multi-Model Synthesized Weight Attribution Matrix</span>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Model 1 (XGBoost SHAP)</span>
+                                    <span className="text-slate-400 text-[10px] block">XGBoost Risk Engine</span>
                                     <span className="font-extrabold text-amber-300">Risk Factor: 82%</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Model 2 (End-Sem Regressor)</span>
+                                    <span className="text-slate-400 text-[10px] block">End-Sem Score Regressor</span>
                                     <span className="font-extrabold text-indigo-300">Pred Score: 58.4%</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Model 3 (LSTM Time-Series)</span>
+                                    <span className="text-slate-400 text-[10px] block">LSTM Trend Slope</span>
                                     <span className="font-extrabold text-rose-300">Trend: Declining (-14%)</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Model 7 (DKT Knowledge Tracing)</span>
+                                    <span className="text-slate-400 text-[10px] block">DKT Concept Tracing</span>
                                     <span className="font-extrabold text-amber-300">2 Weak Topics</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Model 10 (IRT Rasch Ability)</span>
+                                    <span className="text-slate-400 text-[10px] block">IRT Latent Ability</span>
                                     <span className="font-extrabold text-emerald-300">Theta: +1.48 (92.5%)</span>
                                 </div>
 
                                 <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                                    <span className="text-slate-400 text-[10px] block">Model 11 (Adaptive Test RL)</span>
+                                    <span className="text-slate-400 text-[10px] block">Adaptive Test RL</span>
                                     <span className="font-extrabold text-purple-300">Policy: Hard Tier</span>
                                 </div>
                             </div>
