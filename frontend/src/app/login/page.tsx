@@ -107,7 +107,15 @@ export default function LoginPage() {
 
             const role = (data.role || 'admin').toLowerCase();
             const token = data.access_token;
-            const targetPath = data.redirect_url || (role === 'admin' ? '/admin/dashboard' : role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+            
+            // Derive targetPath strictly from user role, ignoring fallback '/' from backend
+            let targetPath = '/admin/dashboard';
+            if (role === 'admin') targetPath = '/admin/dashboard';
+            else if (role === 'teacher') targetPath = '/teacher/dashboard';
+            else if (role === 'student') targetPath = '/student/dashboard';
+            else if (data.redirect_url && data.redirect_url !== '/' && data.redirect_url !== '/login') {
+                targetPath = data.redirect_url;
+            }
 
             // Store in localStorage, sessionStorage, and cookies for 100% fail-safe auth persistence
             localStorage.setItem('access_token', token);
@@ -119,11 +127,7 @@ export default function LoginPage() {
             document.cookie = `user_role=${role}; path=/; max-age=86400; SameSite=Lax`;
 
             console.log(`[Login Success] Token saved. Redirecting to: ${targetPath}`);
-
-            // Brief 150ms delay to ensure browser commits storage to disk before navigation
-            setTimeout(() => {
-                window.location.href = targetPath;
-            }, 150);
+            window.location.href = targetPath;
             return;
         } catch (err: any) {
             console.error('[Login Error]', err);
