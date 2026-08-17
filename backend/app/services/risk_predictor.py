@@ -124,13 +124,25 @@ class RuleBasedRiskPredictor(RiskPredictor):
         }
 
 class MLRiskPredictor(RiskPredictor):
-    """Stub ready for scikit-learn / XGBoost tabular model inference"""
+    """Production ML Risk Predictor backed by XGBoost + SHAP Explainability Engine"""
     def __init__(self, model_path: str = None):
-        self.model_version = "academic-risk-v1.0"
+        from .xgboost_risk_engine import XGBoostRiskEngine
+        self.xgb_engine = XGBoostRiskEngine()
+        self.model_version = "XGBoost-v1.6-SHAP"
 
     def predict_risk(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        # Fallback to rule-based predictor if model artifact is not loaded
+        # Run rule-based predictor for breakdown metrics
         rule_predictor = RuleBasedRiskPredictor()
-        res = rule_predictor.predict_risk(features)
-        res["model_version"] = self.model_version
-        return res
+        base_res = rule_predictor.predict_risk(features)
+        
+        # Run XGBoost + SHAP prediction engine
+        xgb_res = self.xgb_engine.predict(features)
+        
+        base_res["overall_risk"] = xgb_res["risk_probability"]
+        base_res["risk_level"] = xgb_res["risk_tier"]
+        base_res["model_version"] = self.model_version
+        base_res["top_reasons"] = xgb_res["top_reasons"]
+        base_res["shap_values"] = xgb_res["shap_values"]
+        
+        return base_res
+

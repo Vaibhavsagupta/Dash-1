@@ -14,3 +14,7 @@ pandas
 openpyxl
 google-auth
 requests
+xgboost
+shap
+scikit-learn
+numpy

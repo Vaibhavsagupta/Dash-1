@@ -218,6 +218,213 @@ def get_student_observations(student_id: str, db: Session = Depends(database.get
         "batch_id": student.batch_id
     }
 
+@router.get("/risk/student/{student_id}/shap-explanation")
+def get_student_shap_risk_explanation(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.risk_explanation_engine import evaluate_and_explain_risk
+    res = evaluate_and_explain_risk(student_id, db)
+    if "error" in res:
+        raise HTTPException(status_code=404, detail=res["error"])
+    return res
+
+@router.get("/student/{student_id}/predicted-score")
+def get_student_predicted_score(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.score_predictor import AcademicScorePredictor
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    predictor = AcademicScorePredictor()
+    return predictor.predict_score(features)
+
+@router.get("/student/{student_id}/time-series-forecast")
+def get_student_time_series_forecast(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.time_series_forecaster import LSTMPerformanceForecaster
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    
+    # Extract test score history from database if available
+    attempts = db.query(models.TestAttempt).filter(
+        models.TestAttempt.student_id == student.enrollment_no
+    ).order_by(models.TestAttempt.submitted_at.asc()).all()
+    
+    history = [float(a.score) for a in attempts if a.score is not None]
+    
+    forecaster = LSTMPerformanceForecaster()
+    return forecaster.forecast_trajectory(test_history=history, student_features=features)
+
+@router.get("/batch/{batch_id}/student-clusters")
+def get_batch_student_clusters(batch_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.student_clustering_engine import KMeansStudentClusterer
+    
+    students = db.query(models.Student).all()
+    batch_students = []
+    for s in students:
+        if batch_id == "All" or getattr(s, "batch_id", "All") == batch_id or getattr(s, "branch", "") == batch_id:
+            batch_students.append({
+                "student_id": s.enrollment_no,
+                "name": s.name,
+                "marks": s.post_score or 70.0,
+                "attendance": s.pre_engagement or 75.0,
+                "cgpa": 7.5,
+                "trend": (s.post_score or 70.0) - (s.pre_score or 65.0)
+            })
+            
+    clusterer = KMeansStudentClusterer()
+    return clusterer.cluster_batch(batch_students)
+
+@router.get("/student/{student_id}/anomalies")
+def get_student_anomalies(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.isolation_forest_anomaly_engine import IsolationForestAnomalyEngine
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    
+    # Check latest test attempt for anomaly inspection
+    latest_attempt = db.query(models.TestAttempt).filter(
+        models.TestAttempt.student_id == student.enrollment_no
+    ).order_by(models.TestAttempt.submitted_at.desc()).first()
+    
+    attempt_dict = None
+    if latest_attempt:
+        attempt_dict = {
+            "test_name": getattr(latest_attempt, "test_name", "Recent Assessment"),
+            "score": float(latest_attempt.score or 50.0),
+            "previous_average": float(features.get("current_average_marks", 75.0)),
+            "time_taken_min": float(getattr(latest_attempt, "duration_minutes", 3.5)),
+            "expected_time_min": 25.0
+        }
+        
+    engine = IsolationForestAnomalyEngine()
+    return engine.detect_anomalies(test_attempt=attempt_dict, student_features=features)
+
+@router.get("/student/{student_id}/disengagement-risk")
+def get_student_disengagement_risk(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.disengagement_engine import LightGBMDisengagementEngine
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    engine = LightGBMDisengagementEngine()
+    return engine.predict_disengagement(student_features=features)
+
+@router.get("/student/{student_id}/knowledge-tracing")
+def get_student_knowledge_tracing(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.knowledge_tracing_engine import DeepKnowledgeTracingEngine
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    engine = DeepKnowledgeTracingEngine()
+    return engine.trace_knowledge(student_features=features)
+
+@router.get("/student/{student_id}/recommendations")
+def get_student_recommendations(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.knowledge_tracing_engine import DeepKnowledgeTracingEngine
+    from ..services.personalized_recommendation_engine import ContentBasedRecommender
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    dkt_engine = DeepKnowledgeTracingEngine()
+    dkt_res = dkt_engine.trace_knowledge(student_features=features)
+    
+    recommender = ContentBasedRecommender()
+    return recommender.generate_recommendations(weak_topics=dkt_res.get("priority_focus_topics", []), student_features=features)
+
+@router.get("/question-bank/predict-difficulty")
+def predict_question_difficulty(question_text: str = None, topic: str = None, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.question_difficulty_engine import IRTQuestionDifficultyEngine
+    
+    item = {}
+    if question_text: item["question_text"] = question_text
+    if topic: item["topic"] = topic
+    
+    engine = IRTQuestionDifficultyEngine()
+    return engine.predict_difficulty(question_item=item if item else None)
+
+@router.get("/student/{student_id}/latent-ability")
+def get_student_latent_ability(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.student_ability_engine import IRTRaschAbilityEngine
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    engine = IRTRaschAbilityEngine()
+    return engine.estimate_ability(student_features=features)
+
+@router.get("/adaptive-test/next-question")
+def get_adaptive_next_question(current_beta: float = 0.50, is_last_correct: bool = True, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.adaptive_test_engine import AdaptiveTestPolicyEngine
+    
+    session_dict = {
+        "current_beta": current_beta,
+        "is_last_correct": is_last_correct,
+        "student_theta": 0.72,
+        "attempted_count": 3
+    }
+    engine = AdaptiveTestPolicyEngine()
+    return engine.select_next_item(session_state=session_dict)
+
+@router.get("/nlp/analyze-teacher-remark")
+def analyze_teacher_text_remark(remark_text: str = None, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.teacher_nlp_engine import TeacherNLPRemarksEngine
+    
+    engine = TeacherNLPRemarksEngine()
+    return engine.analyze_remark(remark_text=remark_text)
+
+@router.get("/student/{student_id}/master-early-warning")
+def get_student_master_early_warning(student_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
+    from ..services.feature_engine import build_student_features
+    from ..services.early_warning_master_engine import EarlyWarningMasterEngine
+    
+    student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) | (models.Student.student_id == student_id)
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    features = build_student_features(student.enrollment_no, db)
+    engine = EarlyWarningMasterEngine()
+    return engine.synthesize_master_score(student_features=features)
+
 @router.get("/batch/{batch_id}/observations")
 def get_batch_observations(batch_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user_obj)):
     # Security check: Admins see all, Teachers see assigned batches

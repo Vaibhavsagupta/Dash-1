@@ -5,7 +5,7 @@ import json
 
 from .. import models
 from .feature_engine import build_student_features
-from .risk_predictor import RuleBasedRiskPredictor
+from .risk_predictor import MLRiskPredictor
 
 def evaluate_and_explain_risk(student_id: str, db: Session) -> Dict[str, Any]:
     student = db.query(models.Student).filter(
@@ -17,8 +17,8 @@ def evaluate_and_explain_risk(student_id: str, db: Session) -> Dict[str, Any]:
     # 1. Feature Engineering
     features = build_student_features(student.enrollment_no, db)
 
-    # 2. Predict Risk using RiskPredictor interface
-    predictor = RuleBasedRiskPredictor()
+    # 2. Predict Risk using XGBoost + SHAP MLRiskPredictor
+    predictor = MLRiskPredictor()
     pred_res = predictor.predict_risk(features)
 
     overall_risk = pred_res["overall_risk"]
@@ -158,6 +158,9 @@ def evaluate_and_explain_risk(student_id: str, db: Session) -> Dict[str, Any]:
         "risk_level": risk_level,
         "risk_trend": risk_trend,
         "risk_status": risk_status,
+        "model_version": pred_res.get("model_version", "XGBoost-v1.6-SHAP"),
+        "top_reasons": pred_res.get("top_reasons", []),
+        "shap_values": pred_res.get("shap_values", {}),
         "reasons": reasons,
         "recommended_actions": actions,
         "calculated_at": datetime.utcnow().isoformat()
