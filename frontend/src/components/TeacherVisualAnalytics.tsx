@@ -566,7 +566,7 @@ export default function TeacherVisualAnalytics() {
                         </div>
                         <div className="mt-4 pt-3 border-t border-indigo-100 flex items-center justify-between text-xs font-bold text-slate-600">
                             <span>Recommended Action: Maintain regular test attempt cadence</span>
-                            <button className="text-indigo-600 hover:text-indigo-800 font-extrabold flex items-center gap-1">
+                            <button onClick={() => setSelectedAIModel('score')} className="text-indigo-600 hover:text-indigo-800 font-extrabold flex items-center gap-1 cursor-pointer">
                                 View Prediction Details →
                             </button>
                         </div>
@@ -634,7 +634,7 @@ export default function TeacherVisualAnalytics() {
                         </div>
                         <div className="mt-4 pt-3 border-t border-rose-200/80 flex items-center justify-between text-xs font-bold text-rose-900">
                             <span>Triggering Automated Faculty Alert & Remedial Quiz Assignment</span>
-                            <button className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow transition">
+                            <button onClick={() => setIsInterventionOpen(true)} className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow transition cursor-pointer">
                                 Assign Remedial Track →
                             </button>
                         </div>
@@ -698,7 +698,7 @@ export default function TeacherVisualAnalytics() {
 
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
                     <span>PCA Projection Mapping: 2D Coordinates (PC1: Academic Performance, PC2: Student Engagement)</span>
-                    <button className="text-blue-600 hover:text-blue-800 font-extrabold flex items-center gap-1">
+                    <button onClick={() => setSelectedAIModel('clustering')} className="text-blue-600 hover:text-blue-800 font-extrabold flex items-center gap-1 cursor-pointer">
                         Open Interactive Cluster Matrix →
                     </button>
                 </div>
@@ -815,7 +815,7 @@ export default function TeacherVisualAnalytics() {
                         </div>
                         <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs font-bold text-rose-900">
                             <span>Counselor Signal: Mandatory 1-on-1 Academic Advisory Reachout Required</span>
-                            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow transition">
+                            <button onClick={() => setIsAlertsOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow transition cursor-pointer">
                                 Dispatch Advisory Alert →
                             </button>
                         </div>
@@ -1015,7 +1015,7 @@ export default function TeacherVisualAnalytics() {
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
                             <span>Topic Domain: Data Structures & Algorithms (Code Snippet Detected)</span>
-                            <button className="text-amber-600 hover:text-amber-800 font-extrabold flex items-center gap-1">
+                            <button onClick={() => setSelectedAIModel('radar')} className="text-amber-600 hover:text-amber-800 font-extrabold flex items-center gap-1 cursor-pointer">
                                 Calibrate Full Question Bank →
                             </button>
                         </div>
@@ -1072,7 +1072,7 @@ export default function TeacherVisualAnalytics() {
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
                             <span>IRT Success Probability: 76.5% on Hard Difficulty Items</span>
-                            <button className="text-emerald-600 hover:text-emerald-800 font-extrabold flex items-center gap-1">
+                            <button onClick={() => setSelectedAIModel('distribution')} className="text-emerald-600 hover:text-emerald-800 font-extrabold flex items-center gap-1 cursor-pointer">
                                 Generate Challenge Assessment →
                             </button>
                         </div>
@@ -1129,7 +1129,7 @@ export default function TeacherVisualAnalytics() {
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
                             <span>Expected Student Success Probability: 51.4%</span>
-                            <button className="text-rose-600 hover:text-rose-800 font-extrabold flex items-center gap-1">
+                            <button onClick={() => setSelectedAIModel('trend')} className="text-rose-600 hover:text-rose-800 font-extrabold flex items-center gap-1 cursor-pointer">
                                 Launch Adaptive Exam Simulator →
                             </button>
                         </div>
@@ -1202,7 +1202,7 @@ export default function TeacherVisualAnalytics() {
 
                         <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
                             <span>Auto-prescribed: Assign targeted SQL practice set & timed speed test</span>
-                            <button className="text-purple-600 hover:text-purple-800 font-extrabold flex items-center gap-1">
+                            <button onClick={() => setSelectedAIModel('anomaly')} className="text-purple-600 hover:text-purple-800 font-extrabold flex items-center gap-1 cursor-pointer">
                                 Run Live NLP Extractor →
                             </button>
                         </div>
@@ -1285,7 +1285,7 @@ export default function TeacherVisualAnalytics() {
 
                         <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-slate-300">
                             <span>Unified Intervention Command Active</span>
-                            <button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-1.5 rounded-xl text-xs font-black shadow-lg transition">
+                            <button onClick={() => setIsInterventionOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-1.5 rounded-xl text-xs font-black shadow-lg transition cursor-pointer">
                                 Dispatch Institutional Directive →
                             </button>
                         </div>
