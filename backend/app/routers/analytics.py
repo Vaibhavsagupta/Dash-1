@@ -7,7 +7,7 @@ import math
 import json
 import uuid
 from datetime import date, datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -1044,7 +1044,7 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
 def get_admin_dashboard_data(
     program: Optional[str] = None,
     branch: Optional[str] = None,
-    semester: Optional[int] = None,
+    semester: Optional[Union[str, int]] = None,
     section: Optional[str] = None,
     db: Session = Depends(database.get_db),
     current_admin: models.User = Depends(auth.get_current_active_admin)
@@ -2447,7 +2447,7 @@ def check_all_inactivity(db: Session = Depends(database.get_db)):
 @router.get("/teacher/class-engagement")
 def get_teacher_class_engagement(
     department: Optional[str] = None,
-    semester: Optional[int] = None,
+    semester: Optional[Union[str, int]] = None,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user_obj)
 ):
@@ -2576,7 +2576,7 @@ def trigger_risk_recalculate_all(
 @router.get("/teacher/risk-center")
 def get_teacher_risk_center(
     branch: Optional[str] = None,
-    semester: Optional[int] = None,
+    semester: Optional[Union[str, int]] = None,
     risk_level: Optional[str] = None,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user_obj)
@@ -3294,7 +3294,7 @@ def get_student_visual_dashboard(
 @router.get("/batch/visual-dashboard")
 def get_batch_visual_dashboard(
     branch: Optional[str] = None,
-    semester: Optional[int] = None,
+    semester: Optional[Union[str, int]] = None,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user_obj)
 ):
