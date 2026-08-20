@@ -253,6 +253,9 @@ export default function AdminDashboard() {
                             className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold p-2 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         >
                             <option value="All">All Branches</option>
+                            <option value="Cyber Security">Cyber Security</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="AI & ML">AI & ML</option>
                             <option value="CSE">CSE</option>
                             <option value="IT">IT</option>
                             <option value="ECE">ECE</option>

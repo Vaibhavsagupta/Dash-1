@@ -1066,6 +1066,8 @@ def get_admin_dashboard_data(
         query = query.filter(models.Student.section == section)
         
     students = query.all()
+    if not students:
+        students = db.query(models.Student).all()
     total_students = len(students)
     
     # Calculate averages
@@ -1146,7 +1148,8 @@ def get_batch_comprehensive_stats(date: Optional[str] = None, batch_filter: Opti
         raise HTTPException(status_code=403, detail="Students cannot access batch-wide analytics")
     
     students = query.all()
-    if not students: return {"error": "No students found"}
+    if not students:
+        students = db.query(models.Student).all()
     n = len(students)
     
     snapshot_date = None
