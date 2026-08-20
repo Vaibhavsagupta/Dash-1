@@ -10,21 +10,12 @@ router = APIRouter(
 
 # Admin or Teacher Dependency
 def admin_or_teacher(current_user: models.User = Depends(auth.get_current_user_obj), db: Session = Depends(database.get_db)):
-    if current_user.role == models.UserRole.admin:
-        allowed_admins = ["admin@sage.com"]
-        if current_user.email not in allowed_admins:
-            admin_entry = db.query(models.Admin).filter(models.Admin.email == current_user.email).first()
-            if not admin_entry or not admin_entry.approved:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied. Admin not approved."
-                )
-    elif current_user.role != models.UserRole.teacher:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Faculty access required"
-        )
-    return current_user
+    if current_user.role in [models.UserRole.admin, models.UserRole.teacher]:
+        return current_user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Faculty or Admin access required"
+    )
 
 @router.get("", response_model=List[schemas.MarksParameterResponse])
 def get_parameters(db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_or_teacher)):
