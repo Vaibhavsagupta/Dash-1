@@ -592,13 +592,13 @@ export default function StudentProgressionList() {
             });
         }
 
-        // Filter by Batch (Flexible string matching for 'Batch 1' -> 'batch_1')
+        // Filter by Batch
         if (selectedBatch !== 'All') {
-            const targetBatch = selectedBatch.toLowerCase().replace(/\s+/g, '_'); // 'batch_1'
+            const cleanTarget = selectedBatch.toLowerCase().replace(/[^a-z0-9]/g, '');
             result = result.filter(s => {
                 if (!s.batch_id) return true;
-                const b = s.batch_id.toLowerCase();
-                return b.includes(targetBatch) || b === selectedBatch.toLowerCase();
+                const cleanB = s.batch_id.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return cleanB.includes(cleanTarget) || cleanTarget.includes(cleanB);
             });
         }
 
@@ -687,12 +687,12 @@ export default function StudentProgressionList() {
                     ))}
                 </div>
 
-                <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
-                    {['All', 'Batch 1', 'Batch 2', 'Batch 3'].map((b) => (
+                <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner overflow-x-auto">
+                    {['All', 'Batch 2020', 'Batch 2021', 'Batch 2022'].map((b) => (
                         <button
                             key={b}
                             onClick={() => setSelectedBatch(b)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedBatch === b ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${selectedBatch === b ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             {b}
                         </button>
