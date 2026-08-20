@@ -42,13 +42,18 @@ export default function AIChatbot() {
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/settings/predefined-questions`)
-            .then(res => res.json())
+            .then(res => {
+                if (res.ok) return res.json();
+                return null;
+            })
             .then(data => {
                 if (Array.isArray(data) && data.length > 0) {
                     setSuggestions(data.map((q: any) => q.question_text));
                 }
             })
-            .catch(err => console.error("Error fetching predefined chatbot questions:", err));
+            .catch(err => {
+                console.warn("Using default predefined chatbot questions:", err);
+            });
     }, []);
 
     // Don't show chatbot for students or unauthenticated users
