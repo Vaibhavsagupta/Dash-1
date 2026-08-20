@@ -32,6 +32,77 @@ def auto_init_database():
                         db.add(models.Teacher(teacher_id="T01", name="Prof. Teacher", email="teacher@sage.com", department="CSE", subject="CS", avg_improvement=15.0, feedback_score=4.5, content_quality_score=4.2, placement_conversion=20.0))
                     db.add(models.User(email="teacher@sage.com", password_hash=get_password_hash("password"), role=models.UserRole.teacher, linked_id="T01", approved=True, is_verified=True))
 
+                # Seed Real Students from real_students_full.json if database has fewer than 100 students
+                student_count = db.query(models.Student).count()
+                if student_count < 100:
+                    json_data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "real_students_full.json")
+                    if os.path.exists(json_data_path):
+                        print("[Auto-Init] Seeding real student dataset (153 students)...")
+                        import json
+                        with open(json_data_path, "r", encoding="utf-8") as f:
+                            real_students = json.load(f)
+                        
+                        for s_data in real_students:
+                            existing = db.query(models.Student).filter(models.Student.enrollment_no == s_data["student_id"]).first()
+                            if not existing:
+                                scholar_no_val = s_data.get("scholar_no")
+                                if not scholar_no_val or str(scholar_no_val).lower() == "nan":
+                                    scholar_no_val = None
+
+                                st = models.Student(
+                                    enrollment_no=s_data["student_id"],
+                                    scholar_no=scholar_no_val,
+                                    name=s_data["name"],
+                                    email=s_data["email"],
+                                    program=s_data.get("program", "B.Tech"),
+                                    branch=s_data.get("branch", "CSE"),
+                                    semester=6,
+                                    section="A",
+                                    cgpa=s_data.get("cgpa", 8.0),
+                                    active_backlogs=s_data.get("active_backlogs", 0),
+                                    admission_year=2020 if "2020" in s_data["batch_id"] else (2021 if "2021" in s_data["batch_id"] else 2022),
+                                    identity_proof=s_data.get("identity_proof"),
+                                    attendance=s_data.get("attendance", 85),
+                                    dsa_score=s_data.get("dsa_score", 80),
+                                    ml_score=s_data.get("ml_score", 78),
+                                    qa_score=s_data.get("qa_score", 82),
+                                    projects_score=s_data.get("projects_score", 85),
+                                    mock_interview_score=s_data.get("mock_interview_score", 80),
+                                    rag_status=s_data.get("rag_status", "Green"),
+                                    batch_id=s_data.get("batch_id"),
+                                    pre_score=s_data.get("pre_score", 70.0),
+                                    post_score=s_data.get("post_score", 88.0),
+                                    pre_communication=s_data.get("pre_communication", 3.5),
+                                    post_communication=s_data.get("post_communication", 4.5),
+                                    pre_engagement=s_data.get("pre_engagement", 3.5),
+                                    post_engagement=s_data.get("post_engagement", 4.5),
+                                    pre_subject_knowledge=s_data.get("pre_subject_knowledge", 3.5),
+                                    post_subject_knowledge=s_data.get("post_subject_knowledge", 4.5),
+                                    pre_confidence=s_data.get("pre_confidence", 3.5),
+                                    post_confidence=s_data.get("post_confidence", 4.5),
+                                    pre_fluency=s_data.get("pre_fluency", 3.5),
+                                    post_fluency=s_data.get("post_fluency", 4.5),
+                                    pre_remarks=s_data.get("pre_remarks"),
+                                    pre_status=s_data.get("pre_status"),
+                                    post_remarks=s_data.get("post_remarks"),
+                                    post_status=s_data.get("post_status"),
+                                    external_certifications=s_data.get("external_certifications", 2)
+                                )
+                                db.add(st)
+                                db.flush()
+                                
+                                # Add User account for student
+                                if not db.query(models.User).filter(models.User.email == s_data["email"]).first():
+                                    db.add(models.User(
+                                        email=s_data["email"],
+                                        password_hash=get_password_hash("password123"),
+                                        role=models.UserRole.student,
+                                        linked_id=st.enrollment_no,
+                                        approved=True,
+                                        is_verified=True
+                                    ))
+                        db.commit()
+
                 # Ensure default Student account
                 if not db.query(models.User).filter(models.User.email == "vaibhav@sage.com").first():
                     print("[Auto-Init] Creating default Student (vaibhav@sage.com)...")

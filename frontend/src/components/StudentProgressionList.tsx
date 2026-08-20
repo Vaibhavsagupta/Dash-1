@@ -85,9 +85,9 @@ interface BatchStats {
 
 const FALLBACK_STUDENTS: StudentAnalytics[] = [
     {
-        student_id: "STU-1001",
-        name: "Aarav Sharma",
-        batch_id: "batch_1",
+        student_id: "22BTA3CSF10001",
+        name: "Aadarsh Patel",
+        batch_id: "Batch 2020",
         prs_score: 92,
         rank: 1,
         percentile: 99.2,
@@ -117,9 +117,9 @@ const FALLBACK_STUDENTS: StudentAnalytics[] = [
         assessment_trend: [72, 78, 85, 92]
     },
     {
-        student_id: "STU-1002",
-        name: "Ananya Iyer",
-        batch_id: "batch_1",
+        student_id: "22BTA3CSF10002",
+        name: "Poorvi Khare",
+        batch_id: "Batch 2020",
         prs_score: 87,
         rank: 2,
         percentile: 97.5,
@@ -145,9 +145,9 @@ const FALLBACK_STUDENTS: StudentAnalytics[] = [
         assessment_trend: [68, 74, 80, 87]
     },
     {
-        student_id: "STU-1003",
-        name: "Rohan Verma",
-        batch_id: "batch_2",
+        student_id: "23MTA5DSC10001",
+        name: "Aarti",
+        batch_id: "Batch 2021",
         prs_score: 68,
         rank: 8,
         percentile: 82.0,
@@ -173,9 +173,9 @@ const FALLBACK_STUDENTS: StudentAnalytics[] = [
         assessment_trend: [55, 60, 64, 68]
     },
     {
-        student_id: "STU-1004",
-        name: "Priya Sundaram",
-        batch_id: "batch_2",
+        student_id: "22MTA5CSF10002",
+        name: "Ajay Malviya",
+        batch_id: "Batch 2022",
         prs_score: 45,
         rank: 14,
         percentile: 52.0,

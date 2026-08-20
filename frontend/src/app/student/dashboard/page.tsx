@@ -50,11 +50,11 @@ ChartJS.register(
 
 const DEFAULT_STUDENT_DATA = {
     student: {
-        student_id: "STU-1001",
-        name: "Aarav Sharma",
-        email: "aarav.sharma@sage.edu",
-        batch_id: "batch_1",
-        batch_name: "CS-2026-A",
+        student_id: "22BTA3CSF10001",
+        name: "Aadarsh Patel",
+        email: "aadarshpatel57@gmail.com",
+        batch_id: "Batch 2020",
+        batch_name: "B Tech (Cyber Security & Forensic)",
         cgpa: 8.92,
         active_backlogs: 0,
         attendance_pct: 94.0,

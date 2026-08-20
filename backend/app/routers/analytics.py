@@ -670,8 +670,8 @@ def list_ai_alerts(db: Session = Depends(database.get_db), current_user: models.
             fallback_alerts = [
                 {
                     "id": "alert-1",
-                    "student_id": "STU1001",
-                    "student_name": "Rahul Kumar",
+                    "student_id": "22BTA3CSF10001",
+                    "student_name": "Aadarsh Patel",
                     "message": "CRITICAL AI ALERT: Attendance dropped to 62%. XGBoost Risk Model predicts High Academic Risk.",
                     "type": "risk",
                     "is_read": False,
@@ -679,8 +679,8 @@ def list_ai_alerts(db: Session = Depends(database.get_db), current_user: models.
                 },
                 {
                     "id": "alert-2",
-                    "student_id": "STU1002",
-                    "student_name": "Priya Sharma",
+                    "student_id": "22BTA3CSF10002",
+                    "student_name": "Poorvi Khare",
                     "message": "PERFORMANCE DROP ALERT: Sudden score drop from 82% to 35% detected in DBMS Mid-Sem test.",
                     "type": "risk",
                     "is_read": False,

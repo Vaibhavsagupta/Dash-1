@@ -48,8 +48,8 @@ ChartJS.register(
 
 const DEFAULT_STUDENT_VISUAL_ANALYTICS_DATA = {
     student: {
-        student_id: "STU-1001",
-        name: "Aarav Sharma",
+        student_id: "22BTA3CSF10001",
+        name: "Aadarsh Patel",
         cgpa: 8.92,
         prs_score: 92.0,
         class_rank: 1
