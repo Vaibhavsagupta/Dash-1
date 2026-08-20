@@ -866,7 +866,7 @@ def get_students(db: Session = Depends(database.get_db), current_user: models.Us
         trend_scores = [a.total_score for a in ass_trend]
 
         results.append({
-            "student_id": s.student_id,
+            "student_id": s.student_id or s.enrollment_no,
             "name": s.name,
             "batch_id": s.batch_id,
             "prs_score": prs,

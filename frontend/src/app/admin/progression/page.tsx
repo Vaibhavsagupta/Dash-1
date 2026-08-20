@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 
 export default function AdminProgressionPage() {
     const router = useRouter();
-    const [viewMode, setViewMode] = useState<'students' | 'teachers'>('teachers');
+    const [viewMode, setViewMode] = useState<'students' | 'teachers'>('students');
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
