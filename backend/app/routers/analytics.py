@@ -910,7 +910,9 @@ def get_student_detailed_analytics(student_id: str, db: Session = Depends(databa
         raise HTTPException(status_code=403, detail="Not authorized to view other students' data")
         
     student = db.query(models.Student).filter(
+        (models.Student.enrollment_no == student_id) |
         (models.Student.student_id == student_id) |
+        (models.Student.scholar_no == student_id) |
         (models.Student.email == student_id)
     ).first()
     if not student:
