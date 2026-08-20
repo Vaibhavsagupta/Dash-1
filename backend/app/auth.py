@@ -57,17 +57,25 @@ def get_current_user_obj(token: Optional[str] = Depends(oauth2_scheme), db: Sess
     if user is None:
         # Create default demo user if not found in database
         default_role = models.UserRole.admin if "admin" in email else (models.UserRole.teacher if "teacher" in email else models.UserRole.student)
+        st = db.query(models.Student).first()
+        student_linked_id = st.enrollment_no if st else "22BTA3CSF10001"
         user = models.User(
             id=str(uuid.uuid4()),
             email=email,
-            hashed_password=get_password_hash("admin123"),
+            password_hash=get_password_hash("admin123"),
             role=default_role,
             approved=True,
-            linked_id="1"
+            linked_id="T01" if default_role == models.UserRole.teacher else (student_linked_id if default_role == models.UserRole.student else "admin")
         )
         db.add(user)
         db.commit()
         db.refresh(user)
+
+    if user.role == models.UserRole.student and (not user.linked_id or user.linked_id == "1"):
+        st = db.query(models.Student).first()
+        if st:
+            user.linked_id = st.enrollment_no
+            db.commit()
 
     if not user.approved:
         user.approved = True

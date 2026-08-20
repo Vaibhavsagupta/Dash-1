@@ -158,6 +158,39 @@ def auto_init_database():
                         db.commit()
                         db.refresh(p)
                         params_created[d["name"]] = p.id
+
+                # Seed Tests & TestAssignments if missing
+                if db.query(models.Test).count() == 0:
+                    print("[Auto-Init] Seeding default tests & test assignments...")
+                    import datetime
+                    teacher = db.query(models.Teacher).first()
+                    t_id = teacher.faculty_id if teacher else "T01"
+                    
+                    t1 = models.Test(id="TEST001", teacher_id=t_id, name="Python & DSA Fundamentals Test", subject="Data Structures", topic="Python Basics & Arrays", description="Assessment on Python fundamentals, list operations, and memory complexity.", duration=45, passing_marks=40, difficulty="Medium", approved=True)
+                    t2 = models.Test(id="TEST002", teacher_id=t_id, name="DBMS & SQL Comprehensive Assessment", subject="DBMS", topic="Normalization & SQL Queries", description="Mid-term evaluation covering 1NF-3NF, JOINs and indexing.", duration=60, passing_marks=50, difficulty="Hard", approved=True)
+                    t3 = models.Test(id="TEST003", teacher_id=t_id, name="Machine Learning & Predictive Models", subject="Machine Learning", topic="Classification & Regression", description="Quiz on supervised learning algorithms, decision trees, and confusion matrix.", duration=30, passing_marks=35, difficulty="Medium", approved=True)
+                    db.add_all([t1, t2, t3])
+                    db.commit()
+
+                    students_list = db.query(models.Student).all()
+                    today_dt = datetime.date.today()
+                    start_dt = today_dt - datetime.timedelta(days=2)
+                    end_dt = today_dt + datetime.timedelta(days=14)
+                    
+                    asgs = []
+                    for st_item in students_list:
+                        for t_item in [t1, t2, t3]:
+                            asgs.append(models.TestAssignment(
+                                id=f"ASG_{st_item.enrollment_no}_{t_item.id}",
+                                test_id=t_item.id,
+                                student_id=st_item.enrollment_no,
+                                assigned_by=t_id,
+                                start_date=start_dt,
+                                end_date=end_dt,
+                                status="Pending"
+                            ))
+                    db.add_all(asgs)
+                    db.commit()
                     
                     students = db.query(models.Student).all()
                     for s in students:
