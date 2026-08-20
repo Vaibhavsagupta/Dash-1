@@ -42,13 +42,16 @@ export default function AdminSidebar() {
 
                 const res = await fetch(`${API_BASE_URL}/admin/pending-approvals`, {
                     headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setPendingCount(data.length);
+                }).catch(() => null);
+
+                if (res && res.ok) {
+                    const data = await res.json().catch(() => []);
+                    if (Array.isArray(data)) {
+                        setPendingCount(data.length);
+                    }
                 }
             } catch (err) {
-                console.warn("Failed to fetch pending count", err);
+                // Ignore network errors
             }
         };
 
