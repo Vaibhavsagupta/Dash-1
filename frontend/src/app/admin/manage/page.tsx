@@ -35,6 +35,7 @@ export default function ManageData() {
             });
             if (res.ok) {
                 const data = await res.json();
+                setStudents(data);
             } else {
                 console.warn('Failed to fetch students:', res.statusText);
             }
@@ -231,8 +232,9 @@ export default function ManageData() {
     const batches = ['All', ...Array.from(new Set(students.map(s => s.batch_id || 'N/A')))];
 
     const filteredStudents = students.filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
-            s.student_id.toLowerCase().includes(search.toLowerCase());
+        const nameStr = (s.name || '').toLowerCase();
+        const idStr = (s.student_id || s.enrollment_no || s.scholar_no || '').toLowerCase();
+        const matchesSearch = nameStr.includes(search.toLowerCase()) || idStr.includes(search.toLowerCase());
         const matchesBatch = selectedBatch === 'All' || (s.batch_id || 'N/A') === selectedBatch;
         return matchesSearch && matchesBatch;
     });
@@ -395,10 +397,12 @@ export default function ManageData() {
                                         </td>
                                     </tr>
                                 )}
-                                {filteredStudents.map(student => (
-                                    <tr key={student.student_id} className="hover:bg-slate-50 transition">
-                                        <td className="p-4 font-mono text-xs text-slate-500">{student.student_id}</td>
-                                        <td className="p-4 font-bold text-slate-900">{student.name}</td>
+                                {filteredStudents.map((student, idx) => {
+                                    const sId = student.student_id || student.enrollment_no || `S_${idx}`;
+                                    return (
+                                        <tr key={sId} className="hover:bg-slate-50 transition">
+                                            <td className="p-4 font-mono text-xs text-slate-500">{sId}</td>
+                                            <td className="p-4 font-bold text-slate-900">{student.name}</td>
 
                                         {editingId === student.student_id ? (
                                             <>
@@ -442,7 +446,8 @@ export default function ManageData() {
                                             </>
                                         )}
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
