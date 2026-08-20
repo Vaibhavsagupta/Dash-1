@@ -77,16 +77,16 @@ const DEFAULT_BATCH_ANALYTICS_DATA = {
         { grade_tier: "F (<60%)", count: 10 }
     ],
     attendance_vs_performance: [
-        { x: 92, y: 88, name: "Rahul Sharma", student_id: "STU1001" },
-        { x: 88, y: 84, name: "Priya Verma", student_id: "STU1002" },
-        { x: 62, y: 48, name: "Aman Gupta", student_id: "STU1003" },
-        { x: 95, y: 94, name: "Ananya Mehta", student_id: "STU1004" }
+        { x: 92, y: 88, name: "Aadarsh Patel", student_id: "22BTA3CSF10001" },
+        { x: 88, y: 84, name: "Poorvi Khare", student_id: "22BTA3CSF10002" },
+        { x: 62, y: 48, name: "Aarti", student_id: "23MTA5DSC10001" },
+        { x: 95, y: 94, name: "Ajay Malviya", student_id: "22MTA5CSF10002" }
     ],
     student_rankings: [
-        { rank: 1, student_id: "STU1001", name: "Rahul Sharma", branch: "CSE", section: "A", score: 94, attendance: 95, rag_status: "Green" },
-        { rank: 2, student_id: "STU1002", name: "Ananya Mehta", branch: "CSE", section: "A", score: 92, attendance: 94, rag_status: "Green" },
-        { rank: 3, student_id: "STU1003", name: "Priya Verma", branch: "IT", section: "B", score: 88, attendance: 89, rag_status: "Green" },
-        { rank: 4, student_id: "STU1004", name: "Aman Gupta", branch: "ECE", section: "A", score: 62, attendance: 65, rag_status: "Amber" }
+        { rank: 1, student_id: "22BTA3CSF10001", name: "Aadarsh Patel", branch: "Cyber Security", section: "A", score: 94, attendance: 95, rag_status: "Green" },
+        { rank: 2, student_id: "22BTA3CSF10002", name: "Poorvi Khare", branch: "Cyber Security", section: "A", score: 92, attendance: 94, rag_status: "Green" },
+        { rank: 3, student_id: "23MTA5DSC10001", name: "Aarti", branch: "Data Science", section: "A", score: 88, attendance: 89, rag_status: "Green" },
+        { rank: 4, student_id: "22MTA5CSF10002", name: "Ajay Malviya", branch: "Cyber Security", section: "A", score: 62, attendance: 65, rag_status: "Amber" }
     ],
     topic_class_performance: [
         { topic: "Python Basics", avg_accuracy: 85 },

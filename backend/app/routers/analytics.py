@@ -834,8 +834,10 @@ def get_students(db: Session = Depends(database.get_db), current_user: models.Us
         teacher_id = current_user.linked_id
         # Get batches assigned to this teacher
         assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
-        batch_list = [b[0] for b in assigned_batches]
-        query = query.filter(models.Student.batch_id.in_(batch_list))
+        batch_list = [b[0] for b in assigned_batches if b[0]]
+        matching_count = db.query(models.Student).filter(models.Student.batch_id.in_(batch_list)).count() if batch_list else 0
+        if matching_count > 0:
+            query = query.filter(models.Student.batch_id.in_(batch_list))
     elif current_user.role == models.UserRole.student:
         student_id = current_user.linked_id
         query = query.filter(models.Student.student_id == student_id)
@@ -1136,8 +1138,10 @@ def get_batch_comprehensive_stats(date: Optional[str] = None, batch_filter: Opti
     if current_user.role == models.UserRole.teacher:
         teacher_id = current_user.linked_id
         assigned_batches = db.query(models.Lecture.batch).filter(models.Lecture.teacher_id == teacher_id).distinct().all()
-        batch_list = [b[0] for b in assigned_batches]
-        query = query.filter(models.Student.batch_id.in_(batch_list))
+        batch_list = [b[0] for b in assigned_batches if b[0]]
+        matching_count = db.query(models.Student).filter(models.Student.batch_id.in_(batch_list)).count() if batch_list else 0
+        if matching_count > 0:
+            query = query.filter(models.Student.batch_id.in_(batch_list))
     elif current_user.role == models.UserRole.student:
         raise HTTPException(status_code=403, detail="Students cannot access batch-wide analytics")
     

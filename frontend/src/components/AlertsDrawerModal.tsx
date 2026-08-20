@@ -18,8 +18,8 @@ interface AlertsDrawerModalProps {
 const DEFAULT_ALERTS = [
     {
         id: "alert-1",
-        student_id: "STU1001",
-        student_name: "Rahul Kumar",
+        student_id: "22BTA3CSF10001",
+        student_name: "Aadarsh Patel",
         message: "CRITICAL ALERT: Attendance dropped to 62%. Student is at high risk of academic decline.",
         type: "risk",
         is_read: false,
@@ -27,8 +27,8 @@ const DEFAULT_ALERTS = [
     },
     {
         id: "alert-2",
-        student_id: "STU1002",
-        student_name: "Priya Sharma",
+        student_id: "22BTA3CSF10002",
+        student_name: "Poorvi Khare",
         message: "PERFORMANCE DROP ALERT: Sudden score drop from 82% to 35% detected in DBMS Mid-Sem exam.",
         type: "risk",
         is_read: false,
@@ -36,8 +36,8 @@ const DEFAULT_ALERTS = [
     },
     {
         id: "alert-3",
-        student_id: "STU1003",
-        student_name: "Aman Verma",
+        student_id: "23MTA5DSC10001",
+        student_name: "Aarti",
         message: "DISENGAGEMENT WARNING: 3 consecutive assignments remain unsubmitted in Data Structures.",
         type: "risk",
         is_read: false,

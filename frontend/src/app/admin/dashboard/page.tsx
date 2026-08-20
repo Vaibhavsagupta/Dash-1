@@ -103,9 +103,9 @@ export default function AdminDashboard() {
                         grade_distribution: { 'O': 120, 'A+': 340, 'A': 410, 'B+': 210, 'B': 95, 'P': 45, 'F': 30 },
                         top_students: [
                             { id: 1, name: 'Vaibhav Gupta', cgpa: 9.85 },
-                            { id: 2, name: 'Ananya Sharma', cgpa: 9.72 },
-                            { id: 3, name: 'Rohan Verma', cgpa: 9.60 },
-                            { id: 4, name: 'Priya Mehta', cgpa: 9.45 }
+                            { id: 2, name: 'Aadarsh Patel', cgpa: 9.72 },
+                            { id: 3, name: 'Poorvi Khare', cgpa: 9.60 },
+                            { id: 4, name: 'Aarti', cgpa: 9.45 }
                         ],
                         teacher_performance: [
                             { id: 1, name: 'Dr. Rajesh Sharma', subject: 'Machine Learning', tei: 94 },
@@ -136,9 +136,9 @@ export default function AdminDashboard() {
                     grade_distribution: { 'O': 120, 'A+': 340, 'A': 410, 'B+': 210, 'B': 95, 'P': 45, 'F': 30 },
                     top_students: [
                         { id: 1, name: 'Vaibhav Gupta', cgpa: 9.85 },
-                        { id: 2, name: 'Ananya Sharma', cgpa: 9.72 },
-                        { id: 3, name: 'Rohan Verma', cgpa: 9.60 },
-                        { id: 4, name: 'Priya Mehta', cgpa: 9.45 }
+                        { id: 2, name: 'Aadarsh Patel', cgpa: 9.72 },
+                        { id: 3, name: 'Poorvi Khare', cgpa: 9.60 },
+                        { id: 4, name: 'Aarti', cgpa: 9.45 }
                     ],
                     teacher_performance: [
                         { id: 1, name: 'Dr. Rajesh Sharma', subject: 'Machine Learning', tei: 94 },

@@ -46,9 +46,9 @@ export default function RiskFeatureDetailModal({
                         "Issue automated attendance warning alerts to parents for students under 65% attendance."
                     ],
                     affectedStudents: [
-                        { name: "Aman Gupta", roll: "23BTA3ARI10038", risk: "Critical (88%)", reason: "Attendance 55% + Test Score 42%" },
-                        { name: "Rohan Verma", roll: "23BTA3ARI10042", risk: "High (76%)", reason: "Declining 30-day score trend (-15%)" },
-                        { name: "Priya Sharma", roll: "23BTA3ARI10019", risk: "High (74%)", reason: "Internal Marks 45% + Backlog Risk" }
+                        { name: "Aadarsh Patel", roll: "22BTA3CSF10001", risk: "Critical (88%)", reason: "Attendance 55% + Test Score 42%" },
+                        { name: "Poorvi Khare", roll: "22BTA3CSF10002", risk: "High (76%)", reason: "Declining 30-day score trend (-15%)" },
+                        { name: "Aarti", roll: "23MTA5DSC10001", risk: "High (74%)", reason: "Internal Marks 45% + Backlog Risk" }
                     ]
                 };
             case 'trend':
