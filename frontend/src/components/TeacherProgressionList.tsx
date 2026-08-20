@@ -417,12 +417,12 @@ export default function TeacherProgressionList() {
             </motion.div>
 
             {filteredTeachers.length === 0 && (
-                <div className="text-center py-20">
-                    <div className="mx-auto h-24 w-24 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                        <User size={40} className="text-slate-600" />
+                <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="mx-auto h-24 w-24 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                        <User size={40} className="text-indigo-500" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-200">No teachers found</h3>
-                    <p className="text-slate-500">Try adjusting your search terms or batch filter</p>
+                    <h3 className="text-lg font-bold text-slate-900">No teachers found</h3>
+                    <p className="text-slate-500 font-medium">Try adjusting your search terms or batch filter</p>
                 </div>
             )}
         </div>

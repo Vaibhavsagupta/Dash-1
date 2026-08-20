@@ -363,15 +363,15 @@ const TiltCard = ({ student, batchStats }: { student: StudentAnalytics, batchSta
             {/* AI Report Modal (kept) */}
             <AnimatePresence>
                 {isReportOpen && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => { e.stopPropagation(); setIsReportOpen(false); }} className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm rounded-2xl">
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-slate-900 border border-violet-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => { e.stopPropagation(); setIsReportOpen(false); }} className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm rounded-2xl">
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
                             {/* ... report modal content ... */}
                             <div className="flex justify-between items-start mb-4">
-                                <div><h4 className="text-lg font-bold text-white flex items-center gap-2"><div className="p-1 bg-violet-600 rounded-lg"><TrendingUp size={16} /></div>AI Performance Analysis</h4><p className="text-xs text-slate-400 mt-1">Generated for {student.name}</p></div>
-                                <button onClick={(e) => { e.stopPropagation(); setIsReportOpen(false); }} className="text-slate-500 hover:text-white p-1"><span className="sr-only">Close</span><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                <div><h4 className="text-lg font-bold text-slate-900 flex items-center gap-2"><div className="p-1 bg-indigo-600 rounded-lg text-white"><TrendingUp size={16} /></div>AI Performance Analysis</h4><p className="text-xs text-slate-500 mt-1">Generated for {student.name}</p></div>
+                                <button onClick={(e) => { e.stopPropagation(); setIsReportOpen(false); }} className="text-slate-400 hover:text-slate-700 p-1"><span className="sr-only">Close</span><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
                             </div>
-                            <div className="min-h-[150px] bg-slate-800/50 rounded-xl p-4 text-sm text-slate-300 leading-relaxed border border-slate-700/50">
-                                {reportLoading ? (<div className="flex flex-col items-center justify-center h-32 gap-3"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div><span className="text-xs text-violet-400 animate-pulse">Analyzing Metrics...</span></div>) : (<>{reportContent.split('\n\n').map((para, i) => (<p key={i} className="mb-3 last:mb-0">{para}</p>))}</>)}
+                            <div className="min-h-[150px] bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-slate-200">
+                                {reportLoading ? (<div className="flex flex-col items-center justify-center h-32 gap-3"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div><span className="text-xs text-indigo-600 font-bold animate-pulse">Analyzing Metrics...</span></div>) : (<>{reportContent.split('\n\n').map((para, i) => (<p key={i} className="mb-3 last:mb-0">{para}</p>))}</>)}
                             </div>
                         </motion.div>
                     </motion.div>
@@ -441,11 +441,11 @@ const TiltCard = ({ student, batchStats }: { student: StudentAnalytics, batchSta
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
                                 transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                className="absolute bottom-0 inset-x-0 z-30 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700 overflow-hidden"
+                                className="absolute bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-xl border-t border-slate-200 overflow-hidden shadow-2xl"
                             >
                                 <div className="p-5 space-y-4">
-                                    <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-violet-400">Batch Enrollment</h4>
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600">Batch Enrollment</h4>
                                         <div className="flex gap-2">
                                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                                             <span className="text-[10px] text-slate-500 font-bold uppercase">Active</span>
@@ -454,39 +454,39 @@ const TiltCard = ({ student, batchStats }: { student: StudentAnalytics, batchSta
 
                                     {batchLoading ? (
                                         <div className="py-8 flex flex-col items-center justify-center gap-3">
-                                            <div className="w-5 h-5 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin"></div>
+                                            <div className="w-5 h-5 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"></div>
                                             <span className="text-[10px] text-slate-500 font-bold uppercase">Syncing Records...</span>
                                         </div>
                                     ) : batchInfo ? (
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-3">
                                                 <div>
-                                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-1">Batch ID</div>
-                                                    <div className="text-sm font-bold text-slate-200">{batchInfo.batch_name}</div>
+                                                    <div className="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-1">Batch ID</div>
+                                                    <div className="text-sm font-bold text-slate-900">{batchInfo.batch_name}</div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-1">Primary Trainer</div>
-                                                    <div className="text-sm font-bold text-slate-200">{batchInfo.trainer}</div>
+                                                    <div className="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-1">Primary Trainer</div>
+                                                    <div className="text-sm font-bold text-slate-900">{batchInfo.trainer}</div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-1">Duration</div>
-                                                    <div className="text-sm font-bold text-slate-200">{batchInfo.duration}</div>
+                                                    <div className="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-1">Duration</div>
+                                                    <div className="text-sm font-bold text-slate-900">{batchInfo.duration}</div>
                                                 </div>
                                             </div>
                                             <div className="space-y-3">
                                                 <div>
-                                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-1">Attendance</div>
-                                                    <div className="text-sm font-bold text-emerald-400">{batchInfo.attendance}</div>
+                                                    <div className="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-1">Attendance</div>
+                                                    <div className="text-sm font-bold text-emerald-600">{batchInfo.attendance}</div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-1">Cycle Range</div>
-                                                    <div className="text-[10px] font-bold text-slate-300">
+                                                    <div className="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-1">Cycle Range</div>
+                                                    <div className="text-[10px] font-bold text-slate-700">
                                                         {new Date(batchInfo.start_date || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(batchInfo.end_date || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-wider mb-1">Assessment Avg</div>
-                                                    <div className="text-sm font-bold text-indigo-400">{batchInfo.assessment_avg}</div>
+                                                    <div className="text-[9px] text-slate-400 font-black uppercase tracking-wider mb-1">Assessment Avg</div>
+                                                    <div className="text-sm font-bold text-indigo-600">{batchInfo.assessment_avg}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -496,7 +496,7 @@ const TiltCard = ({ student, batchStats }: { student: StudentAnalytics, batchSta
 
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setIsBatchOpen(false); }}
-                                        className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-colors border border-slate-700/50"
+                                        className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-colors border border-slate-200"
                                     >
                                         Minimize Details
                                     </button>
@@ -506,37 +506,34 @@ const TiltCard = ({ student, batchStats }: { student: StudentAnalytics, batchSta
                     </AnimatePresence>
 
                     {/* Detailed Content - Fades in on Hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75 absolute inset-0 bg-slate-800 flex flex-col h-full z-20 pointer-events-none group-hover:pointer-events-auto rounded-b-2xl overflow-hidden">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75 absolute inset-0 bg-white border border-slate-200 flex flex-col h-full z-20 pointer-events-none group-hover:pointer-events-auto rounded-b-2xl overflow-hidden shadow-xl">
                         {/* Tab Headers */}
-                        <div className="flex border-b border-slate-700 bg-slate-900/50">
+                        <div className="flex border-b border-slate-200 bg-slate-50">
                             {[
-                                { id: 'skills', label: 'Skills', icon: PieChart, color: 'violet' },
-                                { id: 'growth', label: 'Growth', icon: Activity, color: 'violet' },
-                                { id: 'assessments', label: 'Ass.', icon: TrendingUp, color: 'emerald' },
+                                { id: 'skills', label: 'Skills', icon: PieChart, color: 'indigo' },
+                                { id: 'growth', label: 'Growth', icon: Activity, color: 'indigo' },
+                                { id: 'assessments', label: 'Ass.', icon: TrendingUp, color: 'indigo' },
                                 { id: 'compare', label: 'vs Batch', icon: BarChart2, color: 'indigo' },
-                                { id: 'intelligence', label: 'Soft', icon: Zap, color: 'emerald' },
-                                { id: 'benchmark', label: 'Bench', icon: Target, color: 'sky' },
+                                { id: 'intelligence', label: 'Soft', icon: Zap, color: 'indigo' },
+                                { id: 'benchmark', label: 'Bench', icon: Target, color: 'indigo' },
                             ].map((tab) => {
                                 const isActive = activeTab === tab.id;
-                                const activeClass = tab.color === 'violet' ? 'text-violet-400 border-b-2 border-violet-400 bg-violet-500/5' :
-                                    tab.color === 'emerald' ? 'text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5' :
-                                        tab.color === 'indigo' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/5' :
-                                            'text-sky-400 border-b-2 border-sky-400 bg-sky-500/5';
+                                const activeClass = 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50';
                                 return (
-                                    <button key={tab.id} onClick={(e) => { e.stopPropagation(); setActiveTab(tab.id as any); }} className={`flex-1 py-3 text-[9px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 leading-none ${isActive ? activeClass : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>{tab.label}</button>
+                                    <button key={tab.id} onClick={(e) => { e.stopPropagation(); setActiveTab(tab.id as any); }} className={`flex-1 py-3 text-[9px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 leading-none ${isActive ? activeClass : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}>{tab.label}</button>
                                 );
                             })}
                         </div>
 
                         {/* Chart Area */}
-                        <div className="flex-1 p-4 relative">
-                            {activeTab === 'skills' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><h4 className="text-[10px] uppercase tracking-wider text-slate-500 text-center mb-1">Competency Profile</h4><div className="flex-1 min-h-0 relative"><Radar data={radarData} options={radarOptions} /></div></motion.div>)}
-                            {activeTab === 'growth' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><div className="text-[10px] uppercase tracking-wider text-center mb-1 text-slate-500">Pre vs Post Observation</div><div className="flex-1 min-h-0 relative"><Bar data={growthData} options={barOptions} /></div></motion.div>)}
+                        <div className="flex-1 p-4 relative bg-white">
+                            {activeTab === 'skills' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><h4 className="text-[10px] uppercase tracking-wider text-slate-500 text-center mb-1 font-bold">Competency Profile</h4><div className="flex-1 min-h-0 relative"><Radar data={radarData} options={radarOptions} /></div></motion.div>)}
+                            {activeTab === 'growth' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><div className="text-[10px] uppercase tracking-wider text-center mb-1 text-slate-500 font-bold">Pre vs Post Observation</div><div className="flex-1 min-h-0 relative"><Bar data={growthData} options={barOptions} /></div></motion.div>)}
                             {activeTab === 'assessments' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><div className="text-[10px] uppercase tracking-wider text-center mb-1 text-slate-500 font-bold">Historical Assessment Trend</div><div className="flex-1 min-h-0 relative px-2"><Line data={assessmentTrendData} options={{ ...barOptions, scales: { ...barOptions.scales, y: { ...barOptions.scales.y, max: 400 } } }} /></div></motion.div>)}
 
-                            {activeTab === 'compare' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><div className="text-[10px] uppercase tracking-wider text-center mb-1 text-slate-500">Student vs Batch Average</div><div className="flex-1 min-h-0 relative"><Bar data={compareData} options={barOptions} /></div></motion.div>)}
+                            {activeTab === 'compare' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><div className="text-[10px] uppercase tracking-wider text-center mb-1 text-slate-500 font-bold">Student vs Batch Average</div><div className="flex-1 min-h-0 relative"><Bar data={compareData} options={barOptions} /></div></motion.div>)}
                             {activeTab === 'intelligence' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><div className="text-[10px] uppercase tracking-widest text-center mb-1 text-slate-500 font-bold">Qualitative Shift Radar</div><div className="flex-1 min-h-0 relative"><Radar data={qualitativeRadarData} options={{ ...radarOptions, scales: { ...radarOptions.scales, r: { ...radarOptions.scales.r, max: 10 } } }} /></div></motion.div>)}
-                            {activeTab === 'benchmark' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><h4 className="text-[10px] uppercase tracking-wider text-slate-500 text-center mb-1">Domain Standing</h4><div className="flex-1 min-h-0 relative"><PolarArea data={benchmarkData} options={{ responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } } }, plugins: { legend: { display: false } } }} /></div></motion.div>)}
+                            {activeTab === 'benchmark' && (<motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="h-full w-full flex flex-col"><h4 className="text-[10px] uppercase tracking-wider text-slate-500 text-center mb-1 font-bold">Domain Standing</h4><div className="flex-1 min-h-0 relative"><PolarArea data={benchmarkData} options={{ responsive: true, maintainAspectRatio: false, scales: { r: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { display: false } } }, plugins: { legend: { display: false } } }} /></div></motion.div>)}
                         </div>
                     </div>
                 </div>
@@ -650,7 +647,7 @@ export default function StudentProgressionList() {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
@@ -747,12 +744,12 @@ export default function StudentProgressionList() {
 
             {
                 filteredStudents.length === 0 && (
-                    <div className="text-center py-20">
-                        <div className="mx-auto h-24 w-24 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                            <Search size={40} className="text-slate-600" />
+                    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        <div className="mx-auto h-24 w-24 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                            <Search size={40} className="text-indigo-500" />
                         </div>
-                        <h3 className="text-lg font-medium text-slate-200">No students found</h3>
-                        <p className="text-slate-500">Try adjusting your search terms</p>
+                        <h3 className="text-lg font-bold text-slate-900">No students found</h3>
+                        <p className="text-slate-500 font-medium">Try adjusting your search terms or batch filter</p>
                     </div>
                 )
             }
