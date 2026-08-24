@@ -35,108 +35,366 @@ interface RecommendedStudent {
 
 interface PredefinedSyllabus {
     id: string;
+    code: string;
     title: string;
     subject: string;
+    semester: number;
+    program: string;
     badge: string;
     content: string;
 }
 
 const PREDEFINED_SYLLABI: PredefinedSyllabus[] = [
+    // --- SEMESTER 1 ---
     {
-        id: "ml_ai",
-        title: "Machine Learning & AI Core",
-        subject: "Machine Learning",
-        badge: "ML / AI",
-        content: `Unit 1: Supervised Learning & Foundations
-- Linear & Logistic Regression, Cost Functions, Gradient Descent (SGD, Adam)
-- Decision Trees, Random Forests, Ensemble Methods (Boosting, Bagging, XGBoost)
-- Model Evaluation Metrics: Cross-Validation, Precision, Recall, F1-Score, ROC-AUC Curves
-
-Unit 2: Neural Networks & Deep Learning
-- Perceptrons, Multi-Layer Perceptrons (MLP), Activation Functions (ReLU, Sigmoid, Softmax)
-- Forward & Backpropagation algorithms, Loss Functions (Cross-Entropy, MSE)
-- Optimization, Regularization (L1, L2, Dropout), Overfitting and Underfitting mitigation
-
-Unit 3: Convolutional & Recurrent Architectures
-- CNNs: Convolutions, Pooling, Feature Maps, Architectures (ResNet, VGG)
-- RNNs, LSTM, GRU, Sequence Modeling, Self-Attention & Transformer Fundamentals`
-    },
-    {
-        id: "dsa",
-        title: "Data Structures & Algorithms",
+        id: "cs20b106",
+        code: "CS20B106",
+        title: "Programming Practice - I (C & Logic)",
         subject: "Data Structures",
-        badge: "DSA",
-        content: `Unit 1: Linear Data Structures & Complexity
-- Big O Notation, Time and Space Complexity Analysis, Master Theorem
-- Dynamic Arrays, Singly & Doubly Linked Lists, Skip Lists
-- Stacks & Queues: Array & Linked List implementations, Monotonic Stack, Priority Queue
+        semester: 1,
+        program: "Core CS",
+        badge: "Sem 1",
+        content: `Unit 1: Introduction to Problem Solving & C Fundamentals
+- Program Logic, Flowcharts, Algorithms, Data Types, Control Structures (If-Else, Switch)
+- Loops (For, While, Do-While), Nested Loops, Break & Continue Statements
 
-Unit 2: Non-Linear Structures & Trees
-- Binary Trees, Binary Search Trees (BST), Balanced Trees (AVL, Red-Black Trees)
-- Binary Heaps, Heapify, HeapSort, Trie Data Structures
-- Graph Representations (Adjacency Matrix/List), BFS, DFS, Topological Sorting
+Unit 2: Functions, Arrays & Pointers
+- Function Declarations, Parameter Passing (Call by Value & Reference), Recursion
+- 1D & 2D Arrays, Matrix Operations, Pointer Syntax, Pointer Arithmetic, Dynamic Memory Allocation (malloc, calloc, free)
 
-Unit 3: Algorithmic Paradigms & DP
-- Divide & Conquer: MergeSort, QuickSort, Fast Exponentiation
-- Greedy Algorithms: Dijkstra's Shortest Path, Kruskal & Prim Minimum Spanning Tree
-- Dynamic Programming: Knapsack problem, Longest Common Subsequence (LCS), Edit Distance`
+Unit 3: Structures, File I/O & Modular Programming
+- Structures, Unions, Nested Structures, Array of Structures
+- File Handling in C (fopen, fclose, fread, fwrite, fprintf, fscanf), Command Line Arguments`
     },
     {
-        id: "qa",
-        title: "Quantitative Aptitude & Logic",
+        id: "ma20b103",
+        code: "MA20B103",
+        title: "Engineering Mathematics - I",
         subject: "Quantitative Aptitude",
-        badge: "Aptitude",
-        content: `Unit 1: Numerical Ability & Arithmetic
-- Percentages, Profit & Loss, Simple & Compound Interest
-- Ratio & Proportion, Mixtures & Alligations, Averages
-- Time & Work, Pipes & Cisterns, Speed, Distance & Time
+        semester: 1,
+        program: "Core CS",
+        badge: "Sem 1",
+        content: `Unit 1: Differential Calculus & Rolle's Theorem
+- Successive Differentiation, Leibnitz's Theorem, Rolle's & Mean Value Theorems
+- Taylor's & Maclaurin's Series Expansion, Indeterminate Forms, L'Hospital's Rule
 
-Unit 2: Algebra & Number Systems
-- HCF & LCM, Divisibility Rules, Prime Numbers, Modulo Arithmetic
-- Quadratic Equations, Permutations & Combinations, Probability Theory
-
-Unit 3: Data Interpretation & Reasoning
-- Tables, Bar Charts, Pie Charts, Line Graphs Interpretation
-- Syllogisms, Blood Relations, Seating Arrangements, Coding-Decoding`
+Unit 2: Linear Algebra & Matrix Theory
+- Rank of a Matrix, Echelon Form, System of Linear Equations (Gauss Elimination)
+- Eigenvalues, Eigenvectors, Cayley-Hamilton Theorem & Inverse Calculation`
     },
-    {
-        id: "web_dev",
-        title: "Full Stack Web Development",
-        subject: "Projects",
-        badge: "Web Dev",
-        content: `Unit 1: Modern Frontend Architecture
-- HTML5 Semantic Structure, CSS Grid/Flexbox, Responsive Layouts
-- JavaScript ES6+: Closures, Promises, Async/Await, DOM Manipulation
-- React.js: Components, State Management, Hooks (useEffect, useMemo), Virtual DOM
 
-Unit 2: Backend REST APIs & Databases
-- Node.js & Express / Python FastAPI Architecture
-- Middleware, Authentication (JWT, OAuth2, Session management)
-- Database Integration: SQL (PostgreSQL), NoSQL (MongoDB), ORMs (SQLAlchemy, Prisma)
-
-Unit 3: Deployment & Web Security
-- Version Control (Git/GitHub), CI/CD Pipelines
-- Web Security: CORS, CSRF, XSS Prevention, Rate Limiting`
-    },
+    // --- SEMESTER 2 ---
     {
-        id: "python_prog",
-        title: "Python Programming & Data Tools",
+        id: "cs20b205",
+        code: "CS20B205",
+        title: "Programming Practice - II (Python & OOP)",
         subject: "Machine Learning",
-        badge: "Python",
-        content: `Unit 1: Core Python & Data Structures
-- Primitive Data Types, Mutable vs Immutable Structures (Lists, Tuples, Dicts, Sets)
-- Control Structures, Loops, Comprehensions (List, Dict, Set)
-- Functions, Lambda Expressions, Map, Filter, Reduce, Decorators
+        semester: 2,
+        program: "Core CS",
+        badge: "Sem 2",
+        content: `Unit 1: Python Syntax & Data Collections
+- Python Identifiers, Mutable vs Immutable Types, Lists, Tuples, Dictionaries, Sets
+- Control Flow Statements, List & Dict Comprehensions, Lambda Functions
 
-Unit 2: Object-Oriented Programming (OOP)
-- Classes, Objects, Inheritance, Polymorphism, Encapsulation
-- Dunder Methods (__init__, __str__, __repr__), Property Decorators
-- Exception Handling, Custom Exceptions, Context Managers (with statement)
+Unit 2: Object-Oriented Principles in Python
+- Classes, Objects, Instance vs Class Attributes, Inheritance, Method Overriding
+- Encapsulation, Polymorphism, Magic (Dunder) Methods (__init__, __str__, __len__)
 
-Unit 3: Scientific Python & Data Manipulation
-- File I/O (JSON, CSV, Binary parsing)
-- NumPy Arrays, Vectorized Operations, Broadcasting
-- Pandas DataFrames, Data Cleaning, Merging & Aggregation`
+Unit 3: Modules, Exception Handling & File I/O
+- Custom Modules, Package Structure, Try-Except-Finally, Custom Exceptions
+- File Operations (Text, CSV, JSON parsing), Standard Library Tools`
+    },
+
+    // --- SEMESTER 3 ---
+    {
+        id: "cs20b302",
+        code: "CS20B302",
+        title: "Data Structures & Algorithms (DSA)",
+        subject: "Data Structures",
+        semester: 3,
+        program: "Core CS",
+        badge: "Sem 3",
+        content: `Unit 1: Linear Data Structures & Complexity Analysis
+- Big-O, Omega, Theta Notations, Time-Space Complexity Analysis
+- Dynamic Arrays, Singly & Doubly Linked Lists, Circular Linked Lists
+- Stacks & Queues: Array & Linked List implementations, Infix to Postfix Conversion, Monotonic Stack, Priority Queue
+
+Unit 2: Trees & Heaps
+- Binary Trees, Binary Search Trees (BST), Tree Traversals (Inorder, Preorder, Postorder)
+- Balanced Trees (AVL Trees, Red-Black Trees Basics), Binary Heaps & HeapSort
+
+Unit 3: Graphs & Hash Tables
+- Graph Representations (Adjacency Matrix & List), BFS, DFS, Topological Sort
+- Hash Tables, Collision Resolution Techniques (Chaining, Open Addressing, Quadratic Probing)`
+    },
+    {
+        id: "cs20b303",
+        code: "CS20B303",
+        title: "Java Programming & OOP Architecture",
+        subject: "Data Structures",
+        semester: 3,
+        program: "Core CS",
+        badge: "Sem 3",
+        content: `Unit 1: Java Core & Class Mechanics
+- JVM, JRE, JDK Architecture, Garbage Collection Principles
+- Constructors, Method Overloading, Static vs Final Keywords, Packages & Access Modifiers
+
+Unit 2: Interfaces, Abstract Classes & Collections
+- Abstract Classes vs Interfaces, Multiple Inheritance via Interfaces
+- Java Collection Framework: ArrayList, LinkedList, HashMap, HashSet, Iterators
+
+Unit 3: Exception Handling & Multithreading
+- Checked vs Unchecked Exceptions, Try-Catch-Finally, Throw/Throws
+- Thread Life Cycle, Runnable Interface, Thread Class, Synchronization & Locks`
+    },
+    {
+        id: "uc20b302",
+        code: "UC20B302",
+        title: "Quantitative Aptitude - I & Verbal Logic",
+        subject: "Quantitative Aptitude",
+        semester: 3,
+        program: "Aptitude",
+        badge: "Sem 3",
+        content: `Unit 1: Numerical Aptitude & Arithmetic
+- Percentages, Profit, Loss & Discount, Ratio & Proportion, Averages & Mixtures
+- Time & Work, Pipes & Cisterns, Speed, Distance & Time, Boats & Streams
+
+Unit 2: Number Systems & Logic
+- Divisibility Rules, LCM & HCF, Prime Numbers, Modulo Arithmetic
+- Syllogisms, Blood Relations, Seating Arrangements, Direction Sense`
+    },
+
+    // --- SEMESTER 4 ---
+    {
+        id: "cs20b403",
+        code: "CS20B403",
+        title: "Database Management Systems (DBMS)",
+        subject: "Data Structures",
+        semester: 4,
+        program: "Core CS",
+        badge: "Sem 4",
+        content: `Unit 1: ER Modeling & Relational Algebra
+- Database System Architecture, Three-Schema Architecture, Entity-Relationship (ER) Diagrams
+- Relational Model Concepts, Relational Algebra Operations (Select, Project, Join, Union)
+
+Unit 2: SQL & Normalization
+- DDL, DML, DCL SQL Commands, Joins, Subqueries, Views, Triggers, Stored Procedures
+- Functional Dependencies, Normal Forms: 1NF, 2NF, 3NF, BCNF, Lossless Decomposition
+
+Unit 3: Transaction Processing & Concurrency
+- ACID Properties, Transaction State Diagram, Serializability (Conflict & View)
+- Concurrency Control Protocols: Two-Phase Locking (2PL), Deadlock Detection & Prevention`
+    },
+    {
+        id: "cs23b404",
+        code: "CS23B404",
+        title: "Computer Organization & Architecture (COA)",
+        subject: "Data Structures",
+        semester: 4,
+        program: "Core CS",
+        badge: "Sem 4",
+        content: `Unit 1: Computer Arithmetic & Instruction Sets
+- Register Transfer Language, Microoperations, Bus & Memory Transfers
+- Machine Instructions, Addressing Modes, RISC vs CISC Architectures, ALU & Floating-Point Arithmetic
+
+Unit 2: Memory Hierarchy & Cache Design
+- Main Memory (RAM/ROM), Cache Memory Principles, Mapping Functions (Direct, Associative, Set-Associative)
+- Virtual Memory Architecture, Page Tables, TLB (Translation Lookaside Buffer)
+
+Unit 3: I/O Organization & Pipelining
+- Programmed I/O, Interrupt-Driven I/O, Direct Memory Access (DMA)
+- Pipelining Architecture, Hazard Detection (Data, Control, Structural), Instruction Level Parallelism`
+    },
+
+    // --- SEMESTER 5 ---
+    {
+        id: "ai20b504",
+        code: "AI20B504",
+        title: "Machine Learning & Neural Networks",
+        subject: "Machine Learning",
+        semester: 5,
+        program: "Artificial Intelligence",
+        badge: "Sem 5",
+        content: `Unit 1: Supervised Learning & Regression Models
+- Linear & Logistic Regression, Gradient Descent Optimization (SGD, Adam)
+- Decision Trees, Random Forests, Gradient Boosting Machines (XGBoost, LightGBM)
+- Model Evaluation Metrics: Cross-Validation, Precision, Recall, F1-Score, ROC-AUC Curve
+
+Unit 2: Deep Learning & Backpropagation
+- Perceptrons, Multi-Layer Perceptrons (MLP), Activation Functions (ReLU, Sigmoid, Softmax)
+- Forward Pass & Backpropagation Algorithm, Loss Functions (Cross-Entropy, MSE)
+- Regularization Techniques (L1, L2, Dropout, Batch Normalization), Overfitting Mitigation
+
+Unit 3: Unsupervised Learning & Clustering
+- K-Means Clustering, Hierarchical Clustering, DBSCAN Algorithm
+- Principal Component Analysis (PCA) for Dimensionality Reduction, Anomaly Detection`
+    },
+    {
+        id: "fs20b504",
+        code: "FS20B504",
+        title: "Frontend Web Architecture (React & Web Specs)",
+        subject: "Projects",
+        semester: 5,
+        program: "Full Stack Development",
+        badge: "Sem 5",
+        content: `Unit 1: HTML5, Modern CSS & Responsive Layouts
+- HTML5 Semantic Tags, Accessibility (ARIA), Web Performance Standards
+- Flexbox, CSS Grid Architecture, CSS Variables, Responsive Media Queries
+
+Unit 2: Modern JavaScript (ES6+)
+- Closures, Lexical Scope, Hoisting, Promises, Async/Await Execution Model
+- ES6 Modules, Destructuring, Spread/Rest Operators, Event Loop Mechanics
+
+Unit 3: React.js Component Architecture
+- Virtual DOM Reconciliation, JSX Syntax, Functional Components & Props
+- State Management, React Hooks (useState, useEffect, useMemo, useCallback, useRef)
+- Client-Side Routing (React Router), Context API & Redux Toolkit State Management`
+    },
+    {
+        id: "cs20b503",
+        code: "CS20B503",
+        title: "Analysis and Design of Algorithms (DAA)",
+        subject: "Data Structures",
+        semester: 5,
+        program: "Core CS",
+        badge: "Sem 5",
+        content: `Unit 1: Divide & Conquer and Greedy Paradigms
+- Recurrence Relations, Substitution & Master Method
+- Divide & Conquer: MergeSort, QuickSort, Strassen's Matrix Multiplication
+- Greedy Strategy: Fractional Knapsack, Job Sequencing, Huffman Coding, Minimum Spanning Trees (Prim's & Kruskal's)
+
+Unit 2: Dynamic Programming & Shortest Paths
+- Principles of Dynamic Programming, Matrix Chain Multiplication, 0/1 Knapsack
+- Longest Common Subsequence (LCS), Floyd-Warshall & Bellman-Ford Shortest Path Algorithms
+
+Unit 3: NP-Completeness & Approximation Algorithms
+- P, NP, NP-Hard, NP-Complete Complexity Classes, Polynomial Time Reduction
+- Traveling Salesperson Problem (TSP), Vertex Cover Approximation`
+    },
+
+    // --- SEMESTER 6 ---
+    {
+        id: "fs20b603",
+        code: "FS20B603",
+        title: "Full Stack Backend (Node.js, Express & REST APIs)",
+        subject: "Projects",
+        semester: 6,
+        program: "Full Stack Development",
+        badge: "Sem 6",
+        content: `Unit 1: Node.js Architecture & Express Framework
+- Event-Driven Non-Blocking I/O Architecture, Event Loop Execution Steps
+- Express Server Setup, Middleware Execution Flow, Error Handling Middleware
+
+Unit 2: RESTful API Design & Database ORM Integration
+- REST API Conventions, HTTP Methods (GET, POST, PUT, DELETE, PATCH), Status Codes
+- SQL Integration (PostgreSQL / Sequelize / SQLAlchemy), NoSQL Integration (MongoDB / Mongoose)
+
+Unit 3: Security, Authentication & Deployment
+- JSON Web Tokens (JWT) Authentication, Password Hashing (Bcrypt), OAuth 2.0 Integration
+- CORS Configuration, Rate Limiting, Input Validation, Deployment on Cloud Platforms`
+    },
+    {
+        id: "ai20b603",
+        code: "AI20B603",
+        title: "Deep Learning & Computer Vision",
+        subject: "Machine Learning",
+        semester: 6,
+        program: "Artificial Intelligence",
+        badge: "Sem 6",
+        content: `Unit 1: Convolutional Neural Networks (CNN)
+- Convolution Operations, Stride, Padding, Pooling Layers (Max Pooling, Average Pooling)
+- CNN Architectures: LeNet, AlexNet, VGGNet, ResNet, Transfer Learning Principles
+
+Unit 2: Object Detection & Image Segmentation
+- Anchor Boxes, IoU Metric, Non-Max Suppression
+- Object Detectors: YOLO Architecture, R-CNN, Fast R-CNN, Faster R-CNN, Semantic Segmentation (U-Net)
+
+Unit 3: Sequential Deep Learning Models
+- Recurrent Neural Networks (RNN), Vanishing/Exploding Gradient Problems
+- LSTM (Long Short-Term Memory) Units, GRU, Gated Mechanisms, Sequence-to-Sequence Models`
+    },
+    {
+        id: "cf20b603",
+        code: "CF20B603",
+        title: "Cyber Security & Digital Forensics",
+        subject: "Projects",
+        semester: 6,
+        program: "Cyber Security",
+        badge: "Sem 6",
+        content: `Unit 1: Cryptography & Network Defense
+- Symmetric vs Asymmetric Encryption (AES, RSA), Hash Functions (SHA-256)
+- Digital Signatures, PKI, Firewalls, Intrusion Detection Systems (IDS/IPS)
+
+Unit 2: Web Security & Ethical Hacking
+- OWASP Top 10 Vulnerabilities: SQL Injection, XSS, CSRF, SSRF, Broken Authentication
+- Penetration Testing Life Cycle, Reconnaissance, Exploitation Frameworks (Metasploit, Nmap)
+
+Unit 3: Digital Forensics & Incident Response
+- Evidence Acquisition, Chain of Custody, Memory Forensics, File System Artifacts Analysis`
+    },
+
+    // --- SEMESTER 7 ---
+    {
+        id: "ai20b701",
+        code: "AI20B701",
+        title: "Natural Language Processing & Generative AI",
+        subject: "Machine Learning",
+        semester: 7,
+        program: "Artificial Intelligence",
+        badge: "Sem 7",
+        content: `Unit 1: Text Preprocessing & Vector Embeddings
+- Tokenization, Stemming, Lemmatization, Stopwords Removal, N-grams
+- TF-IDF Vectors, Word2Vec, GloVe Embeddings, Subword Tokenization (BPE)
+
+Unit 2: Transformer Architecture & Attention Mechanisms
+- Self-Attention Mechanism, Multi-Head Attention, Positional Encodings
+- Encoder-Decoder Architecture, BERT, GPT Models, Fine-Tuning Strategies
+
+Unit 3: Large Language Models & Prompt Engineering
+- LLM Architecture Specifications, Retrieval-Augmented Generation (RAG) Systems
+- Prompt Engineering Strategies, Vector Databases (Pinecone, ChromaDB, FAISS)`
+    },
+    {
+        id: "fs20b701",
+        code: "FS20B701",
+        title: "Cloud Computing, Microservices & DevOps",
+        subject: "Projects",
+        semester: 7,
+        program: "Full Stack Development",
+        badge: "Sem 7",
+        content: `Unit 1: Cloud Architecture & Serverless
+- IaaS, PaaS, SaaS Delivery Models, AWS / GCP Core Services (EC2, S3, RDS, Lambda)
+- Serverless Computing, Cloud Storage Buckets, IAM Policies & Access Control
+
+Unit 2: Microservices Architecture & Containerization
+- Monolithic vs Microservices Architecture, API Gateways, Event-Driven Communication
+- Docker Containerization, Dockerfile Syntax, Docker Compose Multi-Container Setup
+
+Unit 3: CI/CD Pipelines & Kubernetes Orchestration
+- GitHub Actions / Jenkins Continuous Integration & Continuous Deployment Pipelines
+- Kubernetes Architecture: Pods, Services, Deployments, Auto-Scaling & Load Balancing`
+    },
+
+    // --- SEMESTER 8 ---
+    {
+        id: "cs20b801",
+        code: "CS20B801",
+        title: "Capstone Major Project & Research Thesis",
+        subject: "Projects",
+        semester: 8,
+        program: "Core CS",
+        badge: "Sem 8",
+        content: `Unit 1: System Requirements & Architectural Design
+- Feasibility Analysis, SRS Document Preparation, Software Architecture Selection
+- Database Schema Design, API Endpoint Specifications, UI/UX Wireframing
+
+Unit 2: Implementation, Testing & Verification
+- Full Stack Implementation, Automated Unit & Integration Testing (Jest, PyTest)
+- Performance Profiling, Security Vulnerability Scanning, Load Testing
+
+Unit 3: Thesis Documentation & Public Demonstration
+- Research Report Formatting, IEEE / Springer Citation Standards
+- Project Seminar Presentation, Live Code Demonstration & Peer Review`
     }
 ];
 
@@ -152,6 +410,8 @@ export default function TeacherTestsPage() {
     const [savedSyllabusDocs, setSavedSyllabusDocs] = useState<any[]>([]);
     const [selectedSyllabusId, setSelectedSyllabusId] = useState<string>("");
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+    const [selectedSemesterFilter, setSelectedSemesterFilter] = useState<number | "ALL">("ALL");
+    const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>("ALL");
     const [isIRTAdaptive, setIsIRTAdaptive] = useState(false);
 
     // Step 1: Basic Details
@@ -910,51 +1170,114 @@ export default function TeacherTestsPage() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {PREDEFINED_SYLLABI.map((tmpl) => {
-                                        const isSelected = selectedTemplateId === tmpl.id;
-                                        const isRecommended = subject.toLowerCase().includes(tmpl.subject.toLowerCase()) || tmpl.subject.toLowerCase().includes(subject.toLowerCase());
-                                        return (
-                                            <button
-                                                key={tmpl.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedTemplateId(tmpl.id);
-                                                    setSelectedSyllabusId("");
-                                                    setSyllabusText(tmpl.content);
-                                                    setSuccess(`Loaded Pre-defined Syllabus: ${tmpl.title}`);
-                                                }}
-                                                className={`text-left p-3.5 rounded-xl border transition-all flex flex-col justify-between gap-2 relative ${
-                                                    isSelected
-                                                        ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20"
-                                                        : "bg-white text-slate-800 border-slate-200 hover:border-indigo-400 hover:shadow-sm"
-                                                }`}
+                                <div className="space-y-3">
+                                    {/* Semester & Stream Filters */}
+                                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                                            <span className="text-[11px] font-extrabold text-slate-500 mr-1 flex items-center gap-1">
+                                                <Layers size={13} className="text-indigo-600" /> Sem Filter:
+                                            </span>
+                                            {(["ALL", 1, 2, 3, 4, 5, 6, 7, 8] as const).map((sem) => (
+                                                <button
+                                                    key={sem}
+                                                    type="button"
+                                                    onClick={() => setSelectedSemesterFilter(sem)}
+                                                    className={`text-[10px] font-extrabold px-3 py-1 rounded-lg transition-all flex-shrink-0 ${
+                                                        selectedSemesterFilter === sem
+                                                            ? "bg-indigo-600 text-white shadow-sm"
+                                                            : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                                    }`}
+                                                >
+                                                    {sem === "ALL" ? "All Semesters" : `Sem ${sem}`}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-extrabold text-slate-500">Stream:</span>
+                                            <select
+                                                value={selectedProgramFilter}
+                                                onChange={(e) => setSelectedProgramFilter(e.target.value)}
+                                                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] font-bold text-slate-800 focus:outline-none cursor-pointer"
                                             >
-                                                <div className="flex justify-between items-start w-full gap-2">
-                                                    <span className={`text-xs font-extrabold line-clamp-1 ${isSelected ? "text-white" : "text-slate-900"}`}>
-                                                        {tmpl.title}
-                                                    </span>
-                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                                                        isSelected ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                                                    }`}>
-                                                        {tmpl.badge}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-[10px] font-semibold w-full mt-1">
-                                                    <span className={isSelected ? "text-indigo-100" : "text-slate-500"}>
-                                                        {tmpl.subject}
-                                                    </span>
-                                                    {isRecommended && (
-                                                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                                                            isSelected ? "bg-amber-400 text-slate-950" : "bg-amber-100 text-amber-800"
-                                                        }`}>
-                                                            ★ Recommended
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                                                <option value="ALL">🎓 All Specializations</option>
+                                                <option value="Full Stack Development">💻 Full Stack Development (FSD)</option>
+                                                <option value="Artificial Intelligence">🤖 Artificial Intelligence (AI)</option>
+                                                <option value="Cyber Security">🛡️ Cyber Security & Forensics</option>
+                                                <option value="Core CS">⚡ Core Computer Science</option>
+                                                <option value="Aptitude">🔢 Aptitude & Reasoning</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Filtered Predefined Syllabus Grid */}
+                                    {PREDEFINED_SYLLABI.filter((tmpl) => {
+                                        const matchesSem = selectedSemesterFilter === "ALL" || tmpl.semester === selectedSemesterFilter;
+                                        const matchesProg = selectedProgramFilter === "ALL" || tmpl.program === selectedProgramFilter;
+                                        return matchesSem && matchesProg;
+                                    }).length === 0 ? (
+                                        <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs text-slate-500 font-medium">
+                                            No predefined syllabi found for the selected Semester ({selectedSemesterFilter}) and Stream filter.
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {PREDEFINED_SYLLABI.filter((tmpl) => {
+                                                const matchesSem = selectedSemesterFilter === "ALL" || tmpl.semester === selectedSemesterFilter;
+                                                const matchesProg = selectedProgramFilter === "ALL" || tmpl.program === selectedProgramFilter;
+                                                return matchesSem && matchesProg;
+                                            }).map((tmpl) => {
+                                                const isSelected = selectedTemplateId === tmpl.id;
+                                                const isRecommended = subject.toLowerCase().includes(tmpl.subject.toLowerCase()) || tmpl.subject.toLowerCase().includes(subject.toLowerCase());
+                                                return (
+                                                    <button
+                                                        key={tmpl.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedTemplateId(tmpl.id);
+                                                            setSelectedSyllabusId("");
+                                                            setSyllabusText(tmpl.content);
+                                                            setSuccess(`Loaded Pre-defined Syllabus: [${tmpl.code}] ${tmpl.title}`);
+                                                        }}
+                                                        className={`text-left p-3.5 rounded-xl border transition-all flex flex-col justify-between gap-2 relative ${
+                                                            isSelected
+                                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20"
+                                                                : "bg-white text-slate-800 border-slate-200 hover:border-indigo-400 hover:shadow-sm"
+                                                        }`}
+                                                    >
+                                                        <div className="flex justify-between items-start w-full gap-2">
+                                                            <div className="flex items-center gap-1.5 overflow-hidden">
+                                                                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                                                    isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                                                                }`}>
+                                                                    {tmpl.code}
+                                                                </span>
+                                                                <span className={`text-xs font-extrabold line-clamp-1 ${isSelected ? "text-white" : "text-slate-900"}`}>
+                                                                    {tmpl.title}
+                                                                </span>
+                                                            </div>
+                                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                                                isSelected ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                                            }`}>
+                                                                {tmpl.badge}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-[10px] font-semibold w-full mt-1">
+                                                            <span className={isSelected ? "text-indigo-100" : "text-slate-500"}>
+                                                                {tmpl.program} • {tmpl.subject}
+                                                            </span>
+                                                            {isRecommended && (
+                                                                <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                                                                    isSelected ? "bg-amber-400 text-slate-950" : "bg-amber-100 text-amber-800"
+                                                                }`}>
+                                                                    ★ Recommended
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             
