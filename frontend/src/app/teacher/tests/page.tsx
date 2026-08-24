@@ -33,6 +33,113 @@ interface RecommendedStudent {
     reason: string | null;
 }
 
+interface PredefinedSyllabus {
+    id: string;
+    title: string;
+    subject: string;
+    badge: string;
+    content: string;
+}
+
+const PREDEFINED_SYLLABI: PredefinedSyllabus[] = [
+    {
+        id: "ml_ai",
+        title: "Machine Learning & AI Core",
+        subject: "Machine Learning",
+        badge: "ML / AI",
+        content: `Unit 1: Supervised Learning & Foundations
+- Linear & Logistic Regression, Cost Functions, Gradient Descent (SGD, Adam)
+- Decision Trees, Random Forests, Ensemble Methods (Boosting, Bagging, XGBoost)
+- Model Evaluation Metrics: Cross-Validation, Precision, Recall, F1-Score, ROC-AUC Curves
+
+Unit 2: Neural Networks & Deep Learning
+- Perceptrons, Multi-Layer Perceptrons (MLP), Activation Functions (ReLU, Sigmoid, Softmax)
+- Forward & Backpropagation algorithms, Loss Functions (Cross-Entropy, MSE)
+- Optimization, Regularization (L1, L2, Dropout), Overfitting and Underfitting mitigation
+
+Unit 3: Convolutional & Recurrent Architectures
+- CNNs: Convolutions, Pooling, Feature Maps, Architectures (ResNet, VGG)
+- RNNs, LSTM, GRU, Sequence Modeling, Self-Attention & Transformer Fundamentals`
+    },
+    {
+        id: "dsa",
+        title: "Data Structures & Algorithms",
+        subject: "Data Structures",
+        badge: "DSA",
+        content: `Unit 1: Linear Data Structures & Complexity
+- Big O Notation, Time and Space Complexity Analysis, Master Theorem
+- Dynamic Arrays, Singly & Doubly Linked Lists, Skip Lists
+- Stacks & Queues: Array & Linked List implementations, Monotonic Stack, Priority Queue
+
+Unit 2: Non-Linear Structures & Trees
+- Binary Trees, Binary Search Trees (BST), Balanced Trees (AVL, Red-Black Trees)
+- Binary Heaps, Heapify, HeapSort, Trie Data Structures
+- Graph Representations (Adjacency Matrix/List), BFS, DFS, Topological Sorting
+
+Unit 3: Algorithmic Paradigms & DP
+- Divide & Conquer: MergeSort, QuickSort, Fast Exponentiation
+- Greedy Algorithms: Dijkstra's Shortest Path, Kruskal & Prim Minimum Spanning Tree
+- Dynamic Programming: Knapsack problem, Longest Common Subsequence (LCS), Edit Distance`
+    },
+    {
+        id: "qa",
+        title: "Quantitative Aptitude & Logic",
+        subject: "Quantitative Aptitude",
+        badge: "Aptitude",
+        content: `Unit 1: Numerical Ability & Arithmetic
+- Percentages, Profit & Loss, Simple & Compound Interest
+- Ratio & Proportion, Mixtures & Alligations, Averages
+- Time & Work, Pipes & Cisterns, Speed, Distance & Time
+
+Unit 2: Algebra & Number Systems
+- HCF & LCM, Divisibility Rules, Prime Numbers, Modulo Arithmetic
+- Quadratic Equations, Permutations & Combinations, Probability Theory
+
+Unit 3: Data Interpretation & Reasoning
+- Tables, Bar Charts, Pie Charts, Line Graphs Interpretation
+- Syllogisms, Blood Relations, Seating Arrangements, Coding-Decoding`
+    },
+    {
+        id: "web_dev",
+        title: "Full Stack Web Development",
+        subject: "Projects",
+        badge: "Web Dev",
+        content: `Unit 1: Modern Frontend Architecture
+- HTML5 Semantic Structure, CSS Grid/Flexbox, Responsive Layouts
+- JavaScript ES6+: Closures, Promises, Async/Await, DOM Manipulation
+- React.js: Components, State Management, Hooks (useEffect, useMemo), Virtual DOM
+
+Unit 2: Backend REST APIs & Databases
+- Node.js & Express / Python FastAPI Architecture
+- Middleware, Authentication (JWT, OAuth2, Session management)
+- Database Integration: SQL (PostgreSQL), NoSQL (MongoDB), ORMs (SQLAlchemy, Prisma)
+
+Unit 3: Deployment & Web Security
+- Version Control (Git/GitHub), CI/CD Pipelines
+- Web Security: CORS, CSRF, XSS Prevention, Rate Limiting`
+    },
+    {
+        id: "python_prog",
+        title: "Python Programming & Data Tools",
+        subject: "Machine Learning",
+        badge: "Python",
+        content: `Unit 1: Core Python & Data Structures
+- Primitive Data Types, Mutable vs Immutable Structures (Lists, Tuples, Dicts, Sets)
+- Control Structures, Loops, Comprehensions (List, Dict, Set)
+- Functions, Lambda Expressions, Map, Filter, Reduce, Decorators
+
+Unit 2: Object-Oriented Programming (OOP)
+- Classes, Objects, Inheritance, Polymorphism, Encapsulation
+- Dunder Methods (__init__, __str__, __repr__), Property Decorators
+- Exception Handling, Custom Exceptions, Context Managers (with statement)
+
+Unit 3: Scientific Python & Data Manipulation
+- File I/O (JSON, CSV, Binary parsing)
+- NumPy Arrays, Vectorized Operations, Broadcasting
+- Pandas DataFrames, Data Cleaning, Merging & Aggregation`
+    }
+];
+
 export default function TeacherTestsPage() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -44,6 +151,7 @@ export default function TeacherTestsPage() {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [savedSyllabusDocs, setSavedSyllabusDocs] = useState<any[]>([]);
     const [selectedSyllabusId, setSelectedSyllabusId] = useState<string>("");
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
     const [isIRTAdaptive, setIsIRTAdaptive] = useState(false);
 
     // Step 1: Basic Details
@@ -760,33 +868,114 @@ export default function TeacherTestsPage() {
                             <div className="border-b border-slate-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <div>
                                     <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">Step 2: Syllabus Context</h2>
-                                    <p className="text-slate-500 text-xs font-medium mt-0.5">Submit curriculum text or pick from previously saved syllabus repository documents.</p>
+                                    <p className="text-slate-500 text-xs font-medium mt-0.5">Pick from pre-defined course syllabi, select a saved repository document, or upload custom notes.</p>
                                 </div>
-                                {savedSyllabusDocs.length > 0 && (
-                                    <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-xl">
-                                        <Bookmark size={14} className="text-indigo-600" />
-                                        <select
-                                            value={selectedSyllabusId}
-                                            onChange={(e) => {
-                                                const id = e.target.value;
-                                                setSelectedSyllabusId(id);
-                                                const doc = savedSyllabusDocs.find(d => d.id === id);
-                                                if (doc) setSyllabusText(doc.content_text);
-                                            }}
-                                            className="bg-transparent text-xs font-bold text-indigo-900 focus:outline-none cursor-pointer"
-                                        >
-                                            <option value="">📁 Select Saved Syllabus Doc ({savedSyllabusDocs.length})</option>
-                                            {savedSyllabusDocs.map(d => (
-                                                <option key={d.id} value={d.id}>{d.filename} ({d.file_type})</option>
-                                            ))}
-                                        </select>
+                            </div>
+
+                            {/* Pre-defined & Saved Syllabus Selection Section */}
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/80 pb-3">
+                                    <div>
+                                        <h3 className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
+                                            <BookOpen size={16} className="text-indigo-600" />
+                                            Pre-defined Syllabus Templates & Repository
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                            Click any template to auto-populate curriculum content for AI question generation.
+                                        </p>
                                     </div>
-                                )}
+                                    {savedSyllabusDocs.length > 0 && (
+                                        <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                                            <Bookmark size={14} className="text-indigo-600" />
+                                            <select
+                                                value={selectedSyllabusId}
+                                                onChange={(e) => {
+                                                    const id = e.target.value;
+                                                    setSelectedSyllabusId(id);
+                                                    setSelectedTemplateId("");
+                                                    const doc = savedSyllabusDocs.find(d => d.id === id);
+                                                    if (doc) {
+                                                        setSyllabusText(doc.content_text);
+                                                        setSuccess(`Loaded Saved Syllabus: ${doc.filename}`);
+                                                    }
+                                                }}
+                                                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                                            >
+                                                <option value="">📁 Select Saved Document ({savedSyllabusDocs.length})</option>
+                                                {savedSyllabusDocs.map(d => (
+                                                    <option key={d.id} value={d.id}>{d.filename} ({d.file_type})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {PREDEFINED_SYLLABI.map((tmpl) => {
+                                        const isSelected = selectedTemplateId === tmpl.id;
+                                        const isRecommended = subject.toLowerCase().includes(tmpl.subject.toLowerCase()) || tmpl.subject.toLowerCase().includes(subject.toLowerCase());
+                                        return (
+                                            <button
+                                                key={tmpl.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedTemplateId(tmpl.id);
+                                                    setSelectedSyllabusId("");
+                                                    setSyllabusText(tmpl.content);
+                                                    setSuccess(`Loaded Pre-defined Syllabus: ${tmpl.title}`);
+                                                }}
+                                                className={`text-left p-3.5 rounded-xl border transition-all flex flex-col justify-between gap-2 relative ${
+                                                    isSelected
+                                                        ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20"
+                                                        : "bg-white text-slate-800 border-slate-200 hover:border-indigo-400 hover:shadow-sm"
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-start w-full gap-2">
+                                                    <span className={`text-xs font-extrabold line-clamp-1 ${isSelected ? "text-white" : "text-slate-900"}`}>
+                                                        {tmpl.title}
+                                                    </span>
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                                        isSelected ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                                    }`}>
+                                                        {tmpl.badge}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-[10px] font-semibold w-full mt-1">
+                                                    <span className={isSelected ? "text-indigo-100" : "text-slate-500"}>
+                                                        {tmpl.subject}
+                                                    </span>
+                                                    {isRecommended && (
+                                                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                                                            isSelected ? "bg-amber-400 text-slate-950" : "bg-amber-100 text-amber-800"
+                                                        }`}>
+                                                            ★ Recommended
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                             
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="lg:col-span-2 space-y-2">
-                                    <label className="text-xs font-bold text-slate-700">Syllabus Text Content</label>
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-xs font-bold text-slate-700">Syllabus Text Content</label>
+                                        {syllabusText && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSyllabusText("");
+                                                    setSelectedTemplateId("");
+                                                    setSelectedSyllabusId("");
+                                                }}
+                                                className="text-[10px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded transition-all"
+                                            >
+                                                Clear Content
+                                            </button>
+                                        )}
+                                    </div>
                                     <textarea rows={10} placeholder="Paste course objectives, text definitions, equations, or unit notes..." value={syllabusText} onChange={(e) => setSyllabusText(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-mono text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/50 shadow-sm resize-none" />
                                 </div>
                                 <div className="space-y-4">

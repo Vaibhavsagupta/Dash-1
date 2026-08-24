@@ -4,6 +4,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base, SessionLocal
 from sqlalchemy import text
 from .routers import auth, analytics, updates, attendance, dashboard, assignments, automation, autograder, ingest, ai_report, admin_workflow, settings, tests, student_tests, marks_parameters, college_sandbox
+from .curriculum import routes as curriculum_routes
+from .curriculum.seed import seed_curriculum
+from .syllabus import routes as syllabus_routes
+from .people import routes as people_routes
+from .attendance import routes as attendance_intelligence_routes
+from .questions import routes as question_intelligence_routes
+from .exam import routes as exam_routes
+from .analytics import routes as analytics_routes
+from .predictions import routes as predictions_routes
+from .institution import routes as institution_routes
 from . import models
 
 from contextlib import asynccontextmanager
@@ -13,6 +23,98 @@ def auto_init_database():
     max_retries = 5
     for attempt in range(1, max_retries + 1):
         try:
+            for stmt in [
+                "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
+                "ALTER TABLE courses ADD COLUMN IF NOT EXISTS id VARCHAR(36);",
+                "UPDATE courses SET id = gen_random_uuid()::text WHERE id IS NULL;",
+                "ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_pkey CASCADE;",
+                "ALTER TABLE courses ADD CONSTRAINT courses_id_pk PRIMARY KEY (id);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS id VARCHAR(36);",
+                "UPDATE students SET id = gen_random_uuid()::text WHERE id IS NULL;",
+                "ALTER TABLE students DROP CONSTRAINT IF EXISTS students_pkey CASCADE;",
+                "ALTER TABLE students ADD CONSTRAINT students_id_pk PRIMARY KEY (id);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS full_name TEXT;",
+                "ALTER TABLE students ALTER COLUMN name DROP NOT NULL;",
+                "UPDATE students SET full_name = name WHERE full_name IS NULL AND name IS NOT NULL;",
+                "UPDATE students SET name = full_name WHERE name IS NULL AND full_name IS NOT NULL;",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS gender VARCHAR(20);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS dob DATE;",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS mobile VARCHAR(20);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_name TEXT;",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_mobile VARCHAR(20);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS address TEXT;",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS blood_group VARCHAR(10);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS batch_id INT;",
+                "UPDATE students SET batch_id = NULL WHERE batch_id::text !~ '^[0-9]+$';",
+                "ALTER TABLE students ALTER COLUMN batch_id TYPE INT USING (CASE WHEN batch_id::text ~ '^[0-9]+$' THEN batch_id::text::INT ELSE NULL END);",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS program_id INT;",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS current_semester INT DEFAULT 1;",
+                "ALTER TABLE students ALTER COLUMN semester DROP NOT NULL;",
+                "UPDATE students SET current_semester = semester WHERE current_semester IS NULL AND semester IS NOT NULL;",
+                "UPDATE students SET semester = current_semester WHERE semester IS NULL AND current_semester IS NOT NULL;",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';",
+                "ALTER TABLE students ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now();",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS employee_code VARCHAR(30);",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS full_name TEXT;",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS mobile VARCHAR(20);",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS designation TEXT;",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS department TEXT;",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS joining_date DATE;",
+                "ALTER TABLE faculty ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';",
+                "ALTER TABLE questions DROP COLUMN IF EXISTS options CASCADE;",
+                "ALTER TABLE questions ALTER COLUMN test_id DROP NOT NULL;",
+                "ALTER TABLE questions ALTER COLUMN correct_answer DROP NOT NULL;",
+                "ALTER TABLE questions ALTER COLUMN subject DROP NOT NULL;",
+                "ALTER TABLE questions ALTER COLUMN topic DROP NOT NULL;",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS course_id VARCHAR(36);",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS topic_id VARCHAR(36);",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS co_id VARCHAR(36);",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS unit_id VARCHAR(36);",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS bloom_level VARCHAR(30) DEFAULT 'Understand';",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS marks INT DEFAULT 5;",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS language VARCHAR(20) DEFAULT 'English';",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS source_type VARCHAR(20) DEFAULT 'OFFICIAL';",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS ai_generated BOOLEAN DEFAULT TRUE;",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'PENDING_REVIEW';",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS version INT DEFAULT 1;",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS embedding_str TEXT;",
+                "ALTER TABLE questions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now();",
+                "ALTER TABLE tests ALTER COLUMN teacher_id DROP NOT NULL;",
+                "ALTER TABLE tests ALTER COLUMN name DROP NOT NULL;",
+                "ALTER TABLE tests ALTER COLUMN subject DROP NOT NULL;",
+                "ALTER TABLE tests ALTER COLUMN topic DROP NOT NULL;",
+                "ALTER TABLE tests ALTER COLUMN duration DROP NOT NULL;",
+                "ALTER TABLE tests ALTER COLUMN passing_marks DROP NOT NULL;",
+                "ALTER TABLE tests ALTER COLUMN difficulty DROP NOT NULL;",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS title TEXT;",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS course_id VARCHAR(36);",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS faculty_id VARCHAR(36);",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS total_marks INT DEFAULT 100;",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS duration_minutes INT DEFAULT 180;",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS test_type VARCHAR(30) DEFAULT 'ENDSEM';",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS start_time TIMESTAMP;",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS end_time TIMESTAMP;",
+                "ALTER TABLE tests ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';",
+                "ALTER TABLE test_attempts ALTER COLUMN test_assignment_id DROP NOT NULL;",
+                "ALTER TABLE test_attempts ADD COLUMN IF NOT EXISTS test_id VARCHAR(36);",
+                "ALTER TABLE test_attempts ADD COLUMN IF NOT EXISTS started_at TIMESTAMP DEFAULT now();",
+                "ALTER TABLE test_attempts ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP;",
+                "ALTER TABLE test_attempts ADD COLUMN IF NOT EXISTS tab_switch_count INT DEFAULT 0;",
+                "ALTER TABLE test_attempts ADD COLUMN IF NOT EXISTS fullscreen_violations INT DEFAULT 0;",
+                "ALTER TABLE test_attempts ADD COLUMN IF NOT EXISTS suspicious_score NUMERIC(5,2) DEFAULT 0.0;",
+                "ALTER TABLE student_answers ADD COLUMN IF NOT EXISTS question_id VARCHAR(36);",
+                "ALTER TABLE student_answers ADD COLUMN IF NOT EXISTS answer TEXT;",
+                "ALTER TABLE student_answers ADD COLUMN IF NOT EXISTS code_language VARCHAR(20);",
+                "ALTER TABLE student_answers ADD COLUMN IF NOT EXISTS obtained_marks NUMERIC(5,2) DEFAULT 0.0;",
+                "ALTER TABLE student_answers ADD COLUMN IF NOT EXISTS ai_feedback TEXT;",
+                "ALTER TABLE student_answers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now();"
+            ]:
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(text(stmt))
+                except Exception as s_err:
+                    pass
+
             Base.metadata.create_all(bind=engine)
             db = SessionLocal()
             try:
@@ -200,6 +302,13 @@ def auto_init_database():
                         db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["Projects"], score=float(s.projects_score or 0)))
                         db.add(models.StudentParameterMark(student_id=s.student_id, parameter_id=params_created["Mock Interview"], score=float(s.mock_interview_score or 0)))
                     db.commit()
+
+                # Seed Curriculum OS
+                try:
+                    seed_curriculum(db)
+                except Exception as c_err:
+                    print(f"[Auto-Init] Curriculum seed warning: {c_err}")
+
                 print("[Auto-Init] Database ready.")
                 return
             except Exception as e:
@@ -285,6 +394,15 @@ app.include_router(tests.router)
 app.include_router(student_tests.router)
 app.include_router(marks_parameters.router)
 app.include_router(college_sandbox.router)
+app.include_router(curriculum_routes.router)
+app.include_router(syllabus_routes.router)
+app.include_router(people_routes.router)
+app.include_router(attendance_intelligence_routes.router)
+app.include_router(question_intelligence_routes.router)
+app.include_router(exam_routes.router)
+app.include_router(analytics_routes.router)
+app.include_router(predictions_routes.router)
+app.include_router(institution_routes.router)
 
 @app.get("/")
 def read_root():

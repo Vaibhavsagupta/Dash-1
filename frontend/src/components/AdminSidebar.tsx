@@ -13,18 +13,34 @@ import {
     GraduationCap,
     BarChart3,
     TrendingUp,
-    Server
+    Server,
+    BookOpen,
+    Sparkles,
+    QrCode,
+    FileText,
+    Monitor,
+    BrainCircuit,
+    LineChart,
+    Building2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const menuItems = [
     { name: 'Dashboard', icon: BarChart3, path: '/admin/dashboard' },
+    { name: 'Curriculum Manager', icon: BookOpen, path: '/admin/curriculum' },
+    { name: 'Syllabus Intelligence', icon: Sparkles, path: '/admin/syllabus-intelligence' },
+    { name: 'Attendance Intelligence', icon: QrCode, path: '/admin/attendance' },
+    { name: 'Assessments & QIE', icon: FileText, path: '/admin/assessments' },
+    { name: 'Exam Operating System', icon: Monitor, path: '/admin/exam-os' },
+    { name: 'Learning Intelligence', icon: BrainCircuit, path: '/admin/analytics' },
+    { name: 'Predictive AI', icon: LineChart, path: '/admin/predictions' },
+    { name: 'Institutional Intelligence', icon: Building2, path: '/admin/institution' },
+    { name: 'Import Center', icon: FolderOpen, path: '/admin/import-center' },
+    { name: 'Students', icon: Users, path: '/admin/students' },
+    { name: 'Faculty Management', icon: GraduationCap, path: '/admin/faculty' },
     { name: 'Batch Analytics', icon: LayoutDashboard, path: '/admin/batch-analytics' },
     { name: 'Progression', icon: TrendingUp, path: '/admin/progression' },
-    { name: 'Students', icon: Users, path: '/admin/manage' },
-    { name: 'Teachers', icon: GraduationCap, path: '/admin/manage_teachers' },
     { name: 'Approvals', icon: ClipboardCheck, path: '/admin/approvals' },
-    { name: 'Dataset Uploads', icon: FolderOpen, path: '/admin/ingestion' },
     { name: 'API Sandbox', icon: Server, path: '/admin/sandbox' },
     { name: 'Settings', icon: Settings, path: '/admin/settings' },
 ];

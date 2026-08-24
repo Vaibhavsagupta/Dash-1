@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Enum, Integer, Float, Date, Boolean, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, Enum, Integer, Float, Date, Boolean, Text, UniqueConstraint
 from sqlalchemy.sql import func
-from sqlalchemy.orm import synonym
+from sqlalchemy.orm import synonym, relationship
 import enum
 from .db.session import Base
 
@@ -31,83 +31,15 @@ class User(Base):
     otp_expiry = Column(DateTime(timezone=True), nullable=True)
     is_verified = Column(Boolean, default=False)
 
-class Student(Base):
-    __tablename__ = "students"
+from .people.models import (
+    Student, Faculty, Teacher, FacultyCourseMapping,
+    StudentAcademicMapping, UserAccount
+)
 
-    enrollment_no = Column(String, primary_key=True) # Unique code, e.g., 23BTA3ARI10038
-    scholar_no = Column(String, unique=True, nullable=True, index=True) # University Scholar No, e.g., 231945
-    student_id = synonym("enrollment_no")
-    name = Column(String, nullable=False)
-    email = Column(String, unique=True, nullable=False, index=True)
-    program = Column(String, nullable=False) # B.Tech, M.Tech, BCA, MCA, MBA
-    branch = Column(String, nullable=False) # CSE, IT, ECE, ME
-    semester = Column(Integer, nullable=False) # 1 to 8
-    section = Column(String, nullable=False) # A, B, C
-    cgpa = Column(Float, default=0.0) # Out of 10.0
-    active_backlogs = Column(Integer, default=0)
-    admission_year = Column(Integer, nullable=True)
-    graduation_year = Column(Integer, nullable=True)
-    identity_proof = Column(String, nullable=True) # Aadhar/PAN
-    placement_status = Column(String, default="Eligible") # Eligible, Placed, Not Placed, Opted Out
-
-    # Retained metrics to bridge placement readiness dashboard charts
-    attendance = Column(Integer, default=0) # overall attendance percentage
-    dsa_score = Column(Integer, default=0)
-    ml_score = Column(Integer, default=0)
-    qa_score = Column(Integer, default=0)
-    projects_score = Column(Integer, default=0)
-    mock_interview_score = Column(Integer, default=0)
-    rag_status = Column(String, default="Green")
-    start_date = Column(Date, nullable=True)
-    end_date = Column(Date, nullable=True)
-    
-    # Additional fields from legacy model to prevent breaks
-    batch_id = Column(String, nullable=True, index=True) # Legacy support (e.g. Program + Branch + Sem)
-    fees_paid = Column(Boolean, default=True)
-    external_certifications = Column(Integer, default=0)
-    pre_score = Column(Float, default=0.0)
-    post_score = Column(Float, default=0.0)
-    pre_communication = Column(Float, default=0.0)
-    pre_engagement = Column(Float, default=0.0)
-    pre_subject_knowledge = Column(Float, default=0.0)
-    pre_confidence = Column(Float, default=0.0)
-    pre_fluency = Column(Float, default=0.0)
-    pre_remarks = Column(Text, nullable=True)
-    pre_status = Column(Text, nullable=True)
-    post_communication = Column(Float, default=0.0)
-    post_engagement = Column(Float, default=0.0)
-    post_subject_knowledge = Column(Float, default=0.0)
-    post_confidence = Column(Float, default=0.0)
-    post_fluency = Column(Float, default=0.0)
-    post_remarks = Column(Text, nullable=True)
-    post_status = Column(Text, nullable=True)
-
-class Teacher(Base):
-    __tablename__ = "teachers"
-
-    faculty_id = Column(String, primary_key=True) # Unique Faculty code, e.g., FAC101 (replaces teacher_id)
-    teacher_id = synonym("faculty_id")
-    name = Column(String, nullable=False)
-    email = Column(String, unique=True, nullable=False, index=True)
-    department = Column(String, nullable=False) # e.g. CSE
-    designation = Column(String, nullable=True) # Assistant Professor, Professor, etc.
-    teaching_experience = Column(Integer, default=0) # in years
-    feedback_score = Column(Float, default=5.0) # 1.0 to 5.0
-
-    # Retained metrics to bridge performance dashboard charts
-    subject = Column(String, nullable=True) # Primary Subject
-    avg_improvement = Column(Float, default=0.0)
-    content_quality_score = Column(Float, default=0.0)
-    placement_conversion = Column(Float, default=0.0)
-
-class Course(Base):
-    __tablename__ = "courses"
-
-    course_code = Column(String, primary_key=True) # e.g. CS-401, MCA-102
-    course_name = Column(String, nullable=False)
-    department = Column(String, nullable=False) # CSE, IT, MCA
-    credits = Column(Integer, nullable=False)
-    semester = Column(Integer, nullable=False)
+from .curriculum.models import (
+    Program, SemesterTemplate, CourseSlot, Course,
+    CurriculumVersion, Batch, AcademicSession, CurriculumAudit
+)
 
 class CourseAllocation(Base):
     __tablename__ = "course_allocations"
@@ -282,82 +214,14 @@ class SystemSetting(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 # AI-Powered Adaptive Test Models
-class Test(Base):
-    __tablename__ = "tests"
+from .questions.models import (
+    Question, QuestionVersion, QuestionOption,
+    QuestionSolution, QuestionPaper
+)
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    teacher_id = Column(String, ForeignKey("teachers.faculty_id", ondelete="CASCADE"), nullable=False, index=True) # maps to faculty_id
-    name = Column(String, nullable=False)
-    subject = Column(String, nullable=False)
-    topic = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    duration = Column(Integer, nullable=False) # in minutes
-    passing_marks = Column(Integer, nullable=False)
-    difficulty = Column(String, nullable=False) # Easy, Medium, Hard
-    approved = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class Question(Base):
-    __tablename__ = "questions"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    test_id = Column(String, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
-    question_text = Column(Text, nullable=False)
-    question_type = Column(String, nullable=False) # MCQ, Multiple Select, True/False, Fill in the Blank, Short Answer
-    options = Column(Text, nullable=True) # JSON array of options if applicable
-    correct_answer = Column(Text, nullable=False) # string or JSON
-    explanation = Column(Text, nullable=True)
-    difficulty = Column(String, nullable=False) # Easy, Medium, Hard
-    subject = Column(String, nullable=False)
-    topic = Column(String, nullable=False)
-    subtopic = Column(String, nullable=True)
-
-class TestAssignment(Base):
-    __tablename__ = "test_assignments"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    test_id = Column(String, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
-    student_id = Column(String, ForeignKey("students.enrollment_no", ondelete="CASCADE"), nullable=False, index=True) # maps to enrollment_no
-    assigned_by = Column(String, ForeignKey("teachers.faculty_id", ondelete="CASCADE"), nullable=False) # maps to faculty_id
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    randomize_questions = Column(Boolean, default=False)
-    randomize_options = Column(Boolean, default=False)
-    allow_retake = Column(Boolean, default=False)
-    show_result_immediately = Column(Boolean, default=True)
-    show_correct_answers = Column(Boolean, default=False)
-    status = Column(String, default="Pending") # Pending, In Progress, Completed, Expired
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class TestAttempt(Base):
-    __tablename__ = "test_attempts"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    test_assignment_id = Column(String, ForeignKey("test_assignments.id", ondelete="CASCADE"), nullable=False, index=True)
-    student_id = Column(String, ForeignKey("students.enrollment_no", ondelete="CASCADE"), nullable=False, index=True) # maps to enrollment_no
-    started_at = Column(DateTime(timezone=True), server_default=func.now())
-    submitted_at = Column(DateTime(timezone=True), nullable=True)
-    score = Column(Float, nullable=True)
-    percentage = Column(Float, nullable=True)
-    correct_count = Column(Integer, default=0)
-    incorrect_count = Column(Integer, default=0)
-    unanswered_count = Column(Integer, default=0)
-    accuracy = Column(Float, default=0.0)
-    time_taken = Column(Integer, nullable=True) # in seconds
-    tab_switch_count = Column(Integer, default=0)
-    fullscreen_exit_count = Column(Integer, default=0)
-    auto_submitted = Column(Boolean, default=False)
-
-class StudentAnswer(Base):
-    __tablename__ = "student_answers"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    attempt_id = Column(String, ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
-    question_id = Column(String, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False, index=True)
-    answer_text = Column(Text, nullable=True) # Selected/typed answer
-    is_correct = Column(Boolean, nullable=True)
-    marked_for_review = Column(Boolean, default=False)
-    saved_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+from .exam.models import (
+    Test, TestAssignment, TestAttempt, StudentAnswer
+)
 
 class TestActivityLog(Base):
     __tablename__ = "test_activity_logs"

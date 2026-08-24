@@ -3,6 +3,10 @@
 A state-of-the-art, full-stack educational dashboard and predictive analytics platform built for educational institutions to monitor **Student Placement Readiness**, **Teacher Effectiveness Index (TEI)**, **AI Academic Risk Detection**, and **Batch Performance Analytics**.
 
 ---
+ye raha ai csf and fad ka syllabus from sem 1 to sem 8 
+mock data hta de and ye vala poora daalde 
+ocurse id vagera sab hai isme 
+poora integrate karde 
 
 ## 🚀 Quick Start Guide
 
