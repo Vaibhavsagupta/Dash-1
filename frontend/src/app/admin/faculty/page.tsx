@@ -97,7 +97,7 @@ export default function FacultyManagementPage() {
 
   const fetchAvailableCourses = async (prog: string, sem: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/curriculum/${prog}/${sem}`);
+      const res = await fetch(`${API_BASE_URL}/api/curriculum/${prog}/${sem}`);
       if (res.ok) {
         const data = await res.json();
         const list = (data.subjects || []).map((s: any) => ({

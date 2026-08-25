@@ -122,7 +122,7 @@ export default function SyllabusIntelligencePage() {
 
   const fetchCourses = async (prog: string, sem: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/curriculum/${prog}/${sem}`);
+      const res = await fetch(`${API_BASE_URL}/api/curriculum/${prog}/${sem}`);
       if (res.ok) {
         const data = await res.json();
         const list: CourseOption[] = (data.subjects || []).map((s: any) => ({
@@ -143,7 +143,7 @@ export default function SyllabusIntelligencePage() {
   const fetchSyllabusDetail = async (cId: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/syllabus/course/${cId}`);
+      const res = await fetch(`${API_BASE_URL}/api/syllabus/course/${cId}`);
       if (res.ok) {
         const data: SyllabusDetail = await res.json();
         setSyllabusDetail(data);
@@ -168,7 +168,7 @@ export default function SyllabusIntelligencePage() {
     formData.append("source_type", sourceType);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/syllabus/upload`, {
+      const res = await fetch(`${API_BASE_URL}/api/syllabus/upload`, {
         method: "POST",
         body: formData,
       });

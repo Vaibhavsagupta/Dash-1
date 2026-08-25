@@ -76,7 +76,7 @@ export default function CurriculumManagerPage() {
     try {
       const semMap: Record<number, SemesterData> = {};
       const semPromises = Array.from({ length: 8 }, (_, i) => i + 1).map(async (sem) => {
-        const res = await fetch(`${API_BASE_URL}/curriculum/${prog}/${sem}`);
+        const res = await fetch(`${API_BASE_URL}/api/curriculum/${prog}/${sem}`);
         if (res.ok) {
           const data: SemesterData = await res.json();
           semMap[sem] = data;

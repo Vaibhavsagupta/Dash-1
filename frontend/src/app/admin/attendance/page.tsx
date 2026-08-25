@@ -143,7 +143,7 @@ export default function AttendanceIntelligencePage() {
 
   const fetchCourses = async (prog: string, sem: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/curriculum/${prog}/${sem}`);
+      const res = await fetch(`${API_BASE_URL}/api/curriculum/${prog}/${sem}`);
       if (res.ok) {
         const data = await res.json();
         const list = (data.subjects || []).map((s: any) => ({
@@ -161,7 +161,7 @@ export default function AttendanceIntelligencePage() {
 
   const fetchSyllabusTopics = async (cId: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/syllabus/course/${cId}`);
+      const res = await fetch(`${API_BASE_URL}/api/syllabus/course/${cId}`);
       if (res.ok) {
         const data = await res.json();
         const tList: TopicOption[] = [];

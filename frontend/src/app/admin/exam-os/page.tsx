@@ -116,7 +116,7 @@ export default function ExamOSPage() {
   const handleStartExamDemo = async () => {
     try {
       // Get AI/7 course & test or generate
-      const cRes = await fetch(`${API_BASE_URL}/curriculum/AI/7`);
+      const cRes = await fetch(`${API_BASE_URL}/api/curriculum/AI/7`);
       const cData = await cRes.json();
       const courseId = cData.subjects[0].id;
 
