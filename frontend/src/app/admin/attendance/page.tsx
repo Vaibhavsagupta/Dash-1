@@ -381,11 +381,15 @@ export default function AttendanceIntelligencePage() {
                   onChange={(e) => setSelectedCourseId(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  {coursesList.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.course_code} - {c.course_name}
-                    </option>
-                  ))}
+                  {coursesList.length === 0 ? (
+                    <option value="">No subjects found (Start Backend)</option>
+                  ) : (
+                    coursesList.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.course_code} - {c.course_name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -396,11 +400,15 @@ export default function AttendanceIntelligencePage() {
                   onChange={(e) => setSelectedTopicId(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
                 >
-                  {topicsList.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      Unit {t.unit_number}: {t.topic_name}
-                    </option>
-                  ))}
+                  {topicsList.length === 0 ? (
+                    <option value="">No topics found (Start Backend)</option>
+                  ) : (
+                    topicsList.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        Unit {t.unit_number}: {t.topic_name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
