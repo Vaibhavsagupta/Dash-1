@@ -90,7 +90,7 @@ export default function AssessmentIntelligencePage() {
 
   // Filter Selectors
   const [selectedProgram, setSelectedProgram] = useState<string>("AI");
-  const [selectedSemester, setSelectedSemester] = useState<number>(7);
+  const [selectedSemester, setSelectedSemester] = useState<number>(1);
   const [coursesList, setCoursesList] = useState<CourseOption[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [topicsList, setTopicsList] = useState<TopicOption[]>([]);
