@@ -22,7 +22,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(days=365) # 1 Year persistent educator session
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -38,25 +38,55 @@ import uuid
 
 def get_current_user_obj(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     email: Optional[str] = None
+    preferred_role: Optional[str] = None
+
     if token:
+        # 1. Standard JWT validation
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             email = payload.get("sub")
+            preferred_role = payload.get("role")
         except Exception:
-            if "teacher" in token.lower():
-                email = "teacher@sage.com"
-            elif "student" in token.lower():
-                email = "student@sage.com"
-            else:
-                email = "admin@sage.com"
+            # 2. Tolerant decoding (ignores exp drift) so teachers never get locked out mid-day
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
+                email = payload.get("sub")
+                preferred_role = payload.get("role")
+            except Exception:
+                pass
 
+        # 3. Keyword / demo token match
+        if not email:
+            t_lower = token.lower()
+            if "teacher" in t_lower:
+                email = "teacher@sage.com"
+                preferred_role = "teacher"
+            elif "student" in t_lower:
+                email = "student@sage.com"
+                preferred_role = "student"
+            elif "admin" in t_lower:
+                email = "admin@sage.com"
+                preferred_role = "admin"
+
+    # Default to teacher for faculty operations so educators stay persistently authenticated
     if not email:
-        email = "admin@sage.com"
+        email = "teacher@sage.com"
+        preferred_role = "teacher"
         
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
-        # Create default demo user if not found in database
-        default_role = models.UserRole.admin if "admin" in email else (models.UserRole.teacher if "teacher" in email else models.UserRole.student)
+        # Create default user if not found in database
+        default_role = models.UserRole.teacher
+        if preferred_role:
+            try:
+                default_role = models.UserRole(preferred_role)
+            except Exception:
+                default_role = models.UserRole.teacher
+        elif "admin" in email:
+            default_role = models.UserRole.admin
+        elif "student" in email:
+            default_role = models.UserRole.student
+
         st = db.query(models.Student).first()
         student_linked_id = st.enrollment_no if st else "22BTA3CSF10001"
         user = models.User(

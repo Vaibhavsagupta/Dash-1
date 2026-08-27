@@ -22,8 +22,8 @@ def create_test(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role != "teacher":
-        raise HTTPException(status_code=403, detail="Only teachers can create tests")
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required to create tests")
     
     db_test = models.Test(
         teacher_id=current_user.linked_id,
@@ -237,8 +237,8 @@ def upload_syllabus(
     file: UploadFile = File(...),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role != "teacher":
-        raise HTTPException(status_code=403, detail="Only teachers can upload syllabus")
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required to upload syllabus")
     
     filename = file.filename.lower()
     allowed_extensions = (".txt", ".pdf", ".png", ".jpg", ".jpeg", ".webp")
@@ -294,8 +294,8 @@ def update_test(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role != "teacher":
-        raise HTTPException(status_code=403, detail="Only teachers can update tests")
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required to update tests")
         
     test = db.query(models.Test).filter(models.Test.id == id).first()
     if not test:

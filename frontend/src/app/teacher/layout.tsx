@@ -39,8 +39,8 @@ export default function TeacherLayout({
             localStorage.setItem('user_role', role);
             sessionStorage.setItem('access_token', token);
             sessionStorage.setItem('user_role', role);
-            document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `user_role=${role}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `access_token=${token}; path=/; max-age=31536000; SameSite=Lax`;
+            document.cookie = `user_role=${role}; path=/; max-age=31536000; SameSite=Lax`;
         }
     }, [router]);
 

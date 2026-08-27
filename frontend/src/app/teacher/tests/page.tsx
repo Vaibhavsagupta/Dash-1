@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getValidAuthToken } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     Sparkles, Upload, Loader2, Plus, Trash2, CheckCircle2, ChevronRight, ChevronLeft,
@@ -442,7 +442,7 @@ export default function TeacherTestsPage() {
 
     // Fetch subjects dynamically
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
+        const token = getValidAuthToken();
         if (token) {
             fetch(`${API_BASE_URL}/tests/subjects/list`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -460,7 +460,7 @@ export default function TeacherTestsPage() {
 
     // Fetch saved syllabus documents
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
+        const token = getValidAuthToken();
         if (token) {
             fetch(`${API_BASE_URL}/tests/syllabus/list`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -525,7 +525,7 @@ export default function TeacherTestsPage() {
         setStartDate(today);
         setEndDate(nextWeekStr);
 
-        const token = localStorage.getItem("access_token");
+        const token = getValidAuthToken();
         if (token) {
             fetch(`${API_BASE_URL}/dashboard/teacher`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -548,7 +548,7 @@ export default function TeacherTestsPage() {
     // Check Question Bank item count for selected subject and topic
     useEffect(() => {
         if (step === 4) {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             const params = new URLSearchParams();
             if (subject) params.append("subject", subject);
             if (topic) params.append("topic", topic);
@@ -596,7 +596,7 @@ export default function TeacherTestsPage() {
         formData.append("topic", topic);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             const res = await fetch(`${API_BASE_URL}/tests/syllabus/upload`, {
                 method: "POST",
                 headers: {
@@ -625,7 +625,7 @@ export default function TeacherTestsPage() {
         if (questions.length === 0) return;
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             const payload = questions.map(q => ({
                 question_text: q.question_text,
                 question_type: q.question_type,
@@ -764,7 +764,7 @@ export default function TeacherTestsPage() {
         formData.append("engine_mode", engineMode);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             
             // 1. Create Test record in DB
             const testRes = await fetch(`${API_BASE_URL}/tests`, {
@@ -877,7 +877,7 @@ export default function TeacherTestsPage() {
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             const q = questions[index];
             const formData = new FormData();
             formData.append("subject", subject);
@@ -914,7 +914,7 @@ export default function TeacherTestsPage() {
         setError(null);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             const res = await fetch(`${API_BASE_URL}/tests/${testId}/approve`, {
                 method: "POST",
                 headers: {
@@ -997,7 +997,7 @@ export default function TeacherTestsPage() {
         setError(null);
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getValidAuthToken();
             const res = await fetch(`${API_BASE_URL}/tests/${testId}/assign`, {
                 method: "POST",
                 headers: {
@@ -1067,17 +1067,24 @@ export default function TeacherTestsPage() {
                 <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl flex items-center justify-between gap-3 text-xs font-bold shadow-sm">
                     <div className="flex items-center gap-2.5">
                         <AlertCircle size={18} className="text-rose-600 flex-shrink-0" />
-                        <span>
-                            {error.toLowerCase().includes("credential")
-                                ? "Your login session has expired. Please re-login with your teacher account."
-                                : error}
-                        </span>
+                        <span>{error}</span>
                     </div>
-                    {error.toLowerCase().includes("credential") && (
-                        <a href="/login" className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex-shrink-0 shadow-sm">
-                            Go to Login
-                        </a>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {step === 4 && (
+                            <button
+                                onClick={handleGenerateQuestions}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex-shrink-0 shadow-sm"
+                            >
+                                Try Again
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setError(null)}
+                            className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition flex-shrink-0"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
                 </div>
             )}
 
