@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Body
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import date, datetime
@@ -186,6 +186,52 @@ def extract_text_from_image(image_bytes: bytes, mime_type: str) -> dict:
             "warning": warning_msg
         }
 
+def extract_text_from_pdf(pdf_bytes: bytes) -> str:
+    """Extract raw text from PDF bytes using PyMuPDF, falling back to pypdf or heuristic decoding."""
+    # 1. Try PyMuPDF
+    try:
+        import pymupdf
+        doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+        text_parts = []
+        for page in doc:
+            page_text = page.get_text()
+            if page_text and page_text.strip():
+                text_parts.append(page_text.strip())
+        full_text = "\n\n".join(text_parts).strip()
+        if full_text:
+            return full_text
+    except Exception:
+        pass
+
+    # 2. Try pypdf fallback
+    try:
+        import io
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        text_parts = []
+        for page in reader.pages:
+            t = page.extract_text()
+            if t and t.strip():
+                text_parts.append(t.strip())
+        full_text = "\n\n".join(text_parts).strip()
+        if full_text:
+            return full_text
+    except Exception:
+        pass
+
+    # 3. Fallback heuristic for raw ASCII strings
+    try:
+        import re
+        strings = re.findall(b"[a-zA-Z0-9\\s\\.,;:!\\?\\(\\)\\{\\}\\[\\]\\+\\-\\*\\/]{4,}", pdf_bytes)
+        decoded_strings = [s.decode("ascii", errors="ignore") for s in strings]
+        heuristic_text = " ".join(decoded_strings).strip()
+        if len(heuristic_text) >= 50:
+            return heuristic_text
+    except Exception:
+        pass
+
+    return MOCK_SYLLABUS_FALLBACK
+
 @router.post("/upload-syllabus")
 def upload_syllabus(
     file: UploadFile = File(...),
@@ -219,21 +265,9 @@ def upload_syllabus(
             text_content = res["content"]
             warning = res["warning"]
         else:
-            # Simple fallback for PDF file binary parsing
-            try:
-                import re
-                strings = re.findall(b"[a-zA-Z0-9\\s\\.,;:!\\?\\(\\)\\{\\}\\[\\]\\+\\-\\*\\/]{4,}", contents)
-                decoded_strings = []
-                for s in strings:
-                    try:
-                        decoded_strings.append(s.decode("ascii"))
-                    except Exception:
-                        pass
-                text_content = " ".join(decoded_strings)
-                if len(text_content.strip()) < 50:
-                    text_content = "[PDF text extraction empty. Please copy and paste the syllabus text directly or use a .txt file.]"
-            except Exception:
-                text_content = "[Failed to parse PDF binary. Please copy and paste the syllabus text directly or use a .txt file.]"
+            text_content = extract_text_from_pdf(contents)
+            if not text_content or text_content == MOCK_SYLLABUS_FALLBACK:
+                warning = "Could not extract clear text from the uploaded PDF. A standard syllabus structure was provided as fallback."
                 
         return {"filename": file.filename, "content": text_content, "warning": warning}
     except Exception as e:
