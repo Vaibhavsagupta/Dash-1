@@ -367,7 +367,7 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     try:
         db = SessionLocal()
@@ -376,6 +376,11 @@ def health_check():
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": str(e)}
+
+@app.api_route("/ping", methods=["GET", "HEAD"])
+def ping():
+    return {"status": "pong"}
+
 
 
 app.include_router(auth.router)
