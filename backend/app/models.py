@@ -726,7 +726,7 @@ class QuestionBankItem(Base):
     __tablename__ = "question_bank"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    teacher_id = Column(String, ForeignKey("teachers.faculty_id", ondelete="SET NULL"), nullable=True, index=True)
+    teacher_id = Column(String, nullable=True, index=True)
     question_text = Column(Text, nullable=False)
     question_type = Column(String, nullable=False, index=True)
     options_json = Column(Text, nullable=True)

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import date, datetime
 from typing import List, Dict, Any, Optional
@@ -8,6 +9,7 @@ from .. import models, schemas
 from ..database import get_db
 from ..auth import get_current_user_obj as get_current_user
 from ..services.ai import generate_questions
+from ..services import question_bank_service
 
 router = APIRouter(
     prefix="/tests",
@@ -43,14 +45,17 @@ def create_test(
 def generate_test_questions(
     subject: str = Form(...),
     topic: str = Form(...),
-    syllabus: str = Form(...),
+    syllabus: str = Form(""),
     question_types_json: str = Form(...),  # JSON array or object string
     count: int = Form(...),
     difficulty: str = Form(...),
+    source: str = Form("auto"),  # "question_bank", "ai", or "auto"
+    engine_mode: str = Form("auto"),  # "local_nlp", "ollama", or "auto"
+    db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role != "teacher":
-        raise HTTPException(status_code=403, detail="Only teachers can generate questions")
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required to generate questions")
     
     try:
         question_types = json.loads(question_types_json)
@@ -62,18 +67,56 @@ def generate_test_questions(
         if type_count_sum != count:
             count = type_count_sum
 
+    # 1. Check Question Bank if requested or auto
+    if source in ["question_bank", "auto"]:
+        bank_res = question_bank_service.generate_questions_from_bank(
+            db=db,
+            subject=subject,
+            topic=topic,
+            question_types=question_types,
+            count=count,
+            difficulty=difficulty
+        )
+        if bank_res["found_count"] >= count or source == "question_bank":
+            return {
+                "source": "question_bank",
+                "questions": bank_res["questions"],
+                "total_found": bank_res["found_count"]
+            }
+
+    # 2. In-House / Local / Custom AI generation
     try:
+        if engine_mode == "custom_trained":
+            from ..services.custom_model_service import generate_with_custom_model
+            questions = generate_with_custom_model(
+                subject=subject,
+                topic=topic,
+                syllabus=syllabus,
+                question_types=question_types,
+                count=count,
+                difficulty=difficulty
+            )
+            return {
+                "source": "custom_trained",
+                "questions": questions
+            }
+
         questions = generate_questions(
             subject=subject,
             topic=topic,
             syllabus=syllabus,
             question_types=question_types,
             count=count,
-            difficulty=difficulty
+            difficulty=difficulty,
+            engine_mode=engine_mode
         )
-        return {"questions": questions}
+        return {
+            "source": "local_nlp" if engine_mode == "local_nlp" else "ai_engine",
+            "questions": questions
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate questions: {str(e)}")
+
 
 MOCK_SYLLABUS_FALLBACK = """
 Syllabus Overview:
@@ -669,6 +712,178 @@ def search_question_bank(
         query = query.filter(models.QuestionBankItem.question_text.ilike(f"%{q}%"))
 
     return query.order_by(models.QuestionBankItem.created_at.desc()).limit(50).all()
+
+@router.post("/question-bank/bulk-upload")
+async def bulk_upload_question_bank(
+    file: UploadFile = File(...),
+    default_subject: Optional[str] = Form(None),
+    default_topic: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required")
+    
+    contents = await file.read()
+    res = question_bank_service.parse_and_validate_bulk_file(
+        file_bytes=contents,
+        filename=file.filename or "upload.xlsx",
+        teacher_id=current_user.linked_id,
+        db=db,
+        default_subject=default_subject,
+        default_topic=default_topic
+    )
+    if "error" in res:
+        raise HTTPException(status_code=400, detail=res["error"])
+    return res
+
+@router.get("/question-bank/template")
+def download_question_bank_template(
+    format: str = "xlsx",
+    current_user: models.User = Depends(get_current_user)
+):
+    output = question_bank_service.generate_sample_template(file_format=format)
+    if format.lower() == "csv":
+        media_type = "text/csv"
+        filename = "question_bank_template.csv"
+    else:
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename = "question_bank_template.xlsx"
+
+    return StreamingResponse(
+        output,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+@router.get("/question-bank/stats")
+def get_question_bank_statistics(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    return question_bank_service.get_question_bank_stats(db=db, teacher_id=current_user.linked_id)
+
+@router.get("/question-bank/search")
+def search_question_bank(
+    subject: Optional[str] = None,
+    topic: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    bloom_taxonomy: Optional[str] = None,
+    q: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Searches and filters items in the institutional Question Bank repository."""
+    query = db.query(models.QuestionBankItem)
+    
+    if subject and subject.strip():
+        query = query.filter(models.QuestionBankItem.subject.ilike(f"%{subject.strip()}%"))
+    if topic and topic.strip():
+        query = query.filter(models.QuestionBankItem.topic.ilike(f"%{topic.strip()}%"))
+    if difficulty and difficulty.strip() and difficulty.lower() != "all":
+        query = query.filter(models.QuestionBankItem.difficulty.ilike(difficulty.strip()))
+    if bloom_taxonomy and bloom_taxonomy.strip() and bloom_taxonomy.lower() != "all":
+        query = query.filter(models.QuestionBankItem.bloom_taxonomy.ilike(bloom_taxonomy.strip()))
+    if q and q.strip():
+        search_pattern = f"%{q.strip()}%"
+        query = query.filter(
+            (models.QuestionBankItem.question_text.ilike(search_pattern)) |
+            (models.QuestionBankItem.subtopic.ilike(search_pattern)) |
+            (models.QuestionBankItem.topic.ilike(search_pattern))
+        )
+
+    items = query.order_by(models.QuestionBankItem.created_at.desc()).limit(200).all()
+    
+    results = []
+    for it in items:
+        options = []
+        if it.options_json:
+            try:
+                options = json.loads(it.options_json)
+            except Exception:
+                options = []
+        results.append({
+            "id": it.id,
+            "question_text": it.question_text,
+            "question_type": it.question_type,
+            "options": options,
+            "options_json": it.options_json,
+            "correct_answer": it.correct_answer,
+            "explanation": it.explanation,
+            "difficulty": it.difficulty,
+            "bloom_taxonomy": it.bloom_taxonomy,
+            "subject": it.subject,
+            "topic": it.topic,
+            "subtopic": it.subtopic,
+            "created_at": it.created_at.isoformat() if it.created_at else None
+        })
+    return results
+
+@router.post("/question-bank/save")
+def save_questions_to_bank(
+    payload: Any = Body(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Saves new questions (from test review or manual entry) into the Question Bank."""
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required")
+
+    items_to_save = payload if isinstance(payload, list) else [payload]
+    saved_count = 0
+
+    for item in items_to_save:
+        opts_json = item.get("options_json")
+        if not opts_json and "options" in item:
+            opts_json = json.dumps(item["options"]) if isinstance(item["options"], list) else str(item["options"])
+
+        bank_entry = models.QuestionBankItem(
+            teacher_id=current_user.linked_id,
+            question_text=item.get("question_text", "").strip(),
+            question_type=item.get("question_type", "MCQ"),
+            options_json=opts_json or "[]",
+            correct_answer=str(item.get("correct_answer", "")).strip(),
+            explanation=item.get("explanation", ""),
+            difficulty=item.get("difficulty", "Medium"),
+            bloom_taxonomy=item.get("bloom_taxonomy", "Understand"),
+            subject=item.get("subject", "General"),
+            topic=item.get("topic", "General"),
+            subtopic=item.get("subtopic", "")
+        )
+        db.add(bank_entry)
+        saved_count += 1
+
+    db.commit()
+    return {"status": "success", "saved_count": saved_count}
+
+# -------------------------------------------------------------------
+# CUSTOM MODEL FINE-TUNING & DATASET ENDPOINTS (PHASE 3)
+# -------------------------------------------------------------------
+@router.get("/custom-model/status")
+def get_custom_model_status_endpoint(
+    current_user: models.User = Depends(get_current_user)
+):
+    from ..services.custom_model_service import get_custom_model_status
+    return get_custom_model_status()
+
+@router.post("/custom-model/export-dataset")
+def export_training_dataset_endpoint(
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required")
+    from scripts.prepare_qg_dataset import export_question_bank_to_dataset
+    return export_question_bank_to_dataset()
+
+@router.post("/custom-model/train")
+def trigger_training_pipeline_endpoint(
+    epochs: int = 3,
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role not in ["teacher", "admin"]:
+        raise HTTPException(status_code=403, detail="Faculty access required")
+    from scripts.train_qg_model import run_fine_tuning
+    return run_fine_tuning(epochs=epochs)
 
 
 # -------------------------------------------------------------------

@@ -283,10 +283,17 @@ def generate_questions(
     syllabus: str,
     question_types: Any,  # List[str] or Dict[str, int]
     count: int,
-    difficulty: str
+    difficulty: str,
+    engine_mode: str = "auto"
 ) -> List[Dict[str, Any]]:
-    """Primary service entry point that routes to AI APIs or fallback mock generator."""
-    
+    """
+    Primary question generation service routing through:
+    1. Local Ollama LLM (if selected or available on localhost)
+    2. In-House Semantic NLP Generator (Zero external API, runs in <40MB RAM)
+    3. Mock Question Pool as graceful fallback
+    """
+    from .local_qg_engine import generate_local_nlp_questions, call_local_ollama
+
     if isinstance(question_types, dict):
         distribution_desc = ", ".join([f"{c} questions of type '{t}'" for t, c in question_types.items()])
         allowed_types_list = list(question_types.keys())
@@ -309,12 +316,12 @@ Each question MUST have the following keys:
 - question_text (string)
 - question_type (must be one of: {", ".join(allowed_types_list)})
 - options (array of strings, only for MCQ and 'Multiple Select', else empty array or null)
-- correct_answer (string. For 'Multiple Select', this should be a JSON array string representing list of correct options. For 'True/False', must be 'True' or 'False'. For others, the exact text.)
+- correct_answer (string)
 - explanation (string explaining why it is correct)
 - difficulty (must be: {difficulty})
 - subject (must be: {subject})
 - topic (must be: {topic})
-- subtopic (string representing the specific subconcept)
+- subtopic (string)
 
 JSON Output template:
 {{
@@ -334,19 +341,30 @@ JSON Output template:
 }}
 """
 
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    openai_key = os.getenv("OPENAI_API_KEY")
-    
-    if gemini_key:
+    # 1. Try Local Ollama if requested
+    if engine_mode in ["ollama", "auto"]:
         try:
-            return call_gemini_api(gemini_key, prompt)
+            ollama_qs = call_local_ollama(prompt, model="llama3.2")
+            if ollama_qs and len(ollama_qs) > 0:
+                return ollama_qs[:count]
         except Exception:
             pass
-            
-    if openai_key:
-        try:
-            return call_openai_api(openai_key, prompt)
-        except Exception:
-            pass
-            
+
+    # 2. In-House Semantic NLP Generator (Primary default for self-hosted / cloud without GPU)
+    try:
+        nlp_qs = generate_local_nlp_questions(
+            subject=subject,
+            topic=topic,
+            syllabus=syllabus or topic,
+            question_types=question_types,
+            count=count,
+            difficulty=difficulty
+        )
+        if nlp_qs and len(nlp_qs) > 0:
+            return nlp_qs
+    except Exception as e:
+        print(f"[Local QG Engine] Warning: {e}")
+
+    # 3. Graceful Fallback
     return generate_mock_questions(subject, topic, count, question_types, difficulty)
+

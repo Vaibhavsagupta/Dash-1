@@ -1,0 +1,24 @@
+{
+  "target_subjects": [
+    "Data Structures",
+    "Machine Learning",
+    "DBMS",
+    "Python Programming",
+    "Quantitative Aptitude"
+  ],
+  "bloom_taxonomy_levels": [
+    "Remember",
+    "Understand",
+    "Apply",
+    "Analyze",
+    "Evaluate"
+  ],
+  "question_formats": [
+    "MCQ",
+    "Multiple Select",
+    "Short Answer",
+    "True/False",
+    "Coding"
+  ],
+  "model_version": "1.0.0"
+}

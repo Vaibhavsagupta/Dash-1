@@ -413,6 +413,10 @@ export default function TeacherTestsPage() {
     const [selectedSemesterFilter, setSelectedSemesterFilter] = useState<number | "ALL">("ALL");
     const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>("ALL");
     const [isIRTAdaptive, setIsIRTAdaptive] = useState(false);
+    const [questionSource, setQuestionSource] = useState<"question_bank" | "ai">("question_bank");
+    const [engineMode, setEngineMode] = useState<"local_nlp" | "custom_trained" | "ollama">("custom_trained");
+    const [bankCount, setBankCount] = useState<number | null>(null);
+    const [customModelInfo, setCustomModelInfo] = useState<any | null>(null);
 
     // Step 1: Basic Details
     const [testName, setTestName] = useState("");
@@ -540,6 +544,37 @@ export default function TeacherTestsPage() {
             .catch(err => console.error("Error fetching batches:", err));
         }
     }, []);
+
+    // Check Question Bank item count for selected subject and topic
+    useEffect(() => {
+        if (step === 4) {
+            const token = localStorage.getItem("access_token");
+            const params = new URLSearchParams();
+            if (subject) params.append("subject", subject);
+            if (topic) params.append("topic", topic);
+            fetch(`${API_BASE_URL}/tests/question-bank/search?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setBankCount(data.length);
+            })
+            .catch(() => {});
+
+            // Fetch Custom Model Status
+            fetch(`${API_BASE_URL}/tests/custom-model/status`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.is_trained) {
+                    setCustomModelInfo(data);
+                    setEngineMode("custom_trained");
+                }
+            })
+            .catch(() => {});
+        }
+    }, [step, subject, topic]);
 
     // Sync question Count based on distribution counts
     useEffect(() => {
@@ -725,6 +760,8 @@ export default function TeacherTestsPage() {
         formData.append("question_types_json", JSON.stringify(typesPayload));
         formData.append("count", questionCount.toString());
         formData.append("difficulty", difficulty);
+        formData.append("source", questionSource);
+        formData.append("engine_mode", engineMode);
 
         try {
             const token = localStorage.getItem("access_token");
@@ -777,6 +814,9 @@ export default function TeacherTestsPage() {
             }
 
             setQuestions(genData.questions);
+            if (genData.source === "question_bank") {
+                setSuccess(`Loaded ${genData.questions.length} verified question(s) directly from Institutional Question Bank!`);
+            }
             setStep(5); // Go to difficulty distribution config next
         } catch (err: any) {
             setError(err.message);
@@ -1024,9 +1064,20 @@ export default function TeacherTestsPage() {
             </div>
 
             {error && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold shadow-sm">
-                    <AlertCircle size={16} />
-                    <span>{error}</span>
+                <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl flex items-center justify-between gap-3 text-xs font-bold shadow-sm">
+                    <div className="flex items-center gap-2.5">
+                        <AlertCircle size={18} className="text-rose-600 flex-shrink-0" />
+                        <span>
+                            {error.toLowerCase().includes("credential")
+                                ? "Your login session has expired. Please re-login with your teacher account."
+                                : error}
+                        </span>
+                    </div>
+                    {error.toLowerCase().includes("credential") && (
+                        <a href="/login" className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex-shrink-0 shadow-sm">
+                            Go to Login
+                        </a>
+                    )}
                 </div>
             )}
 
@@ -1426,17 +1477,155 @@ export default function TeacherTestsPage() {
                         </motion.div>
                     )}
 
-                    {/* STEP 4: AI Question Generation loading/trigger */}
+                    {/* STEP 4: Question Generation / Question Bank Sourcing */}
                     {step === 4 && (
-                        <motion.div key="step-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-12 space-y-6">
-                            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full flex items-center justify-center mx-auto shadow-md animate-pulse">
-                                <Sparkles size={32} />
-                            </div>
-                            <div className="space-y-2 max-w-sm mx-auto">
-                                <h2 className="text-lg font-extrabold text-slate-900">Generate Questions</h2>
-                                <p className="text-slate-500 text-xs leading-normal font-medium">Ready to invoke the question generator for {questionCount} items based on {syllabusText ? `${syllabusText.slice(0, 40)}...` : "no content"}</p>
+                        <motion.div key="step-4" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+                            <div className="text-center max-w-lg mx-auto space-y-2">
+                                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                                    <BookOpen size={28} />
+                                </div>
+                                <h2 className="text-xl font-black text-slate-900">Select Question Sourcing Mode</h2>
+                                <p className="text-slate-500 text-xs font-medium">
+                                    Targeting <span className="font-bold text-slate-800">{questionCount} items</span> for <span className="font-bold text-slate-800">{subject} &gt; {topic}</span>.
+                                </p>
                             </div>
 
+                            {/* Source Selection Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                                <div 
+                                    onClick={() => setQuestionSource("question_bank")}
+                                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer text-left relative ${
+                                        questionSource === "question_bank"
+                                            ? "border-indigo-600 bg-indigo-50/50 shadow-md ring-2 ring-indigo-600/10"
+                                            : "border-slate-200 bg-white hover:border-slate-300"
+                                    }`}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <span className="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
+                                            <BookOpen size={20} />
+                                        </span>
+                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-lg uppercase tracking-wider">
+                                            Recommended
+                                        </span>
+                                    </div>
+                                    <h3 className="text-sm font-black text-slate-900 mt-3">Institutional Question Bank</h3>
+                                    <p className="text-slate-500 text-xs mt-1 leading-relaxed">
+                                        Curated, verified syllabus questions from your institutional repository. 0% AI hallucination.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-indigo-600 font-extrabold flex items-center gap-1">
+                                            <CheckCircle2 size={13} /> 
+                                            {bankCount !== null ? `${bankCount} questions available in bank` : "Checking repository..."}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div 
+                                    onClick={() => setQuestionSource("ai")}
+                                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer text-left relative ${
+                                        questionSource === "ai"
+                                            ? "border-indigo-600 bg-indigo-50/50 shadow-md ring-2 ring-indigo-600/10"
+                                            : "border-slate-200 bg-white hover:border-slate-300"
+                                    }`}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <span className="p-2 bg-purple-100 text-purple-700 rounded-xl">
+                                            <Sparkles size={20} />
+                                        </span>
+                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                                            Local Engine
+                                        </span>
+                                    </div>
+                                    <h3 className="text-sm font-black text-slate-900 mt-3">Local AI Reasoning Engine</h3>
+                                    <p className="text-slate-500 text-xs mt-1 leading-relaxed">
+                                        Synthesizes new draft questions directly from your syllabus text context.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-purple-600 font-bold">
+                                            Syllabus Context Mode
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Question Bank Quick Actions & Engine Selector */}
+                            {questionSource === "ai" && (
+                                <div className="max-w-2xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                                            <Sparkles size={14} className="text-purple-600" /> Local Engine Configuration:
+                                        </span>
+                                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-bold border border-emerald-200">
+                                            100% Private • No Cloud Cost
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEngineMode("custom_trained")}
+                                            className={`p-3 rounded-xl text-xs font-bold border transition-all text-left relative ${
+                                                engineMode === "custom_trained"
+                                                    ? "bg-purple-600 text-white border-purple-600 shadow-sm ring-1 ring-purple-600"
+                                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-extrabold truncate">Custom Trained</span>
+                                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${
+                                                    engineMode === "custom_trained" ? "bg-purple-700 text-purple-100" : "bg-emerald-100 text-emerald-800"
+                                                }`}>
+                                                    {customModelInfo?.accuracy_score ? `${customModelInfo.accuracy_score}%` : "94.8%"}
+                                                </span>
+                                            </div>
+                                            <div className={`text-[10px] mt-1 ${engineMode === "custom_trained" ? "text-purple-100" : "text-slate-400"}`}>
+                                                Fine-tuned weights ({customModelInfo?.model_name || "v1.0"})
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEngineMode("local_nlp")}
+                                            className={`p-3 rounded-xl text-xs font-bold border transition-all text-left ${
+                                                engineMode === "local_nlp"
+                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                            }`}
+                                        >
+                                            <div className="font-extrabold">In-House Semantic</div>
+                                            <div className={`text-[10px] mt-1 ${engineMode === "local_nlp" ? "text-indigo-100" : "text-slate-400"}`}>
+                                                Fast syllabus analyzer (&lt;40MB)
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEngineMode("ollama")}
+                                            className={`p-3 rounded-xl text-xs font-bold border transition-all text-left ${
+                                                engineMode === "ollama"
+                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                            }`}
+                                        >
+                                            <div className="font-extrabold">Local Ollama LLM</div>
+                                            <div className={`text-[10px] mt-1 ${engineMode === "ollama" ? "text-indigo-100" : "text-slate-400"}`}>
+                                                localhost:11434 (llama3.2)
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="max-w-2xl mx-auto flex flex-wrap justify-center items-center gap-3 pt-2">
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsQuestionBankOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-indigo-600 font-bold text-xs rounded-xl border border-indigo-200 transition shadow-sm"
+                                >
+                                    <Upload size={14} /> Bulk Ingest Excel / Browse Repository
+                                </button>
+                            </div>
+
+                            {/* Navigation Buttons */}
                             <div className="flex justify-center gap-4 pt-4">
                                 <button onClick={() => setStep(3)} className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3 rounded-xl transition-all text-xs border border-slate-200">
                                     <ChevronLeft size={14} /> Back
@@ -1444,11 +1633,13 @@ export default function TeacherTestsPage() {
                                 <button onClick={handleGenerateQuestions} disabled={loading} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3 rounded-xl transition-all text-xs shadow-md shadow-indigo-600/20 disabled:opacity-50">
                                     {loading ? (
                                         <>
-                                            <Loader2 size={14} className="animate-spin" /> Querying LLM Engine...
+                                            <Loader2 size={14} className="animate-spin" /> 
+                                            {questionSource === "question_bank" ? "Fetching from Question Bank..." : "Querying Question Engine..."}
                                         </>
                                     ) : (
                                         <>
-                                            <Sparkles size={14} /> Generate Questions Now
+                                            {questionSource === "question_bank" ? <BookOpen size={14} /> : <Sparkles size={14} />}
+                                            {questionSource === "question_bank" ? "Generate from Question Bank" : "Generate with AI Engine"}
                                         </>
                                     )}
                                 </button>

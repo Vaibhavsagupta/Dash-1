@@ -309,8 +309,39 @@ def auto_init_database():
                 except Exception as c_err:
                     print(f"[Auto-Init] Curriculum seed warning: {c_err}")
 
+                # Seed Initial Question Bank if empty
+                if db.query(models.QuestionBankItem).count() == 0:
+                    print("[Auto-Init] Seeding default academic Question Bank...")
+                    from .services.question_bank_service import generate_sample_template, parse_and_validate_bulk_file
+                    template_io = generate_sample_template(file_format="csv")
+                    parse_and_validate_bulk_file(
+                        file_bytes=template_io.getvalue().encode("utf-8"),
+                        filename="template.csv",
+                        teacher_id="T01",
+                        db=db
+                    )
+                    from .services.ai import MOCK_QUESTIONS_POOL
+                    for subj_name, topics_dict in MOCK_QUESTIONS_POOL.items():
+                        for topic_name, q_list in topics_dict.items():
+                            for q in q_list:
+                                db.add(models.QuestionBankItem(
+                                    teacher_id="T01",
+                                    question_text=q["question_text"],
+                                    question_type=q["question_type"],
+                                    options_json=json.dumps(q.get("options", [])),
+                                    correct_answer=q["correct_answer"],
+                                    explanation=q.get("explanation", ""),
+                                    difficulty=q.get("difficulty", "Medium"),
+                                    bloom_taxonomy="Understand",
+                                    subject=subj_name,
+                                    topic=topic_name,
+                                    subtopic=q.get("subtopic", "")
+                                ))
+                    db.commit()
+
                 print("[Auto-Init] Database ready.")
                 return
+
             except Exception as e:
                 print(f"Error during auto_init_database: {e}")
                 db.rollback()

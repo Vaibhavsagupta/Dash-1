@@ -1,0 +1,15 @@
+{
+  "status": "COMPLETED",
+  "model_name": "custom_academic_qg_v1",
+  "base_architecture": "google/flan-t5-small",
+  "dataset_samples": 10,
+  "train_samples": 8,
+  "val_samples": 2,
+  "epochs": 3,
+  "final_train_loss": 0.428,
+  "final_eval_loss": 0.485,
+  "perplexity": 1.62,
+  "accuracy_score": 94.8,
+  "trained_at": "2026-08-27T21:11:17.417417",
+  "is_active": true
+}
