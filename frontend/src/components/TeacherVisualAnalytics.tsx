@@ -56,8 +56,9 @@ export function generateAIModelsForBatch(data: any, branch: string, semester: st
     const avgAtt = kpis.avg_attendance || kpis.average_attendance_pct || 82.5;
     const atRisk = kpis.at_risk_count ?? kpis.at_risk_students_count ?? 14;
 
-    const branchSeed = branch.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const semSeed = (parseInt(semester) || 3) * 7;
+    const safeBranch = branch || 'All';
+    const branchSeed = safeBranch.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const semSeed = (parseInt(semester || '3') || 3) * 7;
     const variance = ((branchSeed + semSeed) % 17) - 8;
 
     const baseRisk = (atRisk / Math.max(1, total)) * 95.0 + (100.0 - avgAtt) * 0.35 + (8.5 - avgCgpa) * 4.0;
@@ -294,6 +295,11 @@ export default function TeacherVisualAnalytics() {
         fetchBatchAnalytics();
     }, [branchFilter, semesterFilter]);
 
+    const aiModels = useMemo(() => {
+        if (data?.ai_models) return data.ai_models;
+        return generateAIModelsForBatch(data, branchFilter, semesterFilter);
+    }, [data, branchFilter, semesterFilter]);
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200/80 shadow-sm text-slate-500">
@@ -321,11 +327,6 @@ export default function TeacherVisualAnalytics() {
         student_rankings,
         topic_class_performance
     } = data;
-
-    const aiModels = useMemo(() => {
-        if (data?.ai_models) return data.ai_models;
-        return generateAIModelsForBatch(data, branchFilter, semesterFilter);
-    }, [data, branchFilter, semesterFilter]);
 
     // 1. Class Performance Trend Line
     const classTrendData = {
