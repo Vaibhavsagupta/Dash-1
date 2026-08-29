@@ -481,6 +481,15 @@ def submit_student_test(
         models.TestAssignment.id == id,
         models.TestAssignment.student_id == student_id
     ).first()
+
+    if not assign:
+        assign = db.query(models.TestAssignment).filter(
+            models.TestAssignment.test_id == id,
+            models.TestAssignment.student_id == student_id
+        ).first()
+
+    if not assign:
+        assign = db.query(models.TestAssignment).filter(models.TestAssignment.id == id).first()
     
     if not assign:
         raise HTTPException(status_code=404, detail="Test assignment not found")
@@ -489,8 +498,20 @@ def submit_student_test(
         models.TestAttempt.test_assignment_id == assign.id
     ).order_by(models.TestAttempt.started_at.desc()).first()
     
-    if not attempt or attempt.submitted_at is not None:
-        raise HTTPException(status_code=400, detail="No active attempt found for this test")
+    if not attempt:
+        attempt = models.TestAttempt(
+            test_assignment_id=assign.id,
+            test_id=assign.test_id,
+            student_id=student_id,
+            started_at=get_utc_now()
+        )
+        db.add(attempt)
+        db.flush()
+    elif attempt.submitted_at is not None:
+        # Already submitted
+        assign.status = "Completed"
+        db.commit()
+        return {"message": "Test already submitted", "attempt_id": attempt.id, "score": attempt.score}
         
     # Mark submitted
     attempt.submitted_at = get_utc_now()

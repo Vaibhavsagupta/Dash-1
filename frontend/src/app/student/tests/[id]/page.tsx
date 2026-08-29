@@ -1,13 +1,14 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     Clock, AlertTriangle, Shield, CheckSquare, ChevronLeft, ChevronRight, 
-    Play, Lock, Loader2, WifiOff, RefreshCw, Bookmark
+    Play, Lock, Loader2, WifiOff, RefreshCw, Bookmark, Maximize2, ShieldAlert,
+    EyeOff, Smartphone, AlertCircle
 } from "lucide-react";
-import SecureAntiLensQuestion from "@/components/SecureAntiLensQuestion";
+import SecureAntiLensQuestion, { obfuscateTextForLens } from "@/components/SecureAntiLensQuestion";
 import ComputerVisionProctoring from "@/components/ComputerVisionProctoring";
 
 interface Question {
@@ -46,22 +47,36 @@ export default function StudentTestAttemptPage() {
     // Security triggers
     const [tabSwitches, setTabSwitches] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [fullscreenLocked, setFullscreenLocked] = useState(false);
     const [showSecurityWarning, setShowSecurityWarning] = useState(false);
+    const [securityWarningMessage, setSecurityWarningMessage] = useState("");
+    const [cameraBlockCountdown, setCameraBlockCountdown] = useState<number | null>(null);
+    const [autoSubmitReason, setAutoSubmitReason] = useState<string | null>(null);
     const [offline, setOffline] = useState(false);
     
     const containerRef = useRef<HTMLDivElement>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const cameraBlockTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const tabSwitchesRef = useRef(0);
+    const fullscreenViolationsRef = useRef(0);
 
-    // 1. Fetch test instructions initially
+    // 1. Fetch test instructions initially & Enforce Single Attempt
     useEffect(() => {
         const fetchInfo = async () => {
             try {
-                const token = localStorage.getItem("access_token");
+                if (typeof window !== "undefined" && sessionStorage.getItem(`test_${assignmentId}_completed`) === "true") {
+                    router.replace(`/student/tests/${assignmentId}/result`);
+                    return;
+                }
+
+                const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
                 const res = await fetch(`${API_BASE_URL}/student/tests/${assignmentId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: {
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    }
                 });
                 if (!res.ok) {
-                    const data = await res.json();
+                    const data = await res.json().catch(() => ({}));
                     throw new Error(data.detail || "Failed to fetch test instructions");
                 }
                 const data = await res.json();
@@ -69,7 +84,11 @@ export default function StudentTestAttemptPage() {
                 
                 // If already completed or expired, redirect
                 if (data.status === "Completed") {
-                    router.push(`/student/tests/${assignmentId}/result`);
+                    if (typeof window !== "undefined") {
+                        sessionStorage.setItem(`test_${assignmentId}_completed`, "true");
+                    }
+                    router.replace(`/student/tests/${assignmentId}/result`);
+                    return;
                 }
             } catch (err: any) {
                 setError(err.message);
@@ -110,100 +129,175 @@ export default function StudentTestAttemptPage() {
         }
     }, [offline, isStarted, attemptId]);
 
-    // 3. Security listeners (Tab switches & Fullscreen check)
+    // 8. Auto Submit Implementation
+    const handleAutoSubmit = useCallback(async (reason: string) => {
+        if (submitting) return;
+        setSubmitting(true);
+        setAutoSubmitReason(reason);
+
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (cameraBlockTimerRef.current) clearInterval(cameraBlockTimerRef.current);
+
+        if (typeof window !== "undefined") {
+            sessionStorage.setItem(`test_${assignmentId}_completed`, "true");
+        }
+
+        try {
+            const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+            // 1. Log security breach
+            await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/log-activity`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    event_type: "auto_submitted",
+                    details: `Exam auto-submitted due to: ${reason}`
+                })
+            }).catch(() => {});
+
+            // 2. Submit test attempt to backend
+            await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/submit`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ auto_submitted: true, reason })
+            }).catch(() => {});
+        } catch (e) {
+            console.error("Auto submit API call failed", e);
+        }
+
+        // Exit fullscreen safely
+        try {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        } catch {}
+
+        setTimeout(() => {
+            router.replace(`/student/tests/${assignmentId}/result`);
+        }, 2500);
+    }, [assignmentId, router, submitting]);
+
+    // 3. Security listeners (Dual Tab & Window Switch + Fullscreen lockdown + Interaction prevention)
     useEffect(() => {
         if (!isStarted || submitting) return;
 
-        // Visibility Change (Tab Switch)
-        const handleVisibilityChange = async () => {
-            if (document.hidden) {
-                const updatedSwitches = tabSwitches + 1;
-                setTabSwitches(updatedSwitches);
-                setShowSecurityWarning(true);
-                
-                // Log event to backend
-                try {
-                    const token = localStorage.getItem("access_token");
-                    await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/log-activity`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            event_type: "tab_switched",
-                            details: `User switched tab. Total tab switches: ${updatedSwitches}`
-                        })
-                    });
-                } catch (err) {
-                    console.error("Failed to log activity", err);
-                }
-                
-                // Auto submit if tab switches exceeds limit (e.g. 5)
-                if (updatedSwitches >= 5) {
-                    handleAutoSubmit("tab_limit_exceeded");
-                }
+        const triggerTabViolation = (details: string) => {
+            if (submitting) return;
+            tabSwitchesRef.current += 1;
+            const updatedSwitches = tabSwitchesRef.current;
+            setTabSwitches(updatedSwitches);
+            setSecurityWarningMessage(details);
+            setShowSecurityWarning(true);
+            
+            try {
+                const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+                fetch(`${API_BASE_URL}/student/tests/${assignmentId}/log-activity`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({
+                        event_type: "tab_switched",
+                        details: `${details}. Total violations: ${updatedSwitches}/3`
+                    })
+                }).catch(() => {});
+            } catch (err) {
+                console.error("Failed to log activity", err);
+            }
+            
+            // Auto submit when reaching 3 tab/window violations
+            if (updatedSwitches >= 3) {
+                handleAutoSubmit("Maximum tab/window switch violations exceeded (3/3)");
             }
         };
 
-        // Fullscreen Change
-        const handleFullscreenChange = async () => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                triggerTabViolation("Browser tab switched or minimized");
+            }
+        };
+
+        const handleWindowBlur = () => {
+            triggerTabViolation("Window lost focus (Alt+Tab / split-screen)");
+        };
+
+        const handleFullscreenChange = () => {
             const fs = document.fullscreenElement !== null;
             setIsFullscreen(fs);
-            if (!fs) {
-                setShowSecurityWarning(true);
+            if (!fs && !submitting) {
+                fullscreenViolationsRef.current += 1;
+                const exits = fullscreenViolationsRef.current;
+                setFullscreenLocked(true);
+
                 try {
-                    const token = localStorage.getItem("access_token");
-                    await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/log-activity`, {
+                    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+                    fetch(`${API_BASE_URL}/student/tests/${assignmentId}/log-activity`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`
+                            ...(token ? { Authorization: `Bearer ${token}` } : {})
                         },
                         body: JSON.stringify({
                             event_type: "fullscreen_exited",
-                            details: "User exited fullscreen mode."
+                            details: `User exited fullscreen mode. Total exits: ${exits}/3`
                         })
-                    });
-                } catch (err) {
-                    console.error("Failed to log activity", err);
+                    }).catch(() => {});
+                } catch {}
+
+                if (exits >= 3) {
+                    handleAutoSubmit("Maximum fullscreen exit violations exceeded (3/3)");
                 }
+            } else if (fs) {
+                setFullscreenLocked(false);
             }
         };
 
-        // Disable copy-paste, context-menu and key combinations
         const disableInteraction = (e: Event) => e.preventDefault();
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "F12") {
+            if (e.key === "F12" || e.key === "PrintScreen") {
+                e.preventDefault();
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText("SCREENSHOTS_PROHIBITED").catch(() => {});
+                }
+            }
+            if (e.ctrlKey && e.shiftKey && ["I", "C", "J", "i", "c", "j"].includes(e.key)) {
                 e.preventDefault();
             }
-            if (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "C" || e.key === "J" || e.key === "i" || e.key === "c" || e.key === "j")) {
-                e.preventDefault();
-            }
-            if (e.ctrlKey && (e.key === "u" || e.key === "U")) {
-                e.preventDefault();
-            }
-            if (e.ctrlKey && (e.key === "c" || e.key === "v" || e.key === "x" || e.key === "C" || e.key === "V" || e.key === "X")) {
+            if (e.ctrlKey && ["u", "U", "c", "C", "v", "V", "x", "X", "p", "P", "a", "A", "s", "S"].includes(e.key)) {
                 e.preventDefault();
             }
         };
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("blur", handleWindowBlur);
         document.addEventListener("fullscreenchange", handleFullscreenChange);
         document.addEventListener("copy", disableInteraction);
         document.addEventListener("paste", disableInteraction);
+        document.addEventListener("cut", disableInteraction);
         document.addEventListener("contextmenu", disableInteraction);
+        document.addEventListener("selectstart", disableInteraction);
+        document.addEventListener("dragstart", disableInteraction);
         window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("blur", handleWindowBlur);
             document.removeEventListener("fullscreenchange", handleFullscreenChange);
             document.removeEventListener("copy", disableInteraction);
             document.removeEventListener("paste", disableInteraction);
+            document.removeEventListener("cut", disableInteraction);
             document.removeEventListener("contextmenu", disableInteraction);
+            document.removeEventListener("selectstart", disableInteraction);
+            document.removeEventListener("dragstart", disableInteraction);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isStarted, tabSwitches, submitting, assignmentId]);
+    }, [isStarted, submitting, assignmentId, handleAutoSubmit]);
 
     // 4. Timer Logic
     useEffect(() => {
@@ -213,7 +307,7 @@ export default function StudentTestAttemptPage() {
             setTimeRemaining((prev) => {
                 if (prev <= 1) {
                     clearInterval(timerRef.current!);
-                    handleAutoSubmit("time_expired");
+                    handleAutoSubmit("Assessment time expired");
                     return 0;
                 }
                 return prev - 1;
@@ -223,7 +317,7 @@ export default function StudentTestAttemptPage() {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [isStarted, timeRemaining, submitting]);
+    }, [isStarted, timeRemaining, submitting, handleAutoSubmit]);
 
     // 5. Start Test Attempt
     const handleStartTest = async () => {
@@ -416,64 +510,65 @@ export default function StudentTestAttemptPage() {
 
     // 7. Manual Submit Attempt
     const handleSubmitTest = async () => {
-        if (!confirm("Are you sure you want to end and submit your exam?")) return;
+        if (!confirm("Are you sure you want to end and submit your exam? Once submitted, you cannot resume.")) return;
         submitAttempt();
     };
 
-    // 8. Auto Submit
-    const handleAutoSubmit = async (reason: string) => {
+    const submitAttempt = async () => {
         setSubmitting(true);
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (cameraBlockTimerRef.current) clearInterval(cameraBlockTimerRef.current);
+
+        if (typeof window !== "undefined") {
+            sessionStorage.setItem(`test_${assignmentId}_completed`, "true");
+        }
+
         try {
-            const token = localStorage.getItem("access_token");
-            await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/log-activity`, {
+            const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+            await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/submit`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    event_type: "auto_submitted",
-                    details: `Exam auto-submitted due to: ${reason}`
-                })
-            });
-        } catch (e) {
-            console.error("Auto submit log failed", e);
-        }
-        submitAttempt(true);
-    };
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                }
+            }).catch(() => {});
 
-    const submitAttempt = async (isAuto = false) => {
-        setSubmitting(true);
-        if (timerRef.current) clearInterval(timerRef.current);
-
-        try {
-            const token = localStorage.getItem("access_token");
-            const res = await fetch(`${API_BASE_URL}/student/tests/${assignmentId}/submit`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (!res.ok) throw new Error("Failed to submit exam");
-
-            // Exit fullscreen
             if (document.fullscreenElement) {
-                document.exitFullscreen().catch(err => console.error(err));
+                document.exitFullscreen().catch(() => {});
             }
 
-            alert(isAuto ? "Your exam was automatically submitted." : "Your exam has been submitted successfully!");
-            router.push(`/student/tests/${assignmentId}/result`);
+            alert("Your exam has been submitted successfully!");
+            router.replace(`/student/tests/${assignmentId}/result`);
         } catch (err: any) {
-            setError("Failed to submit. Please check your network and retry.");
-            setSubmitting(false);
+            router.replace(`/student/tests/${assignmentId}/result`);
         }
     };
 
-    const handleRequestFullscreen = () => {
-        if (containerRef.current?.requestFullscreen) {
-            containerRef.current.requestFullscreen().then(() => {
-                setIsFullscreen(true);
-                setShowSecurityWarning(false);
-            });
+    // Camera Occlusion alert handler
+    const handleCameraBlocked = (reason: string) => {
+        if (cameraBlockCountdown !== null) return;
+        setCameraBlockCountdown(5);
+
+        let remaining = 5;
+        cameraBlockTimerRef.current = setInterval(() => {
+            remaining -= 1;
+            setCameraBlockCountdown(remaining);
+            if (remaining <= 0) {
+                if (cameraBlockTimerRef.current) clearInterval(cameraBlockTimerRef.current);
+                cameraBlockTimerRef.current = null;
+                handleAutoSubmit("Camera blocked or covered with paper/object for extended duration");
+            }
+        }, 1000);
+    };
+
+    const handleReturnToFullscreen = () => {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen()
+                .then(() => {
+                    setIsFullscreen(true);
+                    setFullscreenLocked(false);
+                })
+                .catch(() => {});
         }
     };
 
@@ -529,15 +624,15 @@ export default function StudentTestAttemptPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <Shield size={16} className="text-indigo-600" /> Exam Rules & Security Terms
+                    <div className="space-y-3 bg-red-50/60 p-6 rounded-2xl border border-red-200/80">
+                        <h3 className="text-sm font-bold text-red-900 flex items-center gap-2">
+                            <Shield size={16} className="text-red-600" /> Mandatory Proctoring & Anti-Cheating Protocol
                         </h3>
-                        <ul className="text-xs text-slate-600 space-y-2 list-disc pl-5 leading-relaxed">
-                            <li>Keep browser tab active. Switching tabs will log security warnings.</li>
-                            <li>Full screen mode will be requested. Exiting full screen multiple times will flag your attempt.</li>
-                            <li>Your answers are automatically saved every 5 seconds.</li>
-                            <li>Ensure a stable internet connection before launching the assessment.</li>
+                        <ul className="text-xs text-red-800 space-y-2 list-disc pl-5 leading-relaxed">
+                            <li><strong>Full-screen is required:</strong> Exiting full screen more than 2 times will immediately terminate and auto-submit your exam.</li>
+                            <li><strong>Tab & Focus Lock:</strong> Switching tabs, minimizing the window, or pressing Alt+Tab counts as a violation. Reaching 3 violations triggers immediate auto-submission.</li>
+                            <li><strong>AI Vision Proctoring:</strong> Covering the camera lens with paper, tape, or hands, or holding a mobile phone in front of the camera will immediately lock and submit your attempt.</li>
+                            <li><strong>Anti-Leak Watermark:</strong> Questions are watermarked with your student identity and anti-OCR filters. Google Lens and photography are strictly prohibited.</li>
                         </ul>
                     </div>
 
@@ -600,9 +695,11 @@ export default function StudentTestAttemptPage() {
                     )}
 
                     {/* Security Switches */}
-                    <div className="hidden sm:flex items-center gap-2 text-xs bg-slate-900 border border-slate-850 px-3 py-1.5 rounded-xl text-slate-400">
-                        <AlertTriangle size={14} className="text-amber-500" />
-                        <span>Tab Switches: <strong className="text-white">{tabSwitches}/5</strong></span>
+                    <div className={`flex items-center gap-2 text-xs border px-3 py-1.5 rounded-xl font-semibold transition-colors ${
+                        tabSwitches > 0 ? "bg-red-500/10 border-red-500/40 text-red-400" : "bg-slate-900 border-slate-850 text-slate-400"
+                    }`}>
+                        <AlertTriangle size={14} className={tabSwitches > 0 ? "text-red-500 animate-pulse" : "text-amber-500"} />
+                        <span>Tab/Focus Violations: <strong className={tabSwitches > 0 ? "text-red-400" : "text-white"}>{tabSwitches}/3</strong></span>
                     </div>
 
                     {/* Timer */}
@@ -617,32 +714,94 @@ export default function StudentTestAttemptPage() {
                 </div>
             </header>
 
-            {/* Security Banner Modal overlay when security breach occurs */}
+            {/* FULLSCREEN LOCKDOWN MODAL (Blocks question visibility until returned) */}
+            {fullscreenLocked && !autoSubmitReason && (
+                <div className="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6 text-center select-none">
+                    <div className="bg-slate-900 border-2 border-red-500 p-8 rounded-3xl max-w-lg space-y-6 shadow-2xl animate-in zoom-in-95">
+                        <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/30 flex items-center justify-center mx-auto">
+                            <ShieldAlert size={36} className="animate-bounce" />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-black text-white uppercase tracking-wider">Fullscreen Violation Detected</h2>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                                You have exited full-screen mode. In accordance with exam security policy, questions are obscured until full-screen is restored.
+                            </p>
+                            <p className="text-xs text-red-400 font-bold bg-red-500/10 py-1.5 px-3 rounded-lg mt-2">
+                                Fullscreen exit count: {fullscreenViolationsRef.current}/3. Reaching 3 will trigger immediate exam termination.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleReturnToFullscreen}
+                            className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            <Maximize2 size={16} /> Return to Full Screen Mode
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* CAMERA OCCLUSION COUNTDOWN MODAL */}
+            {cameraBlockCountdown !== null && !autoSubmitReason && (
+                <div className="fixed inset-0 z-[9998] bg-red-950/90 backdrop-blur-sm flex items-center justify-center p-6 text-center select-none">
+                    <div className="bg-slate-900 border-2 border-red-500 p-8 rounded-3xl max-w-md space-y-5 shadow-2xl">
+                        <div className="w-16 h-16 rounded-2xl bg-red-500/20 text-red-500 flex items-center justify-center mx-auto animate-pulse">
+                            <EyeOff size={36} />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-lg font-black text-white uppercase">Camera Lens Blocked!</h2>
+                            <p className="text-xs text-slate-300">
+                                The proctoring camera appears covered with paper or an object. Remove the obstruction immediately.
+                            </p>
+                            <div className="text-3xl font-black text-red-500 pt-2 font-mono">
+                                {cameraBlockCountdown}s
+                            </div>
+                            <p className="text-[11px] text-red-400 font-semibold">
+                                Exam will automatically submit when timer reaches 0.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* AUTO-SUBMITTED TERMINATION MODAL */}
+            {autoSubmitReason && (
+                <div className="fixed inset-0 z-[10000] bg-red-950/95 backdrop-blur-md flex items-center justify-center p-6 text-center select-none">
+                    <div className="bg-slate-900 border-2 border-red-500 p-8 rounded-3xl max-w-lg space-y-5 shadow-2xl">
+                        <div className="w-16 h-16 rounded-2xl bg-red-500/20 text-red-500 flex items-center justify-center mx-auto animate-pulse">
+                            <AlertCircle size={36} />
+                        </div>
+                        <h2 className="text-xl font-black text-white uppercase tracking-wider">Assessment Terminated</h2>
+                        <p className="text-xs text-red-300 bg-red-500/10 p-3 rounded-xl border border-red-500/20 leading-relaxed font-semibold">
+                            {autoSubmitReason}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                            Your responses have been saved and your exam attempt is now permanently locked. Redirecting to evaluation report...
+                        </p>
+                        <Loader2 size={24} className="animate-spin text-red-500 mx-auto" />
+                    </div>
+                </div>
+            )}
+
+            {/* TAB SWITCH WARNING BANNER MODAL */}
             <AnimatePresence>
-                {showSecurityWarning && (
+                {showSecurityWarning && !fullscreenLocked && !autoSubmitReason && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/90 flex items-center justify-center z-50 p-6">
                         <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md text-center space-y-6 shadow-2xl">
                             <div className="w-16 h-16 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full flex items-center justify-center mx-auto">
                                 <AlertTriangle size={32} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-lg font-bold text-white">Security Alert!</h3>
+                                <h3 className="text-lg font-bold text-white">Security Violation Logged!</h3>
                                 <p className="text-xs text-slate-400 leading-relaxed">
-                                    You have left fullscreen mode or switched your browser tab. Focus loss has been logged. 
+                                    {securityWarningMessage || "You switched tabs or lost window focus. All actions are monitored."}
                                 </p>
                                 <p className="text-xs text-red-400 font-semibold bg-red-500/10 py-1.5 px-3 rounded-lg mt-2">
-                                    Tab focus exits count: {tabSwitches}/5. Reaching 5 will trigger automatic quiz lock-out.
+                                    Violation count: {tabSwitches}/3. Reaching 3 violations will terminate your exam.
                                 </p>
                             </div>
-                            {!isFullscreen ? (
-                                <button onClick={handleRequestFullscreen} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-6 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 justify-center w-full">
-                                    <Lock size={14} /> Resume Fullscreen
-                                </button>
-                            ) : (
-                                <button onClick={() => setShowSecurityWarning(false)} className="bg-slate-850 hover:bg-slate-800 text-white font-semibold text-xs px-6 py-3 rounded-xl transition-all w-full">
-                                    I Understand, Resume Exam
-                                </button>
-                            )}
+                            <button onClick={() => setShowSecurityWarning(false)} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-6 py-3 rounded-xl transition-all w-full">
+                                I Understand, Resume Exam
+                            </button>
                         </div>
                     </motion.div>
                 )}
@@ -655,11 +814,16 @@ export default function StudentTestAttemptPage() {
                     {/* Live Computer Vision AI Proctoring Stream */}
                     <ComputerVisionProctoring 
                         onPhoneDetected={(reason) => {
-                            alert(`🚨 CRITICAL SECURITY BREACH!\n\n${reason}\n\nYour exam is being automatically submitted and locked.`);
-                            handleAutoSubmit("phone_detected");
+                            handleAutoSubmit("Unauthorized mobile phone device detected in camera frame");
                         }}
-                        onGazeViolation={(count) => {
-                            console.log("Gaze violation count:", count);
+                        onCameraBlocked={(reason) => {
+                            handleCameraBlocked(reason);
+                        }}
+                        onFaceAbsent={(reason) => {
+                            console.warn("Face absent:", reason);
+                        }}
+                        onMultipleFaces={(reason) => {
+                            console.warn("Multiple faces:", reason);
                         }}
                     />
 
@@ -721,6 +885,15 @@ export default function StudentTestAttemptPage() {
 
                 {/* Right panel: Active Question Card */}
                 <main className="flex-1 flex flex-col justify-between overflow-y-auto bg-[#070b13] p-6 lg:p-10 relative">
+                    {/* DYNAMIC ANTI-GOOGLE LENS STUDENT IDENTITY WATERMARK OVERLAY */}
+                    <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden select-none opacity-[0.04] flex flex-wrap gap-16 p-6 rotate-[-25deg] scale-125">
+                        {Array.from({ length: 48 }).map((_, i) => (
+                            <div key={i} className="text-xs font-mono font-black text-slate-400 whitespace-nowrap tracking-widest uppercase">
+                                • {testInfo?.name || "SAGE EXAM"} • ROLL: {assignmentId.slice(0, 8)} • PROCTORED SESSION •
+                            </div>
+                        ))}
+                    </div>
+
                     <AnimatePresence mode="wait">
                         {currentQuestion && (
                             <motion.div
@@ -728,7 +901,7 @@ export default function StudentTestAttemptPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="space-y-6 flex-1 max-w-3xl mx-auto w-full flex flex-col justify-center"
+                                className="space-y-6 flex-1 max-w-3xl mx-auto w-full flex flex-col justify-center relative z-10"
                             >
                                 <div className="space-y-2.5">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -748,7 +921,10 @@ export default function StudentTestAttemptPage() {
                                         )}
                                     </div>
                                     <div className="mt-2">
-                                        <SecureAntiLensQuestion text={currentQuestion.question_text} />
+                                        <SecureAntiLensQuestion 
+                                            text={currentQuestion.question_text} 
+                                            studentIdentifier={testInfo?.name || "STUDENT ASSESSMENT"}
+                                        />
                                     </div>
                                 </div>
 
@@ -771,13 +947,13 @@ export default function StudentTestAttemptPage() {
                                                     <button
                                                         key={optIdx}
                                                         onClick={() => handleSelectOption(currentQuestion.id, opt)}
-                                                        className={`w-full text-left p-4 rounded-2xl border transition-all text-sm font-semibold flex items-center justify-between ${
+                                                        className={`w-full text-left p-4 rounded-2xl border transition-all text-sm font-semibold flex items-center justify-between cursor-pointer ${
                                                             isSelected 
                                                                 ? "bg-indigo-600/10 border-indigo-500 text-white font-bold" 
                                                                 : "bg-slate-950 border-slate-850 hover:bg-slate-900 text-slate-300"
                                                         }`}
                                                     >
-                                                        <span>{opt}</span>
+                                                        <span>{obfuscateTextForLens(opt)}</span>
                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                                                             isSelected ? "bg-indigo-500 text-white" : "bg-slate-900 text-slate-500"
                                                         }`}>{String.fromCharCode(65 + optIdx)}</span>
