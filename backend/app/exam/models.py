@@ -16,9 +16,19 @@ class Test(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    title = Column(Text, nullable=False)
-    course_id = Column(String(36), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(Text, nullable=True)
+    name = Column(String, nullable=True)
+    subject = Column(String, nullable=True)
+    topic = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    teacher_id = Column(String, nullable=True)
+    course_id = Column(String(36), ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
     faculty_id = Column(String(36), ForeignKey("faculty.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    duration = Column(Integer, default=30)
+    passing_marks = Column(Integer, default=40)
+    difficulty = Column(String, default="Medium")
+    approved = Column(Boolean, default=False)
 
     total_marks = Column(Integer, default=100)
     duration_minutes = Column(Integer, default=180)

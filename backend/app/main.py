@@ -137,9 +137,15 @@ def auto_init_database():
                 # Seed Real Students from real_students_full.json if database has fewer than 100 students
                 student_count = db.query(models.Student).count()
                 if student_count < 100:
-                    json_data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "real_students_full.json")
-                    if os.path.exists(json_data_path):
-                        print("[Auto-Init] Seeding real student dataset (153 students)...")
+                    candidate_paths = [
+                        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "real_students_full.json"),
+                        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "real_students_full.json"),
+                        os.path.join(os.getcwd(), "data", "real_students_full.json"),
+                        os.path.join(os.getcwd(), "backend", "data", "real_students_full.json")
+                    ]
+                    json_data_path = next((p for p in candidate_paths if os.path.exists(p)), None)
+                    if json_data_path:
+                        print(f"[Auto-Init] Seeding real student dataset from {json_data_path}...")
                         import json
                         with open(json_data_path, "r", encoding="utf-8") as f:
                             real_students = json.load(f)
@@ -226,7 +232,8 @@ def auto_init_database():
                             qa_score=82,
                             projects_score=85,
                             mock_interview_score=80,
-                            rag_status="Green"
+                            rag_status="Green",
+                            batch_id="Batch 2023"
                         )
                         db.add(student)
                         db.flush()

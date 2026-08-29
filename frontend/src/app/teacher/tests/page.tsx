@@ -1082,14 +1082,39 @@ export default function TeacherTestsPage() {
                 }
             } catch {}
 
+            // If eligible-students returned very few or single student, augment with full institution student registry
+            if (studentList.length <= 1) {
+                try {
+                    const allRes = await authenticatedFetch(`${API_BASE_URL}/analytics/students/all`);
+                    if (allRes.ok) {
+                        const allData = await allRes.json();
+                        if (Array.isArray(allData) && allData.length > studentList.length) {
+                            studentList = allData.map((s: any) => ({
+                                student_id: s.student_id || s.enrollment_no,
+                                name: s.name || s.full_name || `Student ${s.student_id}`,
+                                batch_id: s.batch_id || "Batch 2023",
+                                subject_score: Math.round(Number(s.ml_score || s.dsa_score || s.qa_score || 75)),
+                                rag_status: (s.rag_status || "green").toLowerCase(),
+                                topic_accuracy: null,
+                                recommended: true,
+                                reason: s.prs_score ? `Cohort PRS: ${Math.round(s.prs_score)}` : "Enrolled cohort student"
+                            }));
+                        }
+                    }
+                } catch {}
+            }
+
             // Robust fallback student cohort if server is unreachable
             if (studentList.length === 0) {
                 studentList = [
-                    { student_id: "22BTA3CSF10001", name: "Vaibhav Gupta", batch_id: classBatch || "Batch A", subject_score: 84, rag_status: "green", topic_accuracy: 0.88, recommended: true, reason: "High concept mastery — Ready for advanced test" },
-                    { student_id: "22BTA3CSF10002", name: "Aarav Sharma", batch_id: classBatch || "Batch A", subject_score: 52, rag_status: "red", topic_accuracy: 0.48, recommended: true, reason: "Targeted remedial practice recommended" },
-                    { student_id: "22BTA3CSF10003", name: "Priya Patel", batch_id: classBatch || "Batch A", subject_score: 76, rag_status: "green", topic_accuracy: 0.72, recommended: true, reason: "Standard cohort assessment" },
-                    { student_id: "22BTA3CSF10004", name: "Rohan Verma", batch_id: classBatch || "Batch A", subject_score: 64, rag_status: "amber", topic_accuracy: 0.60, recommended: true, reason: "Routine progression test" },
-                    { student_id: "22BTA3CSF10005", name: "Ananya Iyer", batch_id: classBatch || "Batch A", subject_score: 92, rag_status: "green", topic_accuracy: 0.95, recommended: true, reason: "Excellence benchmark track" }
+                    { student_id: "23BTA3ARI10038", name: "Vaibhav Gupta", batch_id: "Batch 2023", subject_score: 84, rag_status: "green", topic_accuracy: 0.88, recommended: true, reason: "High concept mastery — Ready for advanced test" },
+                    { student_id: "23BTA3ARI10039", name: "Rohan Mehta", batch_id: "Batch 2023", subject_score: 52, rag_status: "red", topic_accuracy: 0.48, recommended: true, reason: "Targeted remedial practice recommended" },
+                    { student_id: "23BTA3ARI10040", name: "Priya Sharma", batch_id: "Batch 2023", subject_score: 90, rag_status: "green", topic_accuracy: 0.92, recommended: true, reason: "Excellence benchmark track" },
+                    { student_id: "22BTA3CSF10001", name: "Aadarsh Patel", batch_id: "Batch 2022", subject_score: 76, rag_status: "green", topic_accuracy: 0.72, recommended: true, reason: "Standard cohort assessment" },
+                    { student_id: "22BTA3CSF10002", name: "Aarav Sharma", batch_id: "Batch 2022", subject_score: 64, rag_status: "amber", topic_accuracy: 0.60, recommended: true, reason: "Routine progression test" },
+                    { student_id: "22BTA3CSF10005", name: "Ananya Iyer", batch_id: "Batch 2022", subject_score: 92, rag_status: "green", topic_accuracy: 0.95, recommended: true, reason: "Excellence benchmark track" },
+                    { student_id: "20BTA3ARI10007", name: "Yash Manral", batch_id: "Batch 2020", subject_score: 71, rag_status: "amber", topic_accuracy: 0.65, recommended: true, reason: "Mid-term progression checkpoint" },
+                    { student_id: "22MTA5DSC10001", name: "Vishwadeep Singh", batch_id: "Batch 2022", subject_score: 81, rag_status: "green", topic_accuracy: 0.84, recommended: true, reason: "Consistent academic performer" }
                 ];
             }
 
