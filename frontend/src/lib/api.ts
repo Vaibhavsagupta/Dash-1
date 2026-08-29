@@ -3,22 +3,11 @@ const getApiBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_API_URL) {
         let url = process.env.NEXT_PUBLIC_API_URL.trim();
         if (url.endsWith('/')) url = url.slice(0, -1);
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = !url.includes('.') ? `https://${url}.onrender.com` : `https://${url}`;
-        }
         return url;
     }
 
-    // 2. Client-side Safe Defaults
-    if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://127.0.0.1:7000';
-        }
-    }
-
-    // 3. Fallback for any production/Vercel environment
-    return 'https://dash-1-backend.onrender.com';
+    // 2. Pure Localhost Default
+    return 'http://127.0.0.1:7000';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -66,8 +55,8 @@ export const refreshTeacherToken = async (): Promise<string> => {
         const targets = [
             '/api/login',
             `${API_BASE_URL}/auth/login`,
-            'https://dash-1-backend.onrender.com/auth/login',
-            'http://127.0.0.1:7000/auth/login'
+            'http://127.0.0.1:7000/auth/login',
+            'http://localhost:7000/auth/login'
         ];
 
         for (const target of targets) {

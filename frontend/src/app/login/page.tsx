@@ -72,10 +72,10 @@ export default function LoginPage() {
                 lastErrorMsg = err.message;
             }
 
-            // Attempt 2: Direct call to Render Backend if proxy did not yield token
+            // Attempt 2: Direct call to Localhost Backend if proxy did not yield token
             if (!data || !data.access_token) {
-                const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'https://dash-1-backend.onrender.com').trim().replace(/\/$/, '');
-                const directUrl = backendBase.startsWith('http') ? `${backendBase}/auth/login` : `https://${backendBase}/auth/login`;
+                const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:7000').trim().replace(/\/$/, '');
+                const directUrl = backendBase.startsWith('http') ? `${backendBase}/auth/login` : `http://${backendBase}/auth/login`;
                 console.log(`[Login Debug] Attempting direct backend fetch to: ${directUrl}`);
 
                 try {

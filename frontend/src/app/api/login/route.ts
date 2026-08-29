@@ -18,9 +18,9 @@ export async function POST(request: Request) {
             targets.push(`${u}/auth/login`);
         }
 
-        // Standard production & local fallbacks
-        targets.push('https://dash-1-backend.onrender.com/auth/login');
+        // Pure localhost fallbacks
         targets.push('http://127.0.0.1:7000/auth/login');
+        targets.push('http://localhost:7000/auth/login');
 
         // Deduplicate targets
         const uniqueTargets = Array.from(new Set(targets));
