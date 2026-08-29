@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Camera, ShieldAlert, Eye, Smartphone, AlertTriangle, CheckCircle2, UserX, Users, EyeOff } from 'lucide-react';
+import { Camera, ShieldAlert, Eye, Smartphone, AlertTriangle, CheckCircle2, UserX, Users, EyeOff, Compass } from 'lucide-react';
 
 interface ComputerVisionProctoringProps {
     onPhoneDetected: (reason: string) => void;
@@ -29,14 +29,20 @@ export default function ComputerVisionProctoring({
     const [faceDetected, setFaceDetected] = useState(true);
     const [multipleFaces, setMultipleFaces] = useState(false);
     const [phoneDetected, setPhoneDetected] = useState(false);
+    const [headPose, setHeadPose] = useState<'FORWARD' | 'LEFT' | 'RIGHT' | 'DOWN' | 'UP'>('FORWARD');
+    const [gazeDirection, setGazeDirection] = useState<'CENTER' | 'LEFT' | 'RIGHT' | 'DOWN'>('CENTER');
+    const [gazeViolations, setGazeViolations] = useState(0);
     const [statusMessage, setStatusMessage] = useState<string>("Secured Frame");
+    const [mediaPipeLoaded, setMediaPipeLoaded] = useState(false);
 
-    // Violation streaks to prevent false triggers on single frame blips
+    // Violation streaks and timers
     const blockStreakRef = useRef(0);
     const faceAbsentStreakRef = useRef(0);
     const multiFaceStreakRef = useRef(0);
     const phoneStreakRef = useRef(0);
+    const headDeviationStreakRef = useRef(0);
     const cocoModelRef = useRef<any>(null);
+    const faceMeshRef = useRef<any>(null);
     const isAnalyzingRef = useRef(false);
 
     // 1. Initialize Camera Stream
@@ -76,39 +82,52 @@ export default function ComputerVisionProctoring({
         };
     }, [onCameraBlocked]);
 
-    // 2. Dynamically Load Lightweight Object Detection (COCO-SSD via CDN)
+    // 2. Dynamically Load MediaPipe Face Mesh & COCO-SSD for Real Head Pose & Object Tracking
     useEffect(() => {
         let isMounted = true;
 
-        const loadCoco = async () => {
-            try {
-                if ((window as any).cocoSsd) {
-                    const model = await (window as any).cocoSsd.load({ base: 'mobilenet_v1' });
-                    if (isMounted) {
-                        cocoModelRef.current = model;
+        const loadAIModels = async () => {
+            const loadScript = (src: string): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    if (document.querySelector(`script[src="${src}"]`)) {
+                        resolve();
+                        return;
                     }
-                    return;
-                }
+                    const script = document.createElement("script");
+                    script.src = src;
+                    script.async = true;
+                    script.crossOrigin = "anonymous";
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                    document.head.appendChild(script);
+                });
+            };
 
-                const loadScript = (src: string): Promise<void> => {
-                    return new Promise((resolve, reject) => {
-                        if (document.querySelector(`script[src="${src}"]`)) {
-                            resolve();
-                            return;
-                        }
-                        const script = document.createElement("script");
-                        script.src = src;
-                        script.async = true;
-                        script.crossOrigin = "anonymous";
-                        script.onload = () => resolve();
-                        script.onerror = () => reject(new Error(`Failed to load ${src}`));
-                        document.head.appendChild(script);
+            // A. Load MediaPipe Face Mesh
+            try {
+                await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js");
+                if ((window as any).FaceMesh && isMounted) {
+                    const faceMesh = new (window as any).FaceMesh({
+                        locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
                     });
-                };
+                    faceMesh.setOptions({
+                        maxNumFaces: 2,
+                        refineLandmarks: true,
+                        minDetectionConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+                    faceMeshRef.current = faceMesh;
+                    setMediaPipeLoaded(true);
+                    console.log("[AI Proctor] MediaPipe Face Mesh initialized.");
+                }
+            } catch (e) {
+                console.warn("[AI Proctor] MediaPipe Face Mesh CDN load failed, using native geometry:", e);
+            }
 
+            // B. Load COCO-SSD for Mobile Phone Scanning
+            try {
                 await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js");
                 await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js");
-
                 if ((window as any).cocoSsd && isMounted) {
                     const model = await (window as any).cocoSsd.load({ base: 'mobilenet_v1' });
                     if (isMounted) {
@@ -116,18 +135,18 @@ export default function ComputerVisionProctoring({
                     }
                 }
             } catch (e) {
-                console.warn("[AI Proctor] COCO-SSD dynamic load skipped:", e);
+                console.warn("[AI Proctor] COCO-SSD load skipped:", e);
             }
         };
 
-        loadCoco();
+        loadAIModels();
 
         return () => {
             isMounted = false;
         };
     }, []);
 
-    // 3. Real-Time Computer Vision Analysis (Every 400ms, Zero Lag)
+    // 3. Real-Time Computer Vision Analysis Loop (400ms interval, Zero Lag)
     const runAnalysis = useCallback(async () => {
         if (!hasCamera || isAnalyzingRef.current) return;
         const video = videoRef.current;
@@ -156,6 +175,8 @@ export default function ComputerVisionProctoring({
             let sumLuminance = 0;
             let sumSqLuminance = 0;
             let skinPixelCount = 0;
+            let skinCenterX = 0;
+            let skinCenterY = 0;
             const sampleStep = 8;
             const totalSamples = pixels.length / sampleStep;
 
@@ -172,6 +193,9 @@ export default function ComputerVisionProctoring({
                 const cr = 0.5 * r - 0.4187 * g - 0.0813 * b + 128;
                 if (lum > 40 && lum < 235 && cb > 82 && cb < 138 && cr > 132 && cr < 185) {
                     skinPixelCount++;
+                    const pixelIndex = i / 4;
+                    skinCenterX += (pixelIndex % width);
+                    skinCenterY += Math.floor(pixelIndex / width);
                 }
             }
 
@@ -179,10 +203,7 @@ export default function ComputerVisionProctoring({
             const variance = Math.sqrt(Math.max(0, (sumSqLuminance / totalSamples) - (meanLum * meanLum)));
             const skinRatio = skinPixelCount / totalSamples;
 
-            // Camera is considered blocked/occluded if:
-            // 1. Almost pitch black: meanLum < 16
-            // 2. Uniform white paper covering lens: meanLum > 225 and variance < 12
-            // 3. Flat uniform object/paper covering lens: variance < 7.0
+            // Camera is blocked if pitch black (meanLum < 16), white paper (meanLum > 225 & var < 12), or flat uniform object (var < 7.0)
             const isOccluded = meanLum < 16 || (meanLum > 225 && variance < 12) || variance < 7.0;
 
             if (isOccluded) {
@@ -199,22 +220,97 @@ export default function ComputerVisionProctoring({
                 setCameraBlocked(false);
             }
 
-            // B. Face Presence & Multi-Face Detection
+            // B. Real Head Pose & Gaze Estimation via MediaPipe or Geometric Feature Mapping
+            let currentHeadPose: 'FORWARD' | 'LEFT' | 'RIGHT' | 'DOWN' | 'UP' = 'FORWARD';
+            let currentGaze: 'CENTER' | 'LEFT' | 'RIGHT' | 'DOWN' = 'CENTER';
             let detectedFacesCount = 1;
-
-            if (!isOccluded && 'FaceDetector' in window) {
-                try {
-                    const detector = new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 4 });
-                    const detected = await detector.detect(offCanvas);
-                    detectedFacesCount = detected.length;
-                } catch {
-                    detectedFacesCount = skinRatio > 0.035 ? 1 : 0;
-                }
-            } else if (!isOccluded) {
-                detectedFacesCount = skinRatio > 0.025 ? 1 : 0;
-            }
+            let landmarkPoints: { x: number; y: number }[] = [];
 
             if (!isOccluded) {
+                if (faceMeshRef.current) {
+                    try {
+                        const mpResults = await new Promise<any>((resolve) => {
+                            faceMeshRef.current.onResults((results: any) => resolve(results));
+                            faceMeshRef.current.send({ image: video });
+                        });
+
+                        if (mpResults?.multiFaceLandmarks && mpResults.multiFaceLandmarks.length > 0) {
+                            detectedFacesCount = mpResults.multiFaceLandmarks.length;
+                            const lm = mpResults.multiFaceLandmarks[0];
+
+                            // Key 3D Facial Landmarks:
+                            // 1: Nose tip, 33: Left eye outer, 263: Right eye outer, 152: Chin, 10: Forehead
+                            const nose = lm[1];
+                            const leftEye = lm[33];
+                            const rightEye = lm[263];
+                            const chin = lm[152];
+                            const forehead = lm[10];
+
+                            landmarkPoints = [
+                                { x: nose.x * 320, y: nose.y * 240 },
+                                { x: leftEye.x * 320, y: leftEye.y * 240 },
+                                { x: rightEye.x * 320, y: rightEye.y * 240 },
+                                { x: chin.x * 320, y: chin.y * 240 },
+                                { x: forehead.x * 320, y: forehead.y * 240 }
+                            ];
+
+                            // Yaw Calculation (Left vs Right):
+                            const yawRatio = (nose.x - leftEye.x) / (rightEye.x - leftEye.x);
+                            // Pitch Calculation (Up vs Down):
+                            const pitchRatio = (nose.y - forehead.y) / (chin.y - forehead.y);
+
+                            if (yawRatio < 0.36) {
+                                currentHeadPose = 'LEFT';
+                                currentGaze = 'LEFT';
+                            } else if (yawRatio > 0.64) {
+                                currentHeadPose = 'RIGHT';
+                                currentGaze = 'RIGHT';
+                            } else if (pitchRatio > 0.66) {
+                                currentHeadPose = 'DOWN';
+                                currentGaze = 'DOWN';
+                            } else if (pitchRatio < 0.38) {
+                                currentHeadPose = 'UP';
+                            } else {
+                                currentHeadPose = 'FORWARD';
+                                currentGaze = 'CENTER';
+                            }
+                        } else {
+                            detectedFacesCount = 0;
+                        }
+                    } catch (mpErr) {
+                        // fallback to geometry
+                    }
+                } else if ('FaceDetector' in window) {
+                    try {
+                        const detector = new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 3 });
+                        const detected = await detector.detect(offCanvas);
+                        detectedFacesCount = detected.length;
+                        if (detected.length > 0) {
+                            const box = detected[0].boundingBox;
+                            const centerRelX = (box.x + box.width / 2) / width;
+                            const centerRelY = (box.y + box.height / 2) / height;
+                            if (centerRelX < 0.38) currentHeadPose = 'LEFT';
+                            else if (centerRelX > 0.62) currentHeadPose = 'RIGHT';
+                            else if (centerRelY > 0.65) currentHeadPose = 'DOWN';
+                        }
+                    } catch {
+                        detectedFacesCount = skinRatio > 0.03 ? 1 : 0;
+                    }
+                } else {
+                    detectedFacesCount = skinRatio > 0.025 ? 1 : 0;
+                    if (skinPixelCount > 0) {
+                        const avgX = (skinCenterX / skinPixelCount) / width;
+                        const avgY = (skinCenterY / skinPixelCount) / height;
+                        if (avgX < 0.36) currentHeadPose = 'LEFT';
+                        else if (avgX > 0.64) currentHeadPose = 'RIGHT';
+                        else if (avgY > 0.68) currentHeadPose = 'DOWN';
+                    }
+                }
+
+                setHeadPose(currentHeadPose);
+                setGazeDirection(currentGaze);
+
+                // Face absence & multi-face detection
                 if (detectedFacesCount === 0) {
                     faceAbsentStreakRef.current += 1;
                     if (faceAbsentStreakRef.current >= 3) {
@@ -237,6 +333,20 @@ export default function ComputerVisionProctoring({
                 } else {
                     multiFaceStreakRef.current = 0;
                     setMultipleFaces(false);
+                }
+
+                // Head pose deviation tracking
+                if (currentHeadPose !== 'FORWARD') {
+                    headDeviationStreakRef.current += 1;
+                    if (headDeviationStreakRef.current >= 3) {
+                        setGazeViolations(prev => {
+                            const next = prev + 1;
+                            if (onGazeViolation) onGazeViolation(next);
+                            return next;
+                        });
+                    }
+                } else {
+                    headDeviationStreakRef.current = 0;
                 }
             }
 
@@ -269,11 +379,11 @@ export default function ComputerVisionProctoring({
                 setPhoneDetected(false);
             }
 
-            if (!isOccluded && detectedFacesCount === 1 && !phoneFound) {
-                setStatusMessage("Secure Frame");
+            if (!isOccluded && detectedFacesCount === 1 && !phoneFound && currentHeadPose === 'FORWARD') {
+                setStatusMessage("Secured Frame");
             }
 
-            // D. Draw HUD Overlay onto display canvas
+            // D. Draw HUD Overlays, Head Pose Axis & Landmarks onto display canvas
             const canvas = canvasRef.current;
             if (canvas) {
                 const ctx = canvas.getContext('2d');
@@ -292,11 +402,22 @@ export default function ComputerVisionProctoring({
                         ctx.fillStyle = '#ffffff';
                         ctx.font = 'bold 11px sans-serif';
                         ctx.fillText(
-                            isOccluded ? "⚠️ CAMERA LENS BLOCKED" : (phoneFound ? "🚨 PHONE DETECTED" : "⚠️ FACE NOT CENTERED"),
+                            isOccluded ? "⚠️ CAMERA LENS BLOCKED" : (phoneFound ? "🚨 PHONE DETECTED" : "⚠️ FACE NOT DETECTED"),
                             20,
                             28
                         );
+                    } else if (currentHeadPose !== 'FORWARD') {
+                        ctx.strokeStyle = '#f59e0b';
+                        ctx.lineWidth = 2.5;
+                        ctx.strokeRect(15, 15, 290, 210);
+
+                        ctx.fillStyle = 'rgba(245, 158, 11, 0.85)';
+                        ctx.fillRect(15, 15, 290, 24);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.fillText(`⚠️ HEAD TURNED: ${currentHeadPose}`, 25, 31);
                     } else {
+                        // Green HUD brackets
                         ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
                         ctx.lineWidth = 2;
                         const s = 25;
@@ -304,7 +425,28 @@ export default function ComputerVisionProctoring({
                         ctx.beginPath(); ctx.moveTo(280 - s, 40); ctx.lineTo(280, 40); ctx.lineTo(280, 40 + s); ctx.stroke();
                         ctx.beginPath(); ctx.moveTo(40, 200 - s); ctx.lineTo(40, 200); ctx.lineTo(40 + s, 200); ctx.stroke();
                         ctx.beginPath(); ctx.moveTo(280 - s, 200); ctx.lineTo(280, 200); ctx.lineTo(280, 200 - s); ctx.stroke();
+                    }
 
+                    // Draw MediaPipe Face Landmarks & Orientation Compass
+                    if (landmarkPoints.length >= 5) {
+                        ctx.fillStyle = '#10b981';
+                        landmarkPoints.forEach(pt => {
+                            ctx.beginPath();
+                            ctx.arc(320 - pt.x, pt.y, 3, 0, 2 * Math.PI);
+                            ctx.fill();
+                        });
+
+                        // Draw Face Axis Triangle (Forehead -> Chin, Left Eye -> Right Eye)
+                        ctx.strokeStyle = 'rgba(99, 102, 241, 0.6)';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(320 - landmarkPoints[4].x, landmarkPoints[4].y); // Forehead
+                        ctx.lineTo(320 - landmarkPoints[3].x, landmarkPoints[3].y); // Chin
+                        ctx.moveTo(320 - landmarkPoints[1].x, landmarkPoints[1].y); // Left eye
+                        ctx.lineTo(320 - landmarkPoints[2].x, landmarkPoints[2].y); // Right eye
+                        ctx.stroke();
+                    } else if (!isOccluded && detectedFacesCount === 1) {
+                        // Fallback Target Crosshair
                         ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
                         ctx.beginPath();
                         ctx.arc(160, 115, 14, 0, 2 * Math.PI);
@@ -317,7 +459,7 @@ export default function ComputerVisionProctoring({
         } finally {
             isAnalyzingRef.current = false;
         }
-    }, [hasCamera, onCameraBlocked, onFaceAbsent, onMultipleFaces, onPhoneDetected]);
+    }, [hasCamera, onCameraBlocked, onFaceAbsent, onMultipleFaces, onPhoneDetected, onGazeViolation]);
 
     // Run analysis every 400ms for real-time responsiveness without lag
     useEffect(() => {
@@ -335,7 +477,7 @@ export default function ComputerVisionProctoring({
             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-800 text-xs font-bold">
                 <div className="flex items-center gap-1.5 text-indigo-400">
                     <Camera size={14} className={hasCamera ? "text-emerald-400 animate-pulse" : "text-slate-500"} />
-                    <span>AI Vision Proctor</span>
+                    <span>MediaPipe AI Proctor</span>
                 </div>
                 {phoneDetected ? (
                     <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-600 text-white uppercase animate-pulse flex items-center gap-1">
@@ -353,6 +495,10 @@ export default function ComputerVisionProctoring({
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
                         <Users size={10} /> Multiple Faces
                     </span>
+                ) : headPose !== 'FORWARD' ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                        <Compass size={10} className="animate-spin" /> Pose: {headPose}
+                    </span>
                 ) : (
                     <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                         <CheckCircle2 size={10} /> {statusMessage}
@@ -360,7 +506,7 @@ export default function ComputerVisionProctoring({
                 )}
             </div>
 
-            {/* Video & Canvas Frame (Optimized Hardware Stream) */}
+            {/* Video & Canvas Frame (Hardware accelerated) */}
             <div className="relative w-full aspect-[4/3] bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
                 <video
                     ref={videoRef}
@@ -394,19 +540,25 @@ export default function ComputerVisionProctoring({
                 )}
             </div>
 
-            {/* Security Indicator Chips */}
-            <div className="grid grid-cols-2 gap-1.5 mt-2.5">
-                <div className={`px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1.5 ${
+            {/* AI Diagnostics & Head Pose / Gaze Tracking Chips */}
+            <div className="grid grid-cols-3 gap-1 mt-2.5">
+                <div className={`px-1.5 py-1 rounded-lg border text-[9px] font-semibold flex items-center gap-1 justify-center ${
                     faceDetected && !cameraBlocked ? "bg-slate-950/80 border-slate-800 text-slate-300" : "bg-red-500/10 border-red-500/30 text-red-400"
                 }`}>
                     <div className={`w-1.5 h-1.5 rounded-full ${faceDetected && !cameraBlocked ? "bg-emerald-400" : "bg-red-500 animate-ping"}`} />
-                    <span>{cameraBlocked ? "Lens Blocked" : (faceDetected ? "Face Centered" : "Face Absent")}</span>
+                    <span>{cameraBlocked ? "Blocked" : (faceDetected ? "Face OK" : "No Face")}</span>
                 </div>
-                <div className={`px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1.5 ${
-                    !phoneDetected ? "bg-slate-950/80 border-slate-800 text-slate-300" : "bg-red-500/10 border-red-500/30 text-red-400"
+                <div className={`px-1.5 py-1 rounded-lg border text-[9px] font-semibold flex items-center gap-1 justify-center ${
+                    headPose === 'FORWARD' ? "bg-slate-950/80 border-slate-800 text-slate-300" : "bg-amber-500/10 border-amber-500/30 text-amber-400"
                 }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${!phoneDetected ? "bg-emerald-400" : "bg-red-500 animate-ping"}`} />
-                    <span>{phoneDetected ? "Phone Alert!" : "No Device"}</span>
+                    <Compass size={10} className={headPose === 'FORWARD' ? "text-indigo-400" : "text-amber-400 animate-spin"} />
+                    <span>Pose: {headPose}</span>
+                </div>
+                <div className={`px-1.5 py-1 rounded-lg border text-[9px] font-semibold flex items-center gap-1 justify-center ${
+                    gazeDirection === 'CENTER' ? "bg-slate-950/80 border-slate-800 text-slate-300" : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                }`}>
+                    <Eye size={10} className={gazeDirection === 'CENTER' ? "text-emerald-400" : "text-amber-400"} />
+                    <span>Gaze: {gazeDirection}</span>
                 </div>
             </div>
         </div>

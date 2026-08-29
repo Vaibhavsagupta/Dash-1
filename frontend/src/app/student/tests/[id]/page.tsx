@@ -52,6 +52,8 @@ export default function StudentTestAttemptPage() {
     const [securityWarningMessage, setSecurityWarningMessage] = useState("");
     const [cameraBlockCountdown, setCameraBlockCountdown] = useState<number | null>(null);
     const [autoSubmitReason, setAutoSubmitReason] = useState<string | null>(null);
+    const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
+    const [showSubmittingOverlay, setShowSubmittingOverlay] = useState(false);
     const [offline, setOffline] = useState(false);
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -509,13 +511,15 @@ export default function StudentTestAttemptPage() {
     };
 
     // 7. Manual Submit Attempt
-    const handleSubmitTest = async () => {
-        if (!confirm("Are you sure you want to end and submit your exam? Once submitted, you cannot resume.")) return;
-        submitAttempt();
+    const handleSubmitTest = () => {
+        setShowSubmitConfirmModal(true);
     };
 
     const submitAttempt = async () => {
+        if (submitting) return;
         setSubmitting(true);
+        setShowSubmittingOverlay(true);
+
         if (timerRef.current) clearInterval(timerRef.current);
         if (cameraBlockTimerRef.current) clearInterval(cameraBlockTimerRef.current);
 
@@ -530,18 +534,20 @@ export default function StudentTestAttemptPage() {
                 headers: {
                     "Content-Type": "application/json",
                     ...(token ? { Authorization: `Bearer ${token}` } : {})
-                }
+                },
+                body: JSON.stringify({ auto_submitted: false })
             }).catch(() => {});
 
             if (document.fullscreenElement) {
                 document.exitFullscreen().catch(() => {});
             }
-
-            alert("Your exam has been submitted successfully!");
-            router.replace(`/student/tests/${assignmentId}/result`);
         } catch (err: any) {
-            router.replace(`/student/tests/${assignmentId}/result`);
+            console.error("Submission error:", err);
         }
+
+        setTimeout(() => {
+            router.replace(`/student/tests/${assignmentId}/result`);
+        }, 1200);
     };
 
     // Camera Occlusion alert handler
@@ -711,8 +717,65 @@ export default function StudentTestAttemptPage() {
                         <Clock size={16} />
                         <span>{formatTime(timeRemaining)}</span>
                     </div>
+
+                    {/* End & Submit Button in Header */}
+                    <button
+                        onClick={() => setShowSubmitConfirmModal(true)}
+                        disabled={submitting}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600/90 hover:bg-red-500 text-white font-bold text-xs shadow-md transition cursor-pointer border border-red-500/40"
+                    >
+                        <CheckSquare size={14} /> End Exam
+                    </button>
                 </div>
             </header>
+
+            {/* CONFIRM MANUAL SUBMIT MODAL */}
+            {showSubmitConfirmModal && (
+                <div className="fixed inset-0 z-[10000] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-6 text-center select-none animate-in fade-in">
+                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md space-y-5 shadow-2xl text-white">
+                        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 flex items-center justify-center mx-auto">
+                            <CheckSquare size={32} />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-bold text-white">Submit Assessment Now?</h3>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                                Are you sure you want to end and submit your exam? All your saved responses will be evaluated.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                            <button
+                                onClick={() => setShowSubmitConfirmModal(false)}
+                                className="bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold py-3 rounded-xl text-xs transition cursor-pointer"
+                            >
+                                Continue Exam
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowSubmitConfirmModal(false);
+                                    submitAttempt();
+                                }}
+                                disabled={submitting}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                {submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckSquare size={14} />} Yes, Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SUBMITTING PROGRESS OVERLAY */}
+            {showSubmittingOverlay && (
+                <div className="fixed inset-0 z-[10001] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6 text-center select-none animate-in fade-in">
+                    <div className="bg-slate-900 border border-indigo-500/40 p-8 rounded-3xl max-w-md space-y-4 shadow-2xl text-white">
+                        <Loader2 size={36} className="animate-spin text-indigo-500 mx-auto" />
+                        <h3 className="text-lg font-bold">Submitting Assessment...</h3>
+                        <p className="text-xs text-slate-400">
+                            Evaluating your responses and preparing your scorecard. Redirecting...
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* FULLSCREEN LOCKDOWN MODAL (Blocks question visibility until returned) */}
             {fullscreenLocked && !autoSubmitReason && (
