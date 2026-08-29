@@ -16,7 +16,8 @@ class Question(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    course_id = Column(String(36), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    test_id = Column(String, nullable=True, index=True)
+    course_id = Column(String(36), ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
     topic_id = Column(String(36), ForeignKey("course_topics.id", ondelete="SET NULL"), nullable=True, index=True)
     co_id = Column(String(36), ForeignKey("course_outcomes.id", ondelete="SET NULL"), nullable=True, index=True)
     unit_id = Column(String(36), ForeignKey("course_units.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -34,12 +35,19 @@ class Question(Base):
     embedding_str = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    subject = Column(String, nullable=True)
+    topic = Column(String, nullable=True)
+    subtopic = Column(String, nullable=True)
+    correct_answer = Column(Text, nullable=True)
+    explanation = Column(Text, nullable=True)
+    options = Column(Text, nullable=True)
+
     course = relationship("Course", backref="questions")
-    topic = relationship("CourseTopic", backref="questions")
+    course_topic = relationship("CourseTopic", foreign_keys=[topic_id], backref="questions")
     outcome = relationship("CourseOutcome", backref="questions")
     unit = relationship("CourseUnit", backref="questions")
 
-    options = relationship("QuestionOption", back_populates="question", cascade="all, delete-orphan")
+    question_options = relationship("QuestionOption", back_populates="question", cascade="all, delete-orphan")
     solution = relationship("QuestionSolution", back_populates="question", uselist=False, cascade="all, delete-orphan")
     versions = relationship("QuestionVersion", back_populates="question", cascade="all, delete-orphan")
 
@@ -67,7 +75,7 @@ class QuestionOption(Base):
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, default=False)
 
-    question = relationship("Question", back_populates="options")
+    question = relationship("Question", back_populates="question_options")
 
 class QuestionSolution(Base):
     __tablename__ = "question_solutions"

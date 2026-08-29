@@ -316,7 +316,7 @@ def generate_mock_questions(
     topic: str,
     count: int,
     question_types: Any,
-    difficulty: str
+    difficulty: str = "Medium"
 ) -> List[Dict[str, Any]]:
     """
     Guarantees unique questions strictly distributed across requested types without duplicates.

@@ -3,7 +3,7 @@ SQLAlchemy ORM Models for Exam Operating System (Phase 6)
 """
 
 import uuid
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric, Float
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric, Float, Date
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..db.session import Base
@@ -51,18 +51,32 @@ class TestAssignment(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     test_id = Column(String(36), ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
     student_id = Column(String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
-    assigned_at = Column(DateTime(timezone=True), server_default=func.now())
+    assigned_by = Column(String, nullable=True)
+
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    randomize_questions = Column(Boolean, default=False)
+    randomize_options = Column(Boolean, default=False)
+    allow_retake = Column(Boolean, default=False)
+    show_result_immediately = Column(Boolean, default=True)
+    show_correct_answers = Column(Boolean, default=False)
+    status = Column(String, default="Pending")
+
+    assigned_at = Column(DateTime(timezone=True), nullable=True)
     attempt_limit = Column(Integer, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     test = relationship("Test", back_populates="assignments")
     student = relationship("Student", backref="test_assignments")
+    attempts = relationship("TestAttempt", back_populates="assignment", cascade="all, delete-orphan")
 
 class TestAttempt(Base):
     __tablename__ = "test_attempts"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    test_id = Column(String(36), ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
+    test_assignment_id = Column(String(36), ForeignKey("test_assignments.id", ondelete="CASCADE"), nullable=True, index=True)
+    test_id = Column(String(36), ForeignKey("tests.id", ondelete="CASCADE"), nullable=True, index=True)
     student_id = Column(String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
 
     started_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -70,11 +84,19 @@ class TestAttempt(Base):
 
     score = Column(Float, default=0.0)
     percentage = Column(Float, default=0.0)
+    correct_count = Column(Integer, default=0)
+    incorrect_count = Column(Integer, default=0)
+    unanswered_count = Column(Integer, default=0)
+    accuracy = Column(Float, default=0.0)
+    time_taken = Column(Integer, default=0)
 
     tab_switch_count = Column(Integer, default=0)
+    fullscreen_exit_count = Column(Integer, default=0)
     fullscreen_violations = Column(Integer, default=0)
     suspicious_score = Column(Float, default=0.0)
+    auto_submitted = Column(Boolean, default=False)
 
+    assignment = relationship("TestAssignment", back_populates="attempts")
     test = relationship("Test", back_populates="attempts")
     student = relationship("Student", backref="test_attempts")
     answers = relationship("StudentAnswer", back_populates="attempt", cascade="all, delete-orphan")
@@ -88,11 +110,13 @@ class StudentAnswer(Base):
     question_id = Column(String(36), ForeignKey("questions.id", ondelete="CASCADE"), nullable=False, index=True)
 
     answer = Column(Text, nullable=True)
+    answer_text = Column(Text, nullable=True)
     code_language = Column(String(20), nullable=True) # Python, C, C++, Java
     obtained_marks = Column(Float, default=0.0)
     is_correct = Column(Boolean, default=False)
+    marked_for_review = Column(Boolean, default=False)
+    saved_at = Column(DateTime(timezone=True), server_default=func.now())
     ai_feedback = Column(Text, nullable=True)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     attempt = relationship("TestAttempt", back_populates="answers")
