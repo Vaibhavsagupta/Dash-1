@@ -363,28 +363,32 @@ def generate_questions_from_bank(
         return chosen
 
     # Handle distribution: Dict[str, int] or List[str]
+    type_counts_dict: Dict[str, int] = {}
     if isinstance(question_types, dict):
-        for q_type, q_count in question_types.items():
-            pool = items_by_type.get(q_type, [])
-            if not pool:
-                # Try case-insensitive matching
-                for k, v in items_by_type.items():
-                    if k.lower() == q_type.lower():
-                        pool = v
-                        break
-            if pool:
-                picked = pick_from_pool(pool, q_count, difficulty)
-                selected.extend(picked)
+        type_counts_dict = {k: int(v) for k, v in question_types.items() if int(v) > 0}
     elif isinstance(question_types, list) and question_types:
-        pool = []
-        for q_type in question_types:
-            pool.extend(items_by_type.get(q_type, []))
-        if not pool:
-            pool = matched_items
-        selected.extend(pick_from_pool(pool, count, difficulty))
+        per_type = count // len(question_types)
+        rem = count % len(question_types)
+        for idx, t in enumerate(question_types):
+            type_counts_dict[t] = per_type + (1 if idx < rem else 0)
     else:
-        # Pick from all matched
-        selected.extend(pick_from_pool(matched_items, count, difficulty))
+        type_counts_dict = {"MCQ": count}
+
+    for q_type, q_count in type_counts_dict.items():
+        pool = items_by_type.get(q_type, [])
+        if not pool:
+            # Try case-insensitive matching
+            for k, v in items_by_type.items():
+                if k.lower() == q_type.lower() or (
+                    ("fill" in q_type.lower() and "fill" in k.lower()) or
+                    ("select" in q_type.lower() and "select" in k.lower()) or
+                    ("mcq" in q_type.lower() and "mcq" in k.lower())
+                ):
+                    pool = v
+                    break
+        if pool:
+            picked = pick_from_pool(pool, q_count, difficulty)
+            selected.extend(picked)
 
     # If count still not satisfied, fill with any remaining available questions
     shortfall = count - len(selected)

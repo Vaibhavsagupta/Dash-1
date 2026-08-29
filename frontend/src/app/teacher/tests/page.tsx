@@ -427,7 +427,9 @@ const generateClientFallbackQuestions = (
         const concept = concepts[i % concepts.length];
 
         let qType = "MCQ";
-        if (typesPayload && typeof typesPayload === "object") {
+        if (Array.isArray(typesPayload) && typesPayload.length > 0) {
+            qType = typesPayload[i % typesPayload.length];
+        } else if (typesPayload && typeof typesPayload === "object") {
             for (const [t, cnt] of Object.entries(typesPayload)) {
                 const currentOfThisType = results.filter(q => q.question_type === t).length;
                 if (currentOfThisType < (Number(cnt) || 1)) {

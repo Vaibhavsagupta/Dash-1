@@ -213,6 +213,12 @@ class SystemSetting(Base):
     value = Column(String, nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+# Course Syllabus Models
+from .syllabus.models import (
+    SyllabusFile, CourseUnit, CourseTopic,
+    CourseOutcome, RecommendedBook
+)
+
 # AI-Powered Adaptive Test Models
 from .questions.models import (
     Question, QuestionVersion, QuestionOption,

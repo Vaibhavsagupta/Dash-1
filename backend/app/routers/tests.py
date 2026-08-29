@@ -77,12 +77,34 @@ def generate_test_questions(
             count=count,
             difficulty=difficulty
         )
-        if bank_res["found_count"] >= count or source == "question_bank":
+        if bank_res["found_count"] >= count:
             return {
                 "source": "question_bank",
                 "questions": bank_res["questions"],
                 "total_found": bank_res["found_count"]
             }
+        elif source == "question_bank" and bank_res["found_count"] > 0:
+            # Supplement partial bank questions with freshly generated questions for the shortfall
+            bank_questions = bank_res["questions"]
+            shortfall = count - len(bank_questions)
+            try:
+                supplement = generate_questions(
+                    subject=subject,
+                    topic=topic,
+                    syllabus=syllabus,
+                    question_types=question_types,
+                    count=shortfall,
+                    difficulty=difficulty,
+                    engine_mode=engine_mode
+                )
+                combined = bank_questions + supplement
+                return {
+                    "source": "question_bank_augmented",
+                    "questions": combined[:count],
+                    "total_found": len(combined)
+                }
+            except Exception:
+                pass
 
     # 2. In-House / Local / Custom AI generation
     try:

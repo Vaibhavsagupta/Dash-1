@@ -204,6 +204,96 @@ def synthesize_true_false_question(
         "subtopic": concept
     }
 
+def synthesize_fill_in_the_blank_question(
+    concept_item: Dict[str, Any],
+    subject: str,
+    topic: str,
+    difficulty: str
+) -> Dict[str, Any]:
+    """Synthesizes a high-quality Fill in the Blank question with ________ blank."""
+    concept = concept_item["concept"]
+    unit = concept_item.get("unit", "Unit 1")
+
+    templates = [
+        (
+            f"In {subject} ({topic}), the mechanism responsible for regulating the state and operational flow of {concept} is ________.",
+            concept,
+            f"'{concept}' is the foundational operational component defined under {unit}."
+        ),
+        (
+            f"Under standard execution conditions in {topic}, ________ is implemented to optimize throughput and preserve invariants for {concept}.",
+            concept,
+            f"Implementing '{concept}' ensures predictable invariant adherence and operational throughput."
+        ),
+        (
+            f"In the analysis of {subject}, the key structural metric evaluating the efficiency of {concept} is ________.",
+            concept,
+            f"'{concept}' is measured and bounded to maintain theoretical correctness in {topic}."
+        ),
+        (
+            f"The primary architectural constraint associated with deploying {concept} within modern {subject} systems is ________.",
+            concept,
+            f"Understanding the boundaries of '{concept}' ensures fault tolerance in {topic}."
+        )
+    ]
+    stem, ans, exp = random.choice(templates)
+
+    return {
+        "question_text": stem,
+        "question_type": "Fill in the Blank",
+        "options": [],
+        "correct_answer": ans,
+        "explanation": exp,
+        "difficulty": difficulty,
+        "bloom_taxonomy": "Remember",
+        "subject": subject,
+        "topic": topic,
+        "subtopic": concept
+    }
+
+def synthesize_multiple_select_question(
+    concept_item: Dict[str, Any],
+    all_concept_names: List[str],
+    subject: str,
+    topic: str,
+    difficulty: str
+) -> Dict[str, Any]:
+    """Synthesizes a Multiple Select question with 2-3 correct options and valid JSON array answer."""
+    concept = concept_item["concept"]
+    unit = concept_item.get("unit", "Unit 1")
+
+    valid_statements = [
+        f"Ensures deterministic state validation and invariant preservation for {concept}",
+        f"Optimizes operational throughput across {topic} workflows",
+        f"Maintains structural modularity and strict component encapsulation for {concept}",
+        f"Guarantees bounded spatial overhead during execution in {subject}"
+    ]
+    distractors = [
+        f"Forces unhandled memory segmentation faults during {concept} lifecycle",
+        f"Bypasses algorithmic correctness checks to introduce non-deterministic race conditions",
+        f"Permanently degrades cache locality across unindexed execution threads"
+    ]
+
+    correct_count = random.choice([2, 3])
+    correct_picks = random.sample(valid_statements, k=min(len(valid_statements), correct_count))
+    distractor_picks = random.sample(distractors, k=min(len(distractors), 4 - len(correct_picks)))
+
+    all_opts = correct_picks + distractor_picks
+    random.shuffle(all_opts)
+
+    return {
+        "question_text": f"Select all valid operational properties and characteristics of '{concept}' in {subject} ({unit}):",
+        "question_type": "Multiple Select",
+        "options": all_opts,
+        "correct_answer": json.dumps(correct_picks),
+        "explanation": f"The valid statements highlight recognized technical benefits of {concept} in {topic}.",
+        "difficulty": difficulty,
+        "bloom_taxonomy": "Analyze",
+        "subject": subject,
+        "topic": topic,
+        "subtopic": concept
+    }
+
 def generate_local_nlp_questions(
     subject: str,
     topic: str,
@@ -215,49 +305,61 @@ def generate_local_nlp_questions(
     """
     Pure Python In-House Question Generator Engine.
     Requires zero external APIs, zero GPU, and <40MB RAM.
+    Guarantees unique questions with strict distribution across selected question types.
     """
     concept_records = extract_syllabus_concepts(syllabus, default_subject=subject, default_topic=topic)
     all_concept_names = [c["concept"] for c in concept_records]
     
     results = []
+    seen_texts = set()
     
     # Calculate counts per type
     type_counts_dict: Dict[str, int] = {}
     if isinstance(question_types, dict):
         type_counts_dict = {k: int(v) for k, v in question_types.items() if int(v) > 0}
     elif isinstance(question_types, list) and question_types:
-        per_type = max(1, count // len(question_types))
-        for t in question_types:
-            type_counts_dict[t] = per_type
-        # Adjust remainder
-        rem = count - sum(type_counts_dict.values())
-        if rem > 0 and question_types:
-            type_counts_dict[question_types[0]] += rem
+        per_type = count // len(question_types)
+        rem = count % len(question_types)
+        for idx, t in enumerate(question_types):
+            type_counts_dict[t] = per_type + (1 if idx < rem else 0)
     else:
         type_counts_dict = {"MCQ": count}
 
-    # Ensure total matches requested count
     total_requested = sum(type_counts_dict.values())
     if total_requested == 0:
         type_counts_dict = {"MCQ": count}
 
     concept_idx = 0
-    num_concepts = len(concept_records)
+    num_concepts = max(1, len(concept_records))
 
     for q_type, q_count in type_counts_dict.items():
+        norm_type = q_type.lower()
         for _ in range(q_count):
             c_item = concept_records[concept_idx % num_concepts]
             concept_idx += 1
 
-            norm_type = q_type.lower()
-            if "mcq" in norm_type or "select" in norm_type:
-                q_obj = synthesize_mcq_question(c_item, all_concept_names, subject, topic, difficulty)
-            elif "true" in norm_type or "false" in norm_type:
-                q_obj = synthesize_true_false_question(c_item, subject, topic, difficulty)
-            else:
-                q_obj = synthesize_short_answer_question(c_item, subject, topic, difficulty)
+            for attempt in range(5):
+                if "fill" in norm_type or "blank" in norm_type:
+                    q_obj = synthesize_fill_in_the_blank_question(c_item, subject, topic, difficulty)
+                elif "multiple select" in norm_type:
+                    q_obj = synthesize_multiple_select_question(c_item, all_concept_names, subject, topic, difficulty)
+                elif "true" in norm_type or "false" in norm_type:
+                    q_obj = synthesize_true_false_question(c_item, subject, topic, difficulty)
+                elif "short" in norm_type or "answer" in norm_type:
+                    q_obj = synthesize_short_answer_question(c_item, subject, topic, difficulty)
+                else:
+                    # Default MCQ
+                    q_obj = synthesize_mcq_question(c_item, all_concept_names, subject, topic, difficulty)
 
-            results.append(q_obj)
+                if q_obj["question_text"] not in seen_texts:
+                    seen_texts.add(q_obj["question_text"])
+                    results.append(q_obj)
+                    break
+            else:
+                # If seen before, add distinctive concept index variation to guarantee uniqueness
+                q_obj["question_text"] = f"[Part {len(results)+1}] " + q_obj["question_text"]
+                seen_texts.add(q_obj["question_text"])
+                results.append(q_obj)
 
     return results[:count]
 
